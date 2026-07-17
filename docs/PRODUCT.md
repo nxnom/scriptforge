@@ -78,7 +78,21 @@ The Forge workspace displays the real interactive Codex TUI through xterm.js. It
 
 There is no database. Tool manifests and directories are the source of truth.
 
+Forge candidates persist across application restarts. On startup, ScriptForge removes temporary job inputs and outputs older than 24 hours.
+
 The server binds only to `127.0.0.1`, prefers port `4545`, and selects another available port when necessary.
+
+## Forge Preflight
+
+Before opening the Codex terminal, ScriptForge presents GeckoUI selects for the model and reasoning effort. The default is GPT-5.6 Sol with medium effort. Model options are GPT-5.6 Sol, Terra, Luna, GPT-5.5, GPT-5.4, GPT-5.4 Mini, GPT-5.3 Codex, and GPT-5.2; availability depends on the installed CLI and account. Effort options are minimal, low, medium, high, and xhigh.
+
+The browser remembers the last selection in `localStorage`. The selected values are recorded with the candidate and supplied explicitly to Codex.
+
+ScriptForge checks whether Codex CLI is installed and authenticated. A failed preflight does not block the library or starter tools. Forge instead shows installation or `codex login` guidance and a Retry action; it never installs or authenticates Codex automatically.
+
+## Package Shape
+
+The MVP is one publishable `scriptforge` npm package containing the CLI, Hono server, React/Vite application, and compiled web assets. Development uses pnpm, while the published executable remains compatible with `npx scriptforge`.
 
 ## Visual Source
 
@@ -111,4 +125,4 @@ The first end-to-end tool is an image resizer using the bundled `sharp` package.
 Resolve these before their affected milestone begins:
 
 - Exact GPT-5.6 Codex model identifier supported by the installed CLI
-- Temporary job retention and cleanup policy
+- Enforcement details for blocking undeclared direct process execution from a Forge session

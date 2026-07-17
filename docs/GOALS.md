@@ -21,6 +21,7 @@ Acceptance checks:
 Status: Pending
 
 - Scaffold the TypeScript workspace.
+- Keep the CLI, server, and web application in one publishable npm package.
 - Start a Hono server from the CLI.
 - Serve the React application and open it in the default browser.
 - Bind to localhost and handle port selection and shutdown cleanly.
@@ -60,6 +61,8 @@ Status: Pending
 - Spawn the interactive Codex CLI through `node-pty`.
 - Stream terminal input, output, and resizing over WebSocket.
 - Register a local ScriptForge stdio MCP server with Codex.
+- Add the pre-Forge model/effort selector, persisted in browser `localStorage`.
+- Detect missing or unauthenticated Codex CLI and show setup guidance without blocking the library.
 - Generate candidate tool files only in staging.
 - Keep the terminal full-width by default and open a contextual side panel for MCP questions, approvals, and the tester interface.
 - Present read-only execution code, manifest, executable requirements, structured logs, and candidate status for review.

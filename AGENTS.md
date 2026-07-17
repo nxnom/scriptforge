@@ -61,6 +61,12 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 - Always provide automatic `queued`, `running`, `succeeded`, `failed`, and `cancelled` lifecycle events. Detailed percentage progress is optional when the underlying work can measure it.
 - Store installed tools under `~/.scriptforge/tools`, candidates under `~/.scriptforge/staging`, and temporary job data under `~/.scriptforge/jobs`.
 - Do not add SQLite. Discover tools from filesystem manifests and use `~/.scriptforge/settings.json` only for small application preferences.
+- Preserve Forge candidates across restarts. Delete temporary job inputs and outputs older than 24 hours during startup.
+- Use one publishable `scriptforge` package containing the CLI, Hono server, React/Vite application, and built web assets. Use pnpm for development while keeping `npx scriptforge` npm-compatible.
+- Before starting Forge, show a GeckoUI dialog with model and reasoning-effort selects. Store those two UI preferences in browser `localStorage`, not `settings.json`.
+- Default to `gpt-5.6-sol` with `medium` reasoning effort. Offer `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex`, and `gpt-5.2` as additional model choices, subject to the installed Codex CLI and account.
+- Offer `minimal`, `low`, `medium`, `high`, and `xhigh` effort choices.
+- Check that Codex CLI exists and is authenticated before Forge starts. If not, keep the library usable and show installation/login guidance plus Retry. Never install or authenticate Codex automatically.
 
 ## Safety Contract
 
