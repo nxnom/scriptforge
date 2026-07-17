@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "image-resizer",
+  "version": "1.0.0",
+  "name": "Image Resizer",
+  "description": "Resize photos with a visual before-and-after comparison.",
+  "category": "Images",
+  "icon": "image",
+  "script": "resize.ts",
+  "interface": {
+    "type": "native",
+    "route": "/tools/image-resizer"
+  },
+  "requiredExecutables": []
+}
