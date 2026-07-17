@@ -1,7 +1,7 @@
-import { serveStatic } from "@hono/node-server/serve-static";
-import { Hono } from "hono";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
 
 export const apiRoutes = new Hono()
   .get("/health", (c) =>

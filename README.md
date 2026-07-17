@@ -12,7 +12,7 @@ The local application shell and typed API foundation are working. The image-resi
 
 - Local-only Hono server and React library launched from one CLI package
 - GeckoUI application shell based on the checked-in Pencil design
-- Hono-to-Spoosh inferred REST types with caching, deduplication, invalidation, retry, refetch, and cache cleanup
+- Hono-to-Spoosh inferred REST types with caching, in-flight deduplication, and automatic invalidation
 - Preferred `127.0.0.1:4545` address with automatic port fallback
 - Planned embedded Codex TUI, staged tool generation, explicit approvals, structured logs, and dependency Doctor
 
@@ -44,7 +44,9 @@ The production CLI opens ScriptForge in the default browser. Pass `--no-open` wh
 ## Verification
 
 ```bash
+pnpm check
 pnpm lint
+pnpm format
 pnpm typecheck
 pnpm test
 pnpm build

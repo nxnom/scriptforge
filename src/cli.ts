@@ -1,8 +1,8 @@
-import { serve } from "@hono/node-server";
-import open from "open";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { serve } from "@hono/node-server";
+import open from "open";
 import { createApp } from "./server/app.js";
 import { selectPort } from "./server/port.js";
 

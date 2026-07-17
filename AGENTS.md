@@ -43,6 +43,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - `node-pty` for interactive Codex and approved terminal sessions
 - Codex CLI configured for GPT-5.6 and connected to ScriptForge through a local stdio MCP server
 - `sharp` for the starter image resizer
+- Biome for formatting and linting
 - macOS-first behavior without intentionally breaking Windows or Linux
 
 Keep REST operations and real-time streams distinct: use Spoosh for request/response APIs and WebSocket for terminal bytes, progress, logs, and job lifecycle events.
