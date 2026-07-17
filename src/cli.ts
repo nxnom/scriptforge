@@ -3,6 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import open from "open";
+import { WebSocketServer } from "ws";
 import { createApp } from "./server/app.js";
 import { selectPort } from "./server/port.js";
 
@@ -13,8 +14,9 @@ const webRoot = resolve(currentDir, "web");
 const hasBuiltWeb = existsSync(resolve(webRoot, "index.html"));
 const app = createApp(hasBuiltWeb ? webRoot : undefined);
 const url = `http://${host}:${port}`;
+const webSocketServer = new WebSocketServer({ noServer: true });
 
-const server = serve({ fetch: app.fetch, hostname: host, port }, async () => {
+const server = serve({ fetch: app.fetch, hostname: host, port, websocket: { server: webSocketServer } }, async () => {
   console.log(`ScriptForge is running at ${url}`);
   console.log("Press Ctrl+C to stop.");
 
@@ -26,6 +28,7 @@ const server = serve({ fetch: app.fetch, hostname: host, port }, async () => {
 });
 
 function shutdown() {
+  webSocketServer.close();
   server.close(() => process.exit(0));
 }
 

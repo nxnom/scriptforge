@@ -6,10 +6,10 @@
   "description": "Resize photos with a visual before-and-after comparison.",
   "category": "Images",
   "icon": "image",
-  "script": "resize.ts",
+  "script": "run.mjs",
   "interface": {
-    "type": "native",
-    "route": "/tools/image-resizer"
+    "type": "html",
+    "entry": "ui.html"
   },
   "requiredExecutables": []
 }

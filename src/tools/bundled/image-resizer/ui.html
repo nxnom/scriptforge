@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Resizer</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #1a1a1a; color: #ececec; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 22px; background: #1a1a1a; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      .layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 18px; min-height: calc(100vh - 44px); }
+      .panel { border: 1px solid #363636; border-radius: 16px; background: #242424; }
+      .controls { display: flex; flex-direction: column; gap: 18px; padding: 20px; }
+      h1, h2, p { margin: 0; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 14px; }
+      .intro p, .hint, .meta, .log-time { color: #9d9d9d; font-size: 12px; }
+      .intro { display: grid; gap: 6px; }
+      .drop { display: grid; min-height: 140px; place-items: center; gap: 8px; padding: 18px; border: 1px dashed #555; border-radius: 13px; background: #202020; color: #d8d8d8; text-align: center; }
+      .drop.dragging { border-color: #ececec; background: #2e2e2e; }
+      .drop strong { font-size: 13px; }
+      .drop span { color: #8b8b8b; font-size: 11px; }
+      .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+      .file-row { display: none; align-items: center; gap: 10px; padding: 10px; border: 1px solid #3b3b3b; border-radius: 11px; background: #2b2b2b; }
+      .file-row.visible { display: flex; }
+      .file-thumb { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; background: #181818; }
+      .file-copy { display: grid; min-width: 0; flex: 1; gap: 3px; }
+      .file-copy strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .file-copy span { color: #999; font-size: 10px; }
+      .icon-button { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: #aaa; }
+      .icon-button:hover { background: #383838; color: white; }
+      .fields { display: grid; gap: 13px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      label { display: grid; gap: 6px; color: #bbb; font-size: 11px; font-weight: 600; }
+      input[type="number"], select { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid #484848; border-radius: 9px; outline: none; background: #202020; color: #eee; }
+      input:focus, select:focus { border-color: #888; }
+      .run { min-height: 38px; border: 1px solid #fff; border-radius: 9px; background: #fff; color: #211c18; font-weight: 700; }
+      .run:disabled { cursor: not-allowed; opacity: .45; }
+      .progress { display: none; gap: 8px; }
+      .progress.visible { display: grid; }
+      .progress-copy { display: flex; justify-content: space-between; color: #bbb; font-size: 11px; }
+      .track { height: 5px; overflow: hidden; border-radius: 999px; background: #383838; }
+      .track span { display: block; width: 0; height: 100%; border-radius: inherit; background: #ececec; transition: width .2s ease; }
+      .preview { display: flex; min-width: 0; flex-direction: column; overflow: hidden; }
+      .preview-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 17px; border-bottom: 1px solid #363636; }
+      .preview-head span { color: #929292; font-size: 11px; }
+      .canvas-grid { display: grid; min-height: 370px; flex: 1; grid-template-columns: 1fr 1fr; gap: 1px; background: #363636; }
+      figure { display: flex; min-width: 0; flex-direction: column; margin: 0; background: #202020; }
+      figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 13px; color: #aaa; font-size: 11px; }
+      .canvas { display: grid; min-height: 300px; flex: 1; place-items: center; padding: 18px; background-color: #1d1d1d; background-image: linear-gradient(45deg,#242424 25%,transparent 25%),linear-gradient(-45deg,#242424 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#242424 75%),linear-gradient(-45deg,transparent 75%,#242424 75%); background-position: 0 0,0 6px,6px -6px,-6px 0; background-size: 12px 12px; }
+      .canvas img { display: none; max-width: 100%; max-height: 48vh; object-fit: contain; box-shadow: 0 10px 30px #0008; }
+      .canvas img.visible { display: block; }
+      .empty { color: #777; font-size: 12px; text-align: center; }
+      .result-bar { display: none; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; border-top: 1px solid #363636; }
+      .result-bar.visible { display: flex; }
+      .result-copy { display: grid; min-width: 0; gap: 3px; }
+      .result-copy strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .save { padding: 8px 13px; border: 1px solid #fff; border-radius: 8px; background: #fff; color: #211c18; font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+      details { border-top: 1px solid #363636; }
+      summary { padding: 11px 16px; color: #aaa; cursor: pointer; font-size: 11px; }
+      .logs { display: grid; max-height: 130px; gap: 7px; overflow: auto; padding: 0 16px 14px; }
+      .log { display: grid; grid-template-columns: 48px 1fr; gap: 8px; font-size: 10px; }
+      .log.success { color: #96c99c; } .log.error { color: #ef8b82; }
+      @media (max-width: 850px) { body { padding: 12px; } .layout { grid-template-columns: 1fr; } .canvas-grid { min-height: 520px; grid-template-columns: 1fr; } .canvas { min-height: 240px; } }
+      @media (max-width: 480px) { .row { grid-template-columns: 1fr; } .result-bar { align-items: stretch; flex-direction: column; } .save { text-align: center; } }
+    </style>
+  </head>
+  <body>
+    <main class="layout">
+      <form class="panel controls" id="form">
+        <div class="intro"><h1>Image Resizer</h1><p>Resize and convert one image locally.</p></div>
+        <label class="drop" id="drop"><strong>Choose an image</strong><span>Drop a PNG, JPEG, or WebP · up to 20 MB</span><input id="file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+        <div class="file-row" id="file-row"><img class="file-thumb" id="thumb" alt="Selected file preview" /><div class="file-copy"><strong id="file-name"></strong><span id="file-size"></span></div><button class="icon-button" id="remove" type="button" aria-label="Remove image">×</button></div>
+        <div class="fields">
+          <div class="row"><label>Width<input id="width" type="number" min="1" max="8000" value="1200" required /></label><label>Height<input id="height" type="number" min="1" max="8000" value="1200" required /></label></div>
+          <label>Resize mode<select id="fit"><option value="contain">Contain — show whole image</option><option value="cover">Cover — crop to fill</option><option value="fill">Fill — stretch</option><option value="inside">Fit inside bounds</option><option value="outside">Cover bounds</option></select></label>
+          <div class="row"><label>Format<select id="format"><option value="preserve">Keep original</option><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="webp">WebP</option></select></label><label>Quality<input id="quality" type="number" min="1" max="100" value="82" required /></label></div>
+        </div>
+        <div class="progress" id="progress"><div class="progress-copy"><span id="progress-label">Starting…</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
+        <button class="run" id="run" type="submit" disabled>Resize image</button>
+      </form>
+      <section class="panel preview">
+        <div class="preview-head"><h2>Before & after</h2><span>Runs on your machine</span></div>
+        <div class="canvas-grid">
+          <figure><figcaption><strong>Original</strong><span id="original-meta"></span></figcaption><div class="canvas"><span class="empty" id="original-empty">Select an image to begin</span><img id="original" alt="Original preview" /></div></figure>
+          <figure><figcaption><strong>Resized</strong><span id="output-meta"></span></figcaption><div class="canvas"><span class="empty" id="output-empty">Your result will appear here</span><img id="output" alt="Resized preview" /></div></figure>
+        </div>
+        <div class="result-bar" id="result"><div class="result-copy"><strong id="result-name"></strong><span class="meta" id="result-meta"></span></div><a class="save" id="save" href="about:blank">Save result</a></div>
+        <details><summary>Run logs</summary><div class="logs" id="logs"><span class="hint">Logs will appear when the tool runs.</span></div></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let selectedFile;
+      let originalUrl;
+      const setFile = (file) => {
+        selectedFile = file;
+        $("run").disabled = !file;
+        $("drop").style.display = file ? "none" : "grid";
+        $("file-row").classList.toggle("visible", Boolean(file));
+        if (!file) { $("original").classList.remove("visible"); $("original-empty").style.display = "block"; return; }
+        if (originalUrl) URL.revokeObjectURL(originalUrl);
+        originalUrl = URL.createObjectURL(file);
+        $("thumb").src = originalUrl; $("original").src = originalUrl; $("original").classList.add("visible"); $("original-empty").style.display = "none";
+        $("file-name").textContent = file.name; $("file-size").textContent = bytes(file.size);
+        const image = new Image(); image.onload = () => { $("width").value = image.naturalWidth; $("height").value = image.naturalHeight; $("original-meta").textContent = `${image.naturalWidth} × ${image.naturalHeight} · ${bytes(file.size)}`; }; image.src = originalUrl;
+        clearResult();
+      };
+      $("file").addEventListener("change", (event) => setFile(event.target.files[0]));
+      $("remove").addEventListener("click", () => { $("file").value = ""; setFile(); });
+      for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, () => $("drop").classList.add("dragging"));
+      for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
+      $("form").addEventListener("submit", (event) => {
+        event.preventDefault(); if (!selectedFile) return;
+        clearResult(); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.03, "Sending image");
+        parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [selectedFile] }, "*");
+      });
+      window.addEventListener("message", (event) => {
+        const message = event.data; if (message?.source !== "scriptforge-host") return;
+        if (message.type === "progress") setProgress(message.value, message.label);
+        if (message.type === "log") addLog(message);
+        if (message.type === "result") showResult(message.outputs[0]);
+        if (message.type === "failed") { addLog({ level: "error", message: message.message }); finishRun(); }
+        if (message.type === "complete") finishRun();
+      });
+      function setProgress(value, label) { $("progress").classList.add("visible"); $("progress-bar").style.width = `${Math.round(value * 100)}%`; $("progress-value").textContent = `${Math.round(value * 100)}%`; $("progress-label").textContent = label || "Working…"; }
+      function addLog(event) { const row = document.createElement("div"); row.className = `log ${event.level || "info"}`; row.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span><span></span>`; row.lastElementChild.textContent = event.message; $("logs").append(row); }
+      function showResult(output) { $("output").src = output.previewUrl; $("output").classList.add("visible"); $("output-empty").style.display = "none"; const meta = output.metadata.output; $("output-meta").textContent = `${meta.width} × ${meta.height} · ${bytes(meta.bytes)}`; $("result-name").textContent = output.name; $("result-meta").textContent = `${meta.format.toUpperCase()} · ${bytes(meta.bytes)}`; $("save").href = output.downloadUrl; $("save").download = output.name; $("result").classList.add("visible"); }
+      function clearResult() { $("output").classList.remove("visible"); $("output-empty").style.display = "block"; $("output-meta").textContent = ""; $("result").classList.remove("visible"); $("progress").classList.remove("visible"); }
+      function finishRun() { $("run").disabled = !selectedFile; $("run").textContent = "Resize image"; }
+      function bytes(value) { return value < 1024 * 1024 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1024 / 1024).toFixed(1)} MB`; }
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { listBundledTools } from "../tools/registry";
-import { createImageResizerRoutes } from "./image-resizer-routes";
+import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
+import { ToolJobService } from "./jobs/service";
 
 const plannedTools = [
   {
@@ -64,7 +65,7 @@ const plannedTools = [
   },
 ] as const;
 
-export function createApiRoutes(jobsRoot?: string) {
+export function createApiRoutes(jobService: ToolJobService) {
   return new Hono()
     .get("/health", (c) =>
       c.json({
@@ -88,15 +89,16 @@ export function createApiRoutes(jobsRoot?: string) {
         ],
       }),
     )
-    .route("/tools/image-resizer", createImageResizerRoutes(jobsRoot));
+    .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
-export const apiRoutes = createApiRoutes();
+export const apiRoutes = createApiRoutes(new ToolJobService());
 
 export type ApiRoutes = typeof apiRoutes;
 
-export function createApp(webRoot?: string, options: { jobsRoot?: string } = {}) {
-  const app = new Hono().route("/api", createApiRoutes(options.jobsRoot));
+export function createApp(webRoot?: string, options: { jobsRoot?: string; toolsRoot?: string } = {}) {
+  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot);
+  const app = new Hono().route("/api", createApiRoutes(jobService)).route("/", createJobWebSocketRoutes(jobService));
 
   if (webRoot) {
     app.use("/*", serveStatic({ root: webRoot }));

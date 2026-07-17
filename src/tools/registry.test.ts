@@ -11,7 +11,8 @@ describe("bundled tool registry", () => {
     expect(findBundledTool("image-resizer")).toMatchObject({
       name: "Image Resizer",
       requiredExecutables: [],
-      interface: { type: "native", route: "/tools/image-resizer" },
+      script: "run.mjs",
+      interface: { type: "html", entry: "ui.html" },
     });
   });
 

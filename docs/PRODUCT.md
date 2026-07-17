@@ -24,7 +24,7 @@ A local tool initially lives in its own directory and contains:
 <tool-id>/
 ├── tool.json
 ├── ui.html
-└── execution files
+└── run.mjs
 ```
 
 `tool.json` describes the tool, entrypoint, inputs and outputs, and `requiredExecutables`. It does not prescribe how dependencies are installed.
@@ -32,6 +32,8 @@ A local tool initially lives in its own directory and contains:
 The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls and result presentation appropriate to the task, such as drag-and-drop input, buttons, progress, before/after previews, playable media, downloadable output, or metadata. It runs in a sandboxed iframe and communicates only through a controlled ScriptForge host bridge.
 
 For the MVP, each tool uses a JavaScript `run.mjs` orchestration entrypoint. Node.js is already guaranteed by `npx scriptforge`, while the entrypoint may invoke any external executables declared by the tool.
+
+Tool packages do not contain generated test files. Candidate behavior is exercised through a user-approved run in the sandboxed tester iframe; ScriptForge itself tests the shared host bridge, runner, validation, and safety boundaries.
 
 The runtime supplies controlled capabilities for declared executable calls, lifecycle, progress, structured logs, safe output registration, and cancellation. Every tool receives basic queued/running/succeeded/failed/cancelled state even when detailed percentage progress is unavailable.
 
@@ -62,7 +64,7 @@ Generated HTML/JS tool UI
   └── controlled host bridge ─────────────────> tool runner ─────> declared CLI executables
 ```
 
-The main application uses GeckoUI. Generated tool interfaces intentionally do not: they are lightweight HTML/CSS/JS authored for the tool.
+The main application uses GeckoUI with Tailwind utility classes directly in React components. Generated tool interfaces intentionally use neither React nor GeckoUI: they are lightweight, self-contained HTML/CSS/JS authored for the tool.
 
 The Forge workspace displays the real interactive Codex TUI through xterm.js. Its GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results.
 

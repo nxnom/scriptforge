@@ -38,6 +38,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - Hono local server
 - React application shell
 - React Router for application navigation
+- Tailwind CSS utilities for React-side layout and styling; do not add project-specific CSS class selectors for React components
 - GeckoUI for the main ScriptForge interface only
 - React Hook Form with Zod validation and GeckoUI RHF components for application forms
 - Spoosh for typed REST calls, deriving the client schema from Hono with `@spoosh/hono`
@@ -133,6 +134,8 @@ If the repository is public, include an appropriate license and ensure no secret
 11. Do not implement postponed import/export work unless the project owner explicitly brings it back into scope.
 12. Keep React component and form modules focused and roughly 200 lines or fewer. Treat 250 lines as the maximum; split larger files by page, component, schema, or responsibility before adding more behavior.
 13. Build forms with React Hook Form, Zod schemas, `zodResolver`, and GeckoUI RHF components. Do not duplicate form state in ad-hoc `useState` hooks. Move substantial schemas and reusable field groups into their own focused files.
+14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. Candidate behavior is tested through an explicit user-approved run in the sandboxed tester iframe. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.
+15. Style the React ScriptForge shell with Tailwind utility classes directly in components. Keep global CSS limited to imports, design tokens, base element rules, and targeted GeckoUI theme overrides. Self-contained tool `ui.html` files may use ordinary CSS classes and do not depend on Tailwind.
 
 ## Evidence Log
 
