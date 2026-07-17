@@ -82,7 +82,7 @@
         </div>
         <div class="progress" id="progress"><div class="progress-copy"><span id="progress-label">Starting…</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
         <div class="bridge-error" id="bridge-error" role="alert"></div>
-        <button class="run" id="run" type="submit" disabled>Resize image</button>
+        <button class="run" id="run" type="button" disabled>Resize image</button>
       </form>
       <section class="panel preview">
         <div class="preview-head"><h2>Before & after</h2><span>Runs on your machine</span></div>
@@ -115,8 +115,8 @@
       $("remove").addEventListener("click", () => { $("file").value = ""; setFile(); });
       for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, () => $("drop").classList.add("dragging"));
       for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
-      $("form").addEventListener("submit", async (event) => {
-        event.preventDefault(); if (!selectedFile) return;
+      $("run").addEventListener("click", async () => {
+        if (!selectedFile) return;
         clearResult(); $("bridge-error").classList.remove("visible"); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.02, "Reading selected image");
         try {
           const data = await selectedFile.arrayBuffer();
