@@ -49,6 +49,12 @@ export function ToolPage() {
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.source !== iframeRef.current?.contentWindow) return;
+      if (!isToolMessage(event.data)) return;
+      if (event.data.type === "ready") {
+        setHostError(undefined);
+        iframeRef.current?.contentWindow?.postMessage({ source: "scriptforge-host", type: "ready" }, "*");
+        return;
+      }
       const message = runMessageSchema.safeParse(event.data);
       if (!message.success) return reportFailure("The tool interface sent an invalid run request.");
       if (!toolId) return reportFailure("The selected tool is unavailable.");
@@ -131,4 +137,15 @@ function apiErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
   return "The local tool job could not start.";
+}
+
+function isToolMessage(value: unknown): value is { source: "scriptforge-tool"; type: string } {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "source" in value &&
+    value.source === "scriptforge-tool" &&
+    "type" in value &&
+    typeof value.type === "string"
+  );
 }
