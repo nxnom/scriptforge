@@ -117,11 +117,13 @@
       for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
       $("form").addEventListener("submit", async (event) => {
         event.preventDefault(); if (!selectedFile) return;
-        clearResult(); $("bridge-error").classList.remove("visible"); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.03, "Sending image");
+        clearResult(); $("bridge-error").classList.remove("visible"); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.02, "Reading selected image");
         try {
           const data = await selectedFile.arrayBuffer();
+          setProgress(0.04, "Sending image to ScriptForge");
           const file = { name: selectedFile.name, size: selectedFile.size, type: selectedFile.type, lastModified: selectedFile.lastModified, data };
           parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [file] }, "*");
+          setProgress(0.06, "Waiting for ScriptForge host");
         } catch (error) {
           showError(error instanceof Error ? error.message : "The image could not be sent to ScriptForge.");
           finishRun();
@@ -143,6 +145,8 @@
       function clearResult() { $("output").classList.remove("visible"); $("output-empty").style.display = "block"; $("output-meta").textContent = ""; $("result").classList.remove("visible"); $("progress").classList.remove("visible"); }
       function finishRun() { $("run").disabled = !selectedFile; $("run").textContent = "Resize image"; }
       function bytes(value) { return value < 1024 * 1024 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1024 / 1024).toFixed(1)} MB`; }
+      window.addEventListener("error", (event) => showError(event.message || "The tool interface encountered an error."));
+      window.addEventListener("unhandledrejection", (event) => showError(event.reason instanceof Error ? event.reason.message : String(event.reason || "The tool interface promise failed.")));
       parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
     </script>
   </body>
