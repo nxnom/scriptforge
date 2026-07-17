@@ -48,6 +48,7 @@ export function ToolPage() {
       if (!toolId) return reportFailure("The selected tool is unavailable.");
       try {
         setHostError(undefined);
+        iframeRef.current?.contentWindow?.postMessage({ source: "scriptforge-host", type: "accepted" }, "*");
         const files = message.data.files.map(normalizeFile);
         const response = await startJob.trigger({
           body: spooshForm({ toolId, input: JSON.stringify(message.data.input), files }),

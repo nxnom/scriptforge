@@ -38,6 +38,8 @@
       input:focus, select:focus { border-color: #888; }
       .run { min-height: 38px; border: 1px solid #fff; border-radius: 9px; background: #fff; color: #211c18; font-weight: 700; }
       .run:disabled { cursor: not-allowed; opacity: .45; }
+      .bridge-error { display: none; padding: 9px 10px; border: 1px solid #713d3a; border-radius: 9px; background: #392321; color: #efaaa4; font-size: 11px; line-height: 1.4; }
+      .bridge-error.visible { display: block; }
       .progress { display: none; gap: 8px; }
       .progress.visible { display: grid; }
       .progress-copy { display: flex; justify-content: space-between; color: #bbb; font-size: 11px; }
@@ -79,6 +81,7 @@
           <div class="row"><label>Format<select id="format"><option value="preserve">Keep original</option><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="webp">WebP</option></select></label><label>Quality<input id="quality" type="number" min="1" max="100" value="82" required /></label></div>
         </div>
         <div class="progress" id="progress"><div class="progress-copy"><span id="progress-label">Starting…</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
+        <div class="bridge-error" id="bridge-error" role="alert"></div>
         <button class="run" id="run" type="submit" disabled>Resize image</button>
       </form>
       <section class="panel preview">
@@ -88,7 +91,7 @@
           <figure><figcaption><strong>Resized</strong><span id="output-meta"></span></figcaption><div class="canvas"><span class="empty" id="output-empty">Your result will appear here</span><img id="output" alt="Resized preview" /></div></figure>
         </div>
         <div class="result-bar" id="result"><div class="result-copy"><strong id="result-name"></strong><span class="meta" id="result-meta"></span></div><a class="save" id="save" href="about:blank">Save result</a></div>
-        <details><summary>Run logs</summary><div class="logs" id="logs"><span class="hint">Logs will appear when the tool runs.</span></div></details>
+        <details id="log-details"><summary>Run logs</summary><div class="logs" id="logs"><span class="hint">Logs will appear when the tool runs.</span></div></details>
       </section>
     </main>
     <script>
@@ -114,26 +117,28 @@
       for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
       $("form").addEventListener("submit", async (event) => {
         event.preventDefault(); if (!selectedFile) return;
-        clearResult(); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.03, "Sending image");
+        clearResult(); $("bridge-error").classList.remove("visible"); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.03, "Sending image");
         try {
           const data = await selectedFile.arrayBuffer();
           const file = { name: selectedFile.name, size: selectedFile.size, type: selectedFile.type, lastModified: selectedFile.lastModified, data };
-          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [file] }, "*", [data]);
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [file] }, "*");
         } catch (error) {
-          addLog({ level: "error", message: error instanceof Error ? error.message : "The image could not be sent to ScriptForge." });
+          showError(error instanceof Error ? error.message : "The image could not be sent to ScriptForge.");
           finishRun();
         }
       });
       window.addEventListener("message", (event) => {
         const message = event.data; if (message?.source !== "scriptforge-host") return;
+        if (message.type === "accepted") setProgress(0.08, "Validated by ScriptForge");
         if (message.type === "progress") setProgress(message.value, message.label);
         if (message.type === "log") addLog(message);
         if (message.type === "result") showResult(message.outputs[0]);
-        if (message.type === "failed") { addLog({ level: "error", message: message.message }); finishRun(); }
+        if (message.type === "failed") { showError(message.message); finishRun(); }
         if (message.type === "complete") finishRun();
       });
       function setProgress(value, label) { $("progress").classList.add("visible"); $("progress-bar").style.width = `${Math.round(value * 100)}%`; $("progress-value").textContent = `${Math.round(value * 100)}%`; $("progress-label").textContent = label || "Working…"; }
       function addLog(event) { const row = document.createElement("div"); row.className = `log ${event.level || "info"}`; row.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span><span></span>`; row.lastElementChild.textContent = event.message; $("logs").append(row); }
+      function showError(message) { $("bridge-error").textContent = message; $("bridge-error").classList.add("visible"); $("log-details").open = true; addLog({ level: "error", message }); }
       function showResult(output) { $("output").src = output.previewUrl; $("output").classList.add("visible"); $("output-empty").style.display = "none"; const meta = output.metadata.output; $("output-meta").textContent = `${meta.width} × ${meta.height} · ${bytes(meta.bytes)}`; $("result-name").textContent = output.name; $("result-meta").textContent = `${meta.format.toUpperCase()} · ${bytes(meta.bytes)}`; $("save").href = output.downloadUrl; $("save").download = output.name; $("result").classList.add("visible"); }
       function clearResult() { $("output").classList.remove("visible"); $("output-empty").style.display = "block"; $("output-meta").textContent = ""; $("result").classList.remove("visible"); $("progress").classList.remove("visible"); }
       function finishRun() { $("run").disabled = !selectedFile; $("run").textContent = "Resize image"; }
