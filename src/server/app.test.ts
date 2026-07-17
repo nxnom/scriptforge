@@ -11,6 +11,7 @@ describe("local API", () => {
   it("lists the bundled tool catalog", async () => {
     const response = await createApp().request("/api/tools");
     const body = await response.json();
+    expect(body.tools).toHaveLength(8);
     expect(body.tools[0]).toMatchObject({ id: "image-resizer", status: "ready" });
   });
 });
