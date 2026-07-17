@@ -9,10 +9,9 @@ export function createToolRuntimeApiRoutes(service: ToolJobService) {
     .get("/tools/:toolId/ui", async (c) => {
       const html = await service.getToolUi(c.req.param("toolId"));
       if (!html) return c.json({ ok: false as const, error: "That tool interface is not available." }, 404);
-      const origin = new URL(c.req.url).origin;
       c.header(
         "Content-Security-Policy",
-        `default-src 'none'; img-src blob: data: ${origin}; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'`,
+        "default-src 'none'; img-src 'self' blob: data:; media-src 'self' blob: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'",
       );
       c.header("Cache-Control", "no-store");
       return c.html(html);

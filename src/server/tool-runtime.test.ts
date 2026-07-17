@@ -22,7 +22,10 @@ describe("tool runtime host", () => {
     const response = await app.request("/api/tools/image-resizer/ui");
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-security-policy")).toContain("connect-src 'none'");
+    const contentPolicy = response.headers.get("content-security-policy");
+    expect(contentPolicy).toContain("connect-src 'none'");
+    expect(contentPolicy).toContain("img-src 'self' blob: data:");
+    expect(contentPolicy).toContain("media-src 'self' blob: data:");
     await expect(response.text()).resolves.toContain('source: "scriptforge-tool"');
   });
 

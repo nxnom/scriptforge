@@ -29,6 +29,8 @@ A local tool initially lives in its own directory and contains:
 
 `tool.json` describes the tool, entrypoint, inputs and outputs, and `requiredExecutables`. It does not prescribe how dependencies are installed.
 
+Generated tools follow the bridge, lifecycle, preview, and logging rules in [TOOL_AUTHORING.md](./TOOL_AUTHORING.md). The Forge system prompt should draw from that contract so new tools use the same tested host integration.
+
 The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls and result presentation appropriate to the task, such as drag-and-drop input, buttons, progress, before/after previews, playable media, downloadable output, or metadata. It runs in a sandboxed iframe and communicates only through a controlled ScriptForge host bridge.
 
 For the MVP, each tool uses a JavaScript `run.mjs` orchestration entrypoint. Node.js is already guaranteed by `npx scriptforge`, while the entrypoint may invoke any external executables declared by the tool.
