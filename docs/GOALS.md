@@ -24,7 +24,9 @@ Status: Pending
 - Start a Hono server from the CLI.
 - Serve the React application and open it in the default browser.
 - Bind to localhost and handle port selection and shutdown cleanly.
+- Prefer port `4545` and fall back when it is unavailable.
 - Add GeckoUI and a basic ScriptForge visual theme.
+- Implement the Library screen from `ui.pen` through the Pencil MCP design source.
 - Wire Hono types into Spoosh REST calls.
 
 Acceptance checks:
@@ -59,7 +61,9 @@ Status: Pending
 - Stream terminal input, output, and resizing over WebSocket.
 - Register a local ScriptForge stdio MCP server with Codex.
 - Generate candidate tool files only in staging.
-- Present code, manifest, executable requirements, and candidate status for review.
+- Keep the terminal full-width by default and open a contextual side panel for MCP questions, approvals, and the tester interface.
+- Present read-only execution code, manifest, executable requirements, structured logs, and candidate status for review.
+- Run the generated HTML/JS tester inside a sandboxed iframe with a controlled host bridge.
 - Require approval before candidate tests or execution.
 - Save only the reviewed candidate revision.
 

@@ -47,6 +47,21 @@ The selected track and pitch above are settled. Record them in the README once t
 
 Keep REST operations and real-time streams distinct: use Spoosh for request/response APIs and WebSocket for terminal bytes, progress, logs, and job lifecycle events.
 
+## Runtime and UI Decisions
+
+- Bind only to `127.0.0.1`. Prefer port `4545`; if occupied, select another available port and show the chosen URL.
+- Treat `ui.pen` as the visual source of truth for the main application. Read it only through Pencil MCP tools. Use its components, text, icons, tokens, typography, and spacing when implementing React screens.
+- The Forge screen embeds the real interactive Codex TUI with xterm.js.
+- The Forge side panel is hidden by default. Reveal it contextually when Codex asks for human input or approval, or when a candidate tester UI is ready.
+- Render the generated tester interface in the side panel. Do not show its HTML source in the normal review flow.
+- Show the generated execution script in a read-only code viewer. Changes are requested through the Codex conversation.
+- Run generated HTML/JS inside a sandboxed iframe. Its only application access is a controlled host bridge for input selection, execution, lifecycle, progress, structured logs, cancellation, and safe result URLs.
+- Use a JavaScript `run.mjs` orchestration entrypoint for the MVP. It may invoke any executable declared in `tool.json` through the controlled runtime context.
+- Every generated script must produce useful structured logs for startup, major stages, external commands, completion, and failures. Capture raw CLI output as collapsible detail rather than the primary presentation.
+- Always provide automatic `queued`, `running`, `succeeded`, `failed`, and `cancelled` lifecycle events. Detailed percentage progress is optional when the underlying work can measure it.
+- Store installed tools under `~/.scriptforge/tools`, candidates under `~/.scriptforge/staging`, and temporary job data under `~/.scriptforge/jobs`.
+- Do not add SQLite. Discover tools from filesystem manifests and use `~/.scriptforge/settings.json` only for small application preferences.
+
 ## Safety Contract
 
 1. Codex may create and modify candidate files only inside a dedicated staging directory before Save.
@@ -57,6 +72,8 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 6. A tool may invoke only the executables it declares. Surface undeclared executable attempts as errors.
 7. Generated browser code must not receive direct Node.js, shell, or unrestricted filesystem access.
 8. Review and save the exact candidate revision that was tested; detect changes made after review.
+9. Any script change invalidates the previous successful test status.
+10. Redact secrets, environment values, and unsafe filesystem details from logs before sending them to browser code.
 
 ## Delivery Workflow
 

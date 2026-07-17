@@ -29,7 +29,13 @@ A local tool initially lives in its own directory and contains:
 
 `tool.json` describes the tool, entrypoint, inputs and outputs, and `requiredExecutables`. It does not prescribe how dependencies are installed.
 
-The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls and result presentation appropriate to the task, such as drag-and-drop input, buttons, progress, before/after previews, playable media, downloadable output, or metadata.
+The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls and result presentation appropriate to the task, such as drag-and-drop input, buttons, progress, before/after previews, playable media, downloadable output, or metadata. It runs in a sandboxed iframe and communicates only through a controlled ScriptForge host bridge.
+
+For the MVP, each tool uses a JavaScript `run.mjs` orchestration entrypoint. Node.js is already guaranteed by `npx scriptforge`, while the entrypoint may invoke any external executables declared by the tool.
+
+The runtime supplies controlled capabilities for declared executable calls, lifecycle, progress, structured logs, safe output registration, and cancellation. Every tool receives basic queued/running/succeeded/failed/cancelled state even when detailed percentage progress is unavailable.
+
+Generated scripts must log startup, major stages, external command activity, completion, and failures. Logs are structured for polished presentation in the generated interface, with raw CLI output available as collapsible detail. ScriptForge redacts sensitive values before events reach browser code.
 
 ## Dependency Doctor
 
@@ -58,6 +64,26 @@ Generated HTML/JS tool UI
 
 The main application uses GeckoUI. Generated tool interfaces intentionally do not: they are lightweight HTML/CSS/JS authored for the tool.
 
+The Forge workspace displays the real interactive Codex TUI through xterm.js. Its GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results.
+
+## Local Data
+
+```text
+~/.scriptforge/
+├── tools/       # installed tools
+├── staging/     # Forge candidates
+├── jobs/        # temporary inputs and outputs
+└── settings.json
+```
+
+There is no database. Tool manifests and directories are the source of truth.
+
+The server binds only to `127.0.0.1`, prefers port `4545`, and selects another available port when necessary.
+
+## Visual Source
+
+`ui.pen` is the visual source of truth for the main React application. It defines the Library workspace, reusable dependency badge and tool-card patterns, dark design tokens, Geist headings, and Inter body typography. Implementation must inspect the design through Pencil MCP and use GeckoUI where applicable.
+
 ## Safety Guarantees
 
 - Localhost-only server exposure by default.
@@ -84,8 +110,5 @@ The first end-to-end tool is an image resizer using the bundled `sharp` package.
 
 Resolve these before their affected milestone begins:
 
-- Final generated-script entrypoint contract and progress/result protocol
-- Exact sandbox and host bridge exposed to generated `ui.html`
-- Permanent local storage paths and metadata format
-- Whether forge sessions expose only the Codex TUI or add structured GeckoUI review panels alongside it
 - Exact GPT-5.6 Codex model identifier supported by the installed CLI
+- Temporary job retention and cleanup policy
