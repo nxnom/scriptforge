@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer components {
+  @import "@geckoui/geckoui/styles.css";
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #1a1a1a;
+  --surface: #242424;
+  --surface-soft: #2e2e2e;
+  --surface-sunken: #303030;
+  --border: #333333;
+  --border-strong: #454545;
+  --ink: #ececec;
+  --ink-2: #b0b0b0;
+  --muted: #7a7a7a;
+  --inverse: #211c18;
+  --color-primary: oklch(100% 0 0);
+  --color-surface-primary: #242424;
+  --color-text-primary: #ececec;
+  --color-border-primary: #454545;
+  font-family: "Inter Variable", Inter, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 960px; min-height: 100vh; background: var(--bg); }
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.app-shell { display: flex; min-height: 100vh; background: var(--bg); }
+.sidebar { position: sticky; top: 0; display: flex; width: 272px; height: 100vh; flex-direction: column; gap: 20px; padding: 22px 18px 20px; border-right: 1px solid var(--border); background: var(--bg); }
+.brand { display: flex; align-items: center; gap: 11px; padding: 2px 4px; font-family: "Geist Variable", Geist, sans-serif; font-size: 18px; font-weight: 650; }
+.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: var(--surface-soft); }
+.forge-button.GeckoUIButton { display: flex; width: 100%; align-items: center; justify-content: center; gap: 9px; border-radius: 12px; background: #fff; color: var(--inverse); font-weight: 650; }
+.nav { display: flex; flex-direction: column; gap: 3px; }
+.nav-heading { padding: 4px 11px; color: var(--muted); font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+.section-gap { margin-top: 10px; }
+.nav-item { display: flex; align-items: center; gap: 11px; min-height: 38px; padding: 9px 11px; border-radius: 10px; color: var(--ink-2); font-size: 13px; text-decoration: none; }
+.nav-item span { margin-left: auto; color: var(--muted); font-size: 11px; }
+.nav-item:hover, .nav-item.active { background: var(--surface-soft); color: var(--ink); }
+.sidebar-spacer { flex: 1; }
+.profile { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.profile .avatar { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: var(--surface-soft); font-size: 10px; font-weight: 700; }
+.profile div:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.profile strong { font-size: 11px; font-weight: 600; }
+.profile small { color: var(--muted); font-size: 10px; }
+
+.main { display: flex; width: calc(100% - 272px); max-width: 1280px; flex-direction: column; gap: 26px; padding: 30px 40px 34px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; }
+.page-header h1 { margin: 0; font-family: "Geist Variable", Geist, sans-serif; font-size: 26px; line-height: 1.1; }
+.page-header p { margin: 6px 0 0; color: var(--ink-2); font-size: 13px; }
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.search { display: flex; width: 190px; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--muted); }
+.search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 12px; }
+.header-actions .GeckoUIButton { display: flex; align-items: center; gap: 7px; border-radius: 9px; background: #fff; color: var(--inverse); }
+
+.drop-hint { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-sunken); }
+.drop-hint div { display: flex; align-items: center; gap: 12px; color: var(--ink-2); font-size: 12px; }
+.drop-hint .GeckoUIButton { border-color: var(--border-strong); border-radius: 9px; color: var(--ink); }
+
+.tool-grid { display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 22px; }
+.tool-card { display: flex; min-height: 205px; flex-direction: column; gap: 16px; padding: 22px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: 0 4px 16px -4px #00000038; transition: border-color .15s ease, transform .15s ease; }
+.tool-card:hover { transform: translateY(-1px); border-color: var(--border-strong); }
+.tool-card.planned { box-shadow: none; }
+.card-top, .card-footer { display: flex; align-items: center; justify-content: space-between; }
+.icon-tile { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 14px; background: var(--surface-soft); color: #fff; }
+.status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px 5px 8px; border-radius: 999px; font-size: 11px; font-weight: 650; }
+.status.ready { background: var(--surface-soft); color: #c9cdd6; }
+.status.soon { background: #3a2e1a; color: #e0a24e; }
+.card-copy { display: flex; flex: 1; flex-direction: column; gap: 6px; }
+.card-copy h2 { margin: 0; font-family: "Geist Variable", Geist, sans-serif; font-size: 17px; font-weight: 650; }
+.card-copy p { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.45; }
+.tag { padding: 4px 10px; border-radius: 999px; background: var(--surface-sunken); color: var(--ink-2); font-size: 11px; }
+.card-footer button { display: flex; align-items: center; gap: 4px; border: 0; background: transparent; color: #fff; font-size: 12px; font-weight: 650; }
+.card-footer button:disabled { cursor: default; color: var(--muted); }
+
+.empty-panel { display: flex; align-items: center; gap: 24px; padding: 26px 30px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.empty-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: var(--surface-soft); }
+.empty-copy { flex: 1; }
+.empty-copy h2 { margin: 0 0 5px; font-family: "Geist Variable", Geist, sans-serif; font-size: 15px; }
+.empty-copy p { max-width: 660px; margin: 0; color: var(--ink-2); font-size: 12px; line-height: 1.5; }
+.empty-panel .GeckoUIButton { white-space: nowrap; border-color: var(--border-strong); color: var(--ink); }
+.loading { display: flex; min-height: 300px; align-items: center; justify-content: center; gap: 10px; color: var(--ink-2); font-size: 13px; }
+.server-status { display: flex; align-items: center; gap: 7px; margin-top: auto; color: var(--muted); font-size: 10px; }
+.server-status span { width: 6px; height: 6px; border-radius: 50%; }
+.online { background: #83bd8b; box-shadow: 0 0 8px #83bd8b66; }
+.offline { background: #e0a24e; }
+
+@media (max-width: 1080px) {
+  body { min-width: 760px; }
+  .sidebar { width: 228px; }
+  .main { width: calc(100% - 228px); padding-inline: 28px; }
+  .tool-grid { grid-template-columns: 1fr; }
+}

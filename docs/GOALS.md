@@ -18,7 +18,7 @@ Acceptance checks:
 
 ## Goal 1 — Always-Working Local App
 
-Status: Pending
+Status: Complete
 
 - Scaffold the TypeScript workspace.
 - Keep the CLI, server, and web application in one publishable npm package.

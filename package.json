@@ -1,0 +1,72 @@
+{
+  "name": "scriptforge",
+  "version": "0.1.0",
+  "description": "A local app store for utilities forged on demand with Codex.",
+  "type": "module",
+  "bin": {
+    "scriptforge": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm build:web && pnpm build:server",
+    "build:server": "tsup",
+    "build:web": "vite build",
+    "dev": "concurrently -k -n server,web -c cyan,magenta \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:server": "tsx watch src/cli.ts --no-open",
+    "dev:web": "vite --host 127.0.0.1 --open",
+    "lint": "eslint .",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.2.9",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@geckoui/geckoui": "^1.6.3",
+    "@hono/node-server": "^2.0.10",
+    "@spoosh/core": "^0.18.3",
+    "@spoosh/hono": "^0.6.2",
+    "@spoosh/plugin-cache": "^0.7.0",
+    "@spoosh/plugin-deduplication": "^0.4.0",
+    "@spoosh/plugin-gc": "^0.4.0",
+    "@spoosh/plugin-invalidation": "^0.11.0",
+    "@spoosh/plugin-refetch": "^0.4.1",
+    "@spoosh/plugin-retry": "^0.6.1",
+    "@spoosh/react": "^0.15.4",
+    "hono": "^4.12.30",
+    "lucide-react": "^1.25.0",
+    "open": "^10.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.66.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "jsdom": "^27.2.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^7.2.0",
+    "vitest": "^4.0.0"
+  },
+  "packageManager": "pnpm@10.30.3"
+}
