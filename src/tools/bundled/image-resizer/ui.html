@@ -112,10 +112,17 @@
       $("remove").addEventListener("click", () => { $("file").value = ""; setFile(); });
       for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, () => $("drop").classList.add("dragging"));
       for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
-      $("form").addEventListener("submit", (event) => {
+      $("form").addEventListener("submit", async (event) => {
         event.preventDefault(); if (!selectedFile) return;
         clearResult(); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.03, "Sending image");
-        parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [selectedFile] }, "*");
+        try {
+          const data = await selectedFile.arrayBuffer();
+          const file = { name: selectedFile.name, size: selectedFile.size, type: selectedFile.type, lastModified: selectedFile.lastModified, data };
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { width: Number($("width").value), height: Number($("height").value), fit: $("fit").value, format: $("format").value, quality: Number($("quality").value) }, files: [file] }, "*", [data]);
+        } catch (error) {
+          addLog({ level: "error", message: error instanceof Error ? error.message : "The image could not be sent to ScriptForge." });
+          finishRun();
+        }
       });
       window.addEventListener("message", (event) => {
         const message = event.data; if (message?.source !== "scriptforge-host") return;
