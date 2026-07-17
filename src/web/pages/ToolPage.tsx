@@ -11,10 +11,30 @@ const runMessageSchema = z.object({
   type: z.literal("run"),
   input: z.unknown(),
   files: z
-    .array(z.custom<File>((value) => value instanceof File))
+    .array(
+      z.custom<FileLike>((value) => {
+        if (value === null || typeof value !== "object") return false;
+        return (
+          "name" in value &&
+          typeof value.name === "string" &&
+          "size" in value &&
+          typeof value.size === "number" &&
+          "arrayBuffer" in value &&
+          typeof value.arrayBuffer === "function"
+        );
+      }),
+    )
     .min(1)
     .max(10),
 });
+
+interface FileLike {
+  name: string;
+  size: number;
+  type?: string;
+  lastModified?: number;
+  arrayBuffer(): Promise<ArrayBuffer>;
+}
 
 export function ToolPage() {
   const { toolId } = useParams();
@@ -30,12 +50,14 @@ export function ToolPage() {
     const handleMessage = async (event: MessageEvent) => {
       if (event.source !== iframeRef.current?.contentWindow) return;
       const message = runMessageSchema.safeParse(event.data);
-      if (!message.success || !toolId) return;
+      if (!message.success) return reportFailure("The tool interface sent an invalid run request.");
+      if (!toolId) return reportFailure("The selected tool is unavailable.");
       setHostError(undefined);
+      const files = await Promise.all(message.data.files.map(normalizeFile));
       const response = await startJob.trigger({
-        body: spooshForm({ toolId, input: JSON.stringify(message.data.input), files: message.data.files }),
+        body: spooshForm({ toolId, input: JSON.stringify(message.data.input), files }),
       });
-      if (!response.data?.ok) return reportFailure("The local tool job could not start.");
+      if (!response.data?.ok) return reportFailure(apiErrorMessage(response.error));
       connectToJob(response.data.jobId);
     };
 
@@ -95,4 +117,18 @@ export function ToolPage() {
       />
     </section>
   );
+}
+
+async function normalizeFile(file: FileLike) {
+  const contents = await file.arrayBuffer();
+  return new File([contents], file.name, {
+    type: file.type ?? "application/octet-stream",
+    lastModified: file.lastModified,
+  });
+}
+
+function apiErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
+  return "The local tool job could not start.";
 }
