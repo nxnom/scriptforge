@@ -79,7 +79,7 @@ The current server provides a small built-in tool catalog. The first functional 
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell, and write verification tests.
 - **Key decisions:** Filesystem manifests instead of a database; localhost-only server; contextual Forge side panel; generated HTML isolated in a sandboxed iframe; explicit execution and installation approval.
 - **Verification:** TypeScript typecheck, API and port-selection tests, production builds, live local HTTP checks, and npm package dry runs.
-- **Primary Codex Session ID:** `TBD — obtain with /feedback before submission`.
+- **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work
 
