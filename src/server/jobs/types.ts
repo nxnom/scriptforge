@@ -13,7 +13,7 @@ export type ToolJobEvent =
   | { type: "status"; status: JobStatus }
   | { type: "log"; level: "info" | "success" | "warning" | "error"; message: string }
   | { type: "progress"; value: number; label?: string }
-  | { type: "result"; outputs: ToolOutput[] }
+  | { type: "result"; outputs: ToolOutput[]; data?: unknown }
   | { type: "complete" }
   | { type: "failed"; message: string };
 

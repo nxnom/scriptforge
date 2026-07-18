@@ -18,10 +18,10 @@ export const runnerContractGuide = `run.mjs reads one JSON object from stdin:
 Write newline-delimited JSON events to stdout:
 { "type": "log", "level": "info" | "success" | "warning" | "error", "message": string }
 { "type": "progress", "value": number from 0 to 1, "label"?: string }
-{ "type": "result", "outputs": [{ "path": filename relative to outputDir, "name": string, "mimeType": string, "metadata"?: unknown }] }
+{ "type": "result", "data"?: unknown, "outputs"?: [{ "path": filename relative to outputDir, "name": string, "mimeType": string, "metadata"?: unknown }] }
 { "type": "failed", "message": string }
 
-Write outputs inside request.outputDir. Revalidate all input in run.mjs. Emit useful startup, major-stage, completion, and failure logs. Emit result only after every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
+Choose the result shape for the actual tool. Use data for information, live readings, analysis, or other results that do not naturally create a file. Use outputs only when the tool genuinely creates downloadable files; never invent snapshots or files merely to satisfy the contract. Write real file outputs inside request.outputDir. Revalidate all input in run.mjs. Emit useful startup, major-stage, completion, and failure logs. Emit result only after its data is ready and every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
 
 export const uiBridgeGuide = `ui.html installs its message listener before sending:
 parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*")
@@ -29,8 +29,10 @@ parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*")
 For every incoming event, require event.source === parent, event.data.source === "scriptforge-host", and a known message shape.
 
 To run, send selected files as ArrayBuffer descriptors, never File objects:
-parent.postMessage({ source: "scriptforge-tool", type: "run", input: {...}, files: [{ name, size, type, lastModified, data }] }, "*")
+parent.postMessage({ source: "scriptforge-tool", type: "run", input: {...}, files: [] }, "*")
 
-Bind running to an explicit button with type="button". Disable it and show loading immediately; restore it after failed or complete. Handle ready, accepted, progress { value, label }, log { level, message }, result { outputs }, failed { message }, and complete.
+The files array may be empty for tools that do not consume local files. When files are selected, send ArrayBuffer descriptors { name, size, type, lastModified, data }, never File objects.
 
-Result outputs provide relative previewUrl and downloadUrl. Render an appropriate image, video, audio, or metadata preview and an explicit save link. Add media load/error handlers so preview failures appear in the page and logs. Show bridge and runtime failures in the page, not only DevTools. Never use fetch, WebSocket, Node.js, direct filesystem APIs, or hard-coded hosts and ports.`;
+Bind running to an explicit button with type="button". Disable it and show loading immediately; restore it after failed or complete. Handle ready, accepted, progress { value, label }, log { level, message }, result { data?, outputs? }, failed { message }, and complete.
+
+When outputs exist, they provide relative previewUrl and downloadUrl; render only actions appropriate for those real files. For data results, update the dashboard, reading, table, chart, status, or metadata view that fits the tool. Add media load/error handlers when media outputs exist. Show bridge and runtime failures in the page, not only DevTools. Never use fetch, WebSocket, Node.js, direct filesystem APIs, or hard-coded hosts and ports.`;

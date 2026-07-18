@@ -69,10 +69,10 @@ Completed and verified:
 - Mandatory plain-language kickoff approval with validated questions and separate Markdown, Mermaid, HTML, and input blocks that replace the terminal while Codex waits.
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
+- Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
 
 Remaining in this goal:
 
-- Explicitly approved candidate execution through the sandboxed tester bridge.
 - Saving the exact reviewed and successfully tested revision into the library.
 
 - Spawn the interactive Codex CLI through `node-pty`.
@@ -82,7 +82,7 @@ Remaining in this goal:
 - Detect missing or unauthenticated Codex CLI and show setup guidance without blocking the library.
 - Generate candidate tool files only in staging.
 - Run realistic standalone checks in staging after kickoff approval, repair failures, and present only after the check passes.
-- Hide the terminal only for blocking kickoff questions/approval; keep it visible beside candidate previews and the future tester interface.
+- Hide the terminal only for blocking kickoff questions/approval; keep it visible beside candidate previews and the tester interface.
 - Present read-only execution code, manifest, executable requirements, structured logs, and candidate status for review.
 - Run the generated HTML/JS tester inside a sandboxed iframe with a controlled host bridge.
 - Treat kickoff approval as authorization for bounded standalone checks; require a separate tester approval for the final reviewed revision.

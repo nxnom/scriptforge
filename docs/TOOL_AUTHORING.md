@@ -18,7 +18,7 @@ The interface and ScriptForge shell communicate only with `window.postMessage`.
 
 1. After installing all message listeners, the tool posts `{ source: "scriptforge-tool", type: "ready" }` to its parent.
 2. The host responds with `{ source: "scriptforge-host", type: "ready" }`.
-3. A user action posts a `run` message containing validated input and serialized files.
+3. A user action posts a `run` message containing validated input and a files array. The array may be empty for tools without file input.
 4. The host acknowledges the request with `accepted`, starts the job through the REST API, and forwards job events over the bridge.
 5. The interface renders `progress`, `log`, `result`, `failed`, and `complete` events.
 
@@ -27,7 +27,7 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 ## User actions and files
 
 - Bind execution to an explicit button click with `type="button"`, or deliberately disable native form validation before relying on a form `submit` handler. Native constraint validation can prevent `submit` from firing without producing an application error.
-- Do not send `File` objects directly across the sandbox boundary. Read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`.
+- Do not send `File` objects directly across the sandbox boundary. When a tool uses files, read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use files.
 - Disable the action while a run is active and restore it after either `complete` or `failed`.
 - Surface bridge and runtime failures inside the interface, not only in DevTools.
 
@@ -54,7 +54,7 @@ Rules:
 - Emit progress values from `0` through `1` with short user-facing labels.
 - Log meaningful stages, decisions, warnings, and failures. Never log secrets or raw file contents.
 - Write machine-readable events to standard output. Treat unstructured standard output and standard error as diagnostic logs.
-- Emit a `result` only after the declared output exists in the job output directory.
+- Emit data results directly for readings, dashboards, analysis, or other information that does not naturally create a file. Emit file outputs only after they exist in the job output directory. Never invent a downloadable snapshot merely to satisfy the runtime.
 - Include metadata needed for a useful result view, such as dimensions, duration, format, or byte size.
 
 ## Review checklist for a candidate

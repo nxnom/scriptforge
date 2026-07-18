@@ -5,13 +5,14 @@ import { CandidateReview } from "./CandidateReview";
 
 describe("CandidateReview", () => {
   it("shows a passive preview without duplicate feedback controls", () => {
-    render(<CandidateReview candidate={candidate()} />);
+    render(<CandidateReview candidate={candidate()} sessionId="session-1" />);
 
     expect(screen.getByTitle("Tiny Tool interface preview")).toBeVisible();
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/changes/i)).not.toBeInTheDocument();
     expect(screen.getByText("Standalone check passed: Processed a realistic sample.")).toBeVisible();
+    expect(screen.getByText(/Host bridge log/)).toBeVisible();
     expect(screen.getByText(/No extra apps needed.*Ask for changes in the terminal/)).toBeVisible();
   });
 });

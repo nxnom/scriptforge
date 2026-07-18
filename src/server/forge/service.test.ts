@@ -140,6 +140,18 @@ describe("Forge terminal sessions", () => {
       testSummary: "Processed a sample successfully.",
     });
     expect(events).toContainEqual({ type: "candidate", candidate: expect.objectContaining({ name: "Tiny Tool" }) });
+    const presented = events.find(
+      (event): event is { type: "candidate"; candidate: { revision: string } } =>
+        typeof event === "object" && event !== null && "type" in event && event.type === "candidate",
+    );
+    await expect(service.getCandidateRuntime(sessionId, presented?.candidate.revision ?? "")).resolves.toMatchObject({
+      directory: join(root, sessionId),
+      manifest: { id: "tiny-tool", script: "run.mjs" },
+    });
+    await writeFile(join(root, sessionId, "run.mjs"), 'console.log("changed")');
+    await expect(service.getCandidateRuntime(sessionId, presented?.candidate.revision ?? "")).rejects.toThrow(
+      "changed after it was presented",
+    );
 
     vi.useFakeTimers();
     try {

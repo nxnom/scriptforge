@@ -1,11 +1,32 @@
+import { form as spooshForm } from "@spoosh/core";
 import { CheckCircle2, Code2, Eye, FileJson, PackageCheck } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
+import { useWrite } from "../api";
+import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 type CandidateTab = "preview" | "script" | "manifest";
 
-export function CandidateReview({ candidate }: { candidate: ForgeCandidateDocument }) {
+export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCandidateDocument; sessionId: string }) {
   const [tab, setTab] = useState<CandidateTab>("preview");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const startCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/jobs").POST());
+  const runCandidate = useCallback(
+    async (message: ToolRunMessage) => {
+      const response = await startCandidate.trigger({
+        params: { sessionId },
+        body: spooshForm({
+          revision: candidate.revision,
+          input: JSON.stringify(message.input),
+          files: message.files.map(normalizeToolFile),
+        }),
+      });
+      if (!response.data?.ok) throw new Error(candidateError(response.error));
+      return { jobId: response.data.jobId };
+    },
+    [candidate.revision, sessionId, startCandidate.trigger],
+  );
+  const bridge = useToolHostBridge({ iframeRef, startJob: runCandidate });
 
   return (
     <aside className="flex min-h-0 w-[min(48%,620px)] min-w-[420px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#1d1d1d] max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0">
@@ -47,10 +68,11 @@ export function CandidateReview({ candidate }: { candidate: ForgeCandidateDocume
         <div className="relative min-h-0 flex-1 overflow-hidden bg-[#151515]">
           {tab === "preview" ? (
             <iframe
+              ref={iframeRef}
               title={`${candidate.name} interface preview`}
               className="absolute inset-0 size-full border-0 bg-white"
-              sandbox="allow-scripts"
-              srcDoc={previewDocument(candidate.interfaceHtml)}
+              sandbox="allow-scripts allow-downloads"
+              srcDoc={bridge.listening ? previewDocument(candidate.interfaceHtml) : undefined}
             />
           ) : (
             <pre className="absolute inset-0 m-0 overflow-auto p-4 font-mono text-[11px] leading-5 text-[#d0d0d0]">
@@ -68,6 +90,19 @@ export function CandidateReview({ candidate }: { candidate: ForgeCandidateDocume
             </ul>
           </details>
         ) : null}
+        {bridge.hostError && (
+          <p className="m-0 shrink-0 border-[#543733] border-t bg-[#2a1d1c] px-4 py-2 text-[10px] text-[#e19a91]">
+            {bridge.hostError}
+          </p>
+        )}
+        <details className="shrink-0 border-[#333] border-t px-4 py-2 text-[10px] text-[#888]">
+          <summary className="cursor-pointer">Host bridge log · {bridge.diagnostics.length} events</summary>
+          <ol className="mb-1 max-h-28 overflow-auto pl-4 font-mono leading-4">
+            {bridge.diagnostics.map((entry) => (
+              <li key={entry.id}>{entry.message}</li>
+            ))}
+          </ol>
+        </details>
       </div>
     </aside>
   );
@@ -91,8 +126,14 @@ function TabButton({
 }
 
 function previewDocument(html: string) {
-  const policy = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'">`;
+  const policy = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; media-src 'self' data: blob:; font-src data:; form-action 'none'; base-uri 'none'">`;
   return /<head(\s[^>]*)?>/i.test(html)
     ? html.replace(/<head(\s[^>]*)?>/i, (head) => `${head}${policy}`)
     : `${policy}${html}`;
+}
+
+function candidateError(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
+  return "The candidate could not start.";
 }

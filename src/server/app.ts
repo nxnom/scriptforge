@@ -97,7 +97,7 @@ export function createApiRoutes(
       }),
     )
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
-    .route("/forge", createForgeApiRoutes(forgeSessions))
+    .route("/forge", createForgeApiRoutes(forgeSessions, jobService))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 

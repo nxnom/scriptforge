@@ -5,23 +5,29 @@ import { homedir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { z } from "zod";
 import { resolveBundledToolDirectory } from "../../tools/directory";
+import type { ToolManifest } from "../../tools/manifest";
 import { findBundledTool } from "../../tools/registry";
 import type { ToolJobEvent, ToolJobSnapshot, ToolOutput } from "./types";
 
 const scriptEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("log"), level: z.enum(["info", "success", "warning", "error"]), message: z.string() }),
   z.object({ type: z.literal("progress"), value: z.number().min(0).max(1), label: z.string().optional() }),
-  z.object({
-    type: z.literal("result"),
-    outputs: z.array(
-      z.object({
-        path: z.string().min(1),
-        name: z.string().min(1),
-        mimeType: z.string().min(1),
-        metadata: z.unknown().optional(),
-      }),
-    ),
-  }),
+  z
+    .object({
+      type: z.literal("result"),
+      outputs: z
+        .array(
+          z.object({
+            path: z.string().min(1),
+            name: z.string().min(1),
+            mimeType: z.string().min(1),
+            metadata: z.unknown().optional(),
+          }),
+        )
+        .optional(),
+      data: z.unknown().optional(),
+    })
+    .refine((event) => event.data !== undefined || event.outputs !== undefined),
   z.object({ type: z.literal("failed"), message: z.string().min(1) }),
 ]);
 
@@ -30,6 +36,9 @@ interface StoredOutput extends ToolOutput {
 }
 interface JobRecord extends ToolJobSnapshot {
   directory: string;
+  toolDirectory: string;
+  script: string;
+  receivedResult: boolean;
   outputs: Map<string, StoredOutput>;
   listeners: Set<(event: ToolJobEvent) => void>;
 }
@@ -38,6 +47,11 @@ export interface StartJobInput {
   toolId: string;
   input: unknown;
   files: File[];
+}
+
+export interface StartCandidateJobInput extends StartJobInput {
+  directory: string;
+  manifest: ToolManifest;
 }
 
 export class ToolJobService {
@@ -51,7 +65,19 @@ export class ToolJobService {
   async start({ toolId, input, files }: StartJobInput) {
     const manifest = findBundledTool(toolId);
     if (!manifest) throw new Error("That tool is not installed.");
-    if (files.length === 0 || files.length > 10) throw new Error("Choose between one and ten files.");
+    return this.startResolved(
+      { toolId, input, files },
+      resolveBundledToolDirectory(toolId, this.toolsRoot),
+      manifest.script,
+    );
+  }
+
+  async startCandidate({ toolId, input, files, directory, manifest }: StartCandidateJobInput) {
+    return this.startResolved({ toolId, input, files }, directory, manifest.script);
+  }
+
+  private async startResolved({ toolId, input, files }: StartJobInput, toolDirectory: string, script: string) {
+    if (files.length > 10) throw new Error("Choose no more than ten files.");
     if (files.some((file) => file.size > 25 * 1024 * 1024))
       throw new Error("Each input file must be 25 MB or smaller.");
 
@@ -75,13 +101,16 @@ export class ToolJobService {
       toolId,
       status: "queued",
       directory,
+      toolDirectory,
+      script,
+      receivedResult: false,
       events: [],
       outputs: new Map(),
       listeners: new Set(),
     };
     this.jobs.set(id, job);
     this.emit(job, { type: "status", status: "queued" });
-    void this.execute(job, manifest.script, { jobId: id, input, files: storedFiles, outputDir: outputDirectory });
+    void this.execute(job, { jobId: id, input, files: storedFiles, outputDir: outputDirectory });
     return { jobId: id };
   }
 
@@ -110,15 +139,14 @@ export class ToolJobService {
     return readFile(join(directory, manifest.interface.entry), "utf8");
   }
 
-  private async execute(job: JobRecord, script: string, request: unknown) {
-    const toolDirectory = resolveBundledToolDirectory(job.toolId, this.toolsRoot);
-    const scriptPath = resolve(toolDirectory, script);
-    if (!scriptPath.startsWith(`${resolve(toolDirectory)}${sep}`))
+  private async execute(job: JobRecord, request: unknown) {
+    const scriptPath = resolve(job.toolDirectory, job.script);
+    if (!scriptPath.startsWith(`${resolve(job.toolDirectory)}${sep}`))
       return this.fail(job, "The tool script path is invalid.");
 
     this.emit(job, { type: "status", status: "running" });
     const child = spawn(process.execPath, [scriptPath], {
-      cwd: toolDirectory,
+      cwd: job.toolDirectory,
       env: { ...process.env, SCRIPT_FORGE_JOB_ID: job.id },
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -139,7 +167,7 @@ export class ToolJobService {
       if (stdout.trim()) await this.handleScriptEvent(job, stdout);
       await eventQueue;
       if (job.status === "failed") return;
-      if (code === 0 && job.outputs.size > 0) {
+      if (code === 0 && job.receivedResult) {
         this.emit(job, { type: "status", status: "succeeded" });
         this.emit(job, { type: "complete" });
       } else this.fail(job, "The tool stopped before producing a result.");
@@ -160,7 +188,7 @@ export class ToolJobService {
     if (parsed.data.type !== "result") return this.emit(job, parsed.data);
 
     const outputs: ToolOutput[] = [];
-    for (const candidate of parsed.data.outputs) {
+    for (const candidate of parsed.data.outputs ?? []) {
       const path = resolve(job.directory, "outputs", candidate.path);
       if (!path.startsWith(`${resolve(job.directory, "outputs")}${sep}`))
         return this.fail(job, "The tool returned an unsafe output path.");
@@ -178,7 +206,8 @@ export class ToolJobService {
       job.outputs.set(id, { ...output, path });
       outputs.push(output);
     }
-    this.emit(job, { type: "result", outputs });
+    job.receivedResult = true;
+    this.emit(job, { type: "result", outputs, data: parsed.data.data });
   }
 
   private fail(job: JobRecord, message: string) {

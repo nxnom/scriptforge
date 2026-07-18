@@ -90,7 +90,7 @@ export function ForgePage() {
                 onPanel={showPanel}
                 onCandidate={showCandidate}
               />
-              {candidate && <CandidateReview candidate={candidate} />}
+              {candidate && <CandidateReview candidate={candidate} sessionId={visibleSessionId} />}
             </div>
           )}
         </div>

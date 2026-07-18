@@ -6,7 +6,7 @@ ScriptForge is a local app store where small utility apps do not exist until you
 
 ## Status
 
-The local application shell, bundled image-resizer workflow, and MCP-guided Forge collaboration and candidate review are working. Candidate execution, saving, the dependency Doctor, and submission assets are being built milestone by milestone.
+The local application shell, bundled image-resizer workflow, MCP-guided Forge collaboration, and exact-revision candidate tester are working. Saving, the dependency Doctor, and submission assets are being built milestone by milestone.
 
 ## Key Features
 
@@ -21,7 +21,8 @@ The local application shell, bundled image-resizer workflow, and MCP-guided Forg
 - Mandatory plain-language kickoff approval with required questions and separate Markdown, Mermaid, and HTML blocks
 - Side-by-side terminal and sandboxed candidate preview with read-only Script and Details tabs
 - Kickoff-authorized standalone runner checks before Codex can present a candidate
-- Planned approved candidate execution, saving, and dependency Doctor
+- Candidate tester with lifecycle events, bridge diagnostics, zero-file runs, and data or file results
+- Planned candidate saving and dependency Doctor
 
 ## Prerequisites
 
@@ -69,7 +70,7 @@ The repository is one publishable npm package:
 - `src/web` contains the React and GeckoUI application.
 - Hono route types flow into Spoosh without a handwritten API schema.
 - REST handles request/response operations; WebSocket handles job events and Forge terminal streams.
-- Bundled and generated tools share a manifest, `run.mjs`, and sandboxed `ui.html` runtime contract.
+- Bundled and generated tools share a manifest, `run.mjs`, and sandboxed `ui.html` runtime contract. Results may be structured data or genuine file outputs according to the tool rather than a forced download.
 - A session-scoped stdio MCP server gives Codex structured question, approval, and candidate-presentation tools; candidate presentation requires a summary of the real standalone check Codex completed.
 - Forge prefers Node.js built-ins such as `fetch` before declaring system executables.
 
@@ -87,13 +88,13 @@ The bundled image resizer accepts a local PNG, JPEG, or WebP file, so no separat
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
 - **GPT-5.6-powered features:** GPT-5.6 proposes each utility in plain language, asks structured questions when needed, waits for approval, builds and exercises the standalone runner with realistic input, repairs failures, and presents tested staged candidates for code and UI review beside the live terminal. Dependency diagnosis remains planned for Goal 4.
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the sandbox bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; Forge does not override the user's Codex sandbox or approval settings; blocking kickoff panels temporarily replace the terminal and close immediately on submission; kickoff approval authorizes standalone checks in staging; candidate previews stay beside the terminal so revisions use one conversation surface; generated previews use a network-blocked sandboxed iframe; final tester execution and saving remain separately controlled.
-- **Verification:** Biome checks, TypeScript typecheck, 29 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
+- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; Forge does not override the user's Codex sandbox or approval settings; blocking kickoff panels temporarily replace the terminal and close immediately on submission; kickoff approval authorizes standalone checks in staging; candidate testers run the exact presented revision; runner results match the tool as structured data and/or real file outputs instead of forced snapshots; generated interfaces use a network-blocked sandboxed iframe; saving remains separately controlled.
+- **Verification:** Biome checks, TypeScript typecheck, 31 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work
 
-- MCP-guided candidate review and Codex-run standalone checks are working; host-attested execution of the exact reviewed revision, successful-test tracking, and saving are not implemented yet.
+- MCP-guided candidate review, Codex-run standalone checks, and host execution of the exact presented revision are working; persistent successful-test tracking and saving are not implemented yet.
 - Dependency Doctor is not implemented yet.
 - Import/export sharing is intentionally postponed until after the hackathon MVP.
 - macOS is the first supported platform; Windows and Linux should fail clearly where a capability is unavailable.

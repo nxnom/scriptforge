@@ -4,10 +4,17 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { type IPty, spawn as spawnPty } from "node-pty";
 import { forgeMcpInstructions } from "../../mcp/instructions";
+import { toolManifestSchema } from "../../tools/manifest";
 import { type CodexStatusChecker, CodexStatusService } from "../codex/status";
 import { ensureCodexTrusted } from "../codex/trust";
 import { readForgeCandidate } from "./candidate";
-import type { ForgeCandidateRequest, ForgePanelRequest, ForgePreferences, ForgeServerEvent } from "./types";
+import type {
+  ForgeCandidateDocument,
+  ForgeCandidateRequest,
+  ForgePanelRequest,
+  ForgePreferences,
+  ForgeServerEvent,
+} from "./types";
 
 type Listener = (event: ForgeServerEvent) => void;
 type PtyFactory = typeof spawnPty;
@@ -28,6 +35,7 @@ type ForgeSession = {
   mcpToken: string;
   panelVersion: number;
   directory: string;
+  candidate?: ForgeCandidateDocument;
 };
 
 export class ForgeSessionService {
@@ -116,8 +124,26 @@ export class ForgeSessionService {
     const session = this.activeSession(sessionId);
     if (token !== session.mcpToken) throw new Error("Invalid Forge MCP token.");
     const candidate = await readForgeCandidate(session.directory, request);
+    session.candidate = candidate;
     this.emit(session, { type: "candidate", candidate });
     return candidate;
+  }
+
+  async getCandidateRuntime(sessionId: string, revision: string) {
+    const session = this.activeSession(sessionId);
+    const candidate = session.candidate;
+    if (!candidate || candidate.revision !== revision) throw new Error("That candidate revision is no longer current.");
+    const current = await readForgeCandidate(session.directory, {
+      summary: candidate.summary,
+      testSummary: candidate.testSummary,
+      risks: candidate.risks,
+    });
+    if (current.revision !== revision)
+      throw new Error("The candidate changed after it was presented. Present it again.");
+    return {
+      directory: session.directory,
+      manifest: toolManifestSchema.parse(JSON.parse(current.manifestSource)),
+    };
   }
 
   sendFeedback(sessionId: string, text: string, dismiss = true) {

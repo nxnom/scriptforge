@@ -2,6 +2,7 @@ import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
+import type { ToolJobService } from "../jobs/service";
 import type { ForgeSessionService } from "./service";
 import {
   type ForgeServerEvent,
@@ -25,9 +26,44 @@ const feedbackSchema = z.object({
   dismiss: z.boolean().optional(),
 });
 
-export function createForgeApiRoutes(service: ForgeSessionService) {
+export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJobService) {
   return new Hono()
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
+    .post(
+      "/sessions/:sessionId/candidate/jobs",
+      validator("form", (value, c) => {
+        const revision = typeof value.revision === "string" ? value.revision : "";
+        const rawFiles = Array.isArray(value.files) ? value.files : [value.files];
+        const files = rawFiles.filter((file): file is File => file instanceof File);
+        if (!/^[a-f0-9]{64}$/.test(revision))
+          return c.json({ ok: false as const, error: "The candidate revision is invalid." }, 400);
+        try {
+          const input = typeof value.input === "string" ? JSON.parse(value.input) : value.input;
+          return { revision, input, files };
+        } catch {
+          return c.json({ ok: false as const, error: "The tool input is invalid." }, 400);
+        }
+      }),
+      async (c) => {
+        try {
+          const request = c.req.valid("form");
+          const runtime = await service.getCandidateRuntime(c.req.param("sessionId"), request.revision);
+          const result = await jobs.startCandidate({
+            toolId: runtime.manifest.id,
+            input: request.input,
+            files: request.files,
+            directory: runtime.directory,
+            manifest: runtime.manifest,
+          });
+          return c.json({ ok: true as const, ...result }, 202);
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: error instanceof Error ? error.message : "The candidate could not start." },
+            409,
+          );
+        }
+      },
+    )
     .post(
       "/sessions/:sessionId/panel",
       validator("json", (value, c) => {
