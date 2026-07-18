@@ -13,15 +13,9 @@ describe("ScriptForge MCP server", () => {
 
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
     expect(client.getInstructions()).toContain("never infer field names");
-    await expect(client.listResourceTemplates()).resolves.toMatchObject({
-      resourceTemplates: [expect.objectContaining({ uriTemplate: "scriptforge://authoring/{document}" })],
-    });
-    await expect(client.readResource({ uri: "scriptforge://authoring/tool-manifest" })).resolves.toMatchObject({
-      contents: [expect.objectContaining({ text: expect.stringContaining('"requiredExecutables": []') })],
-    });
-    await expect(client.readResource({ uri: "scriptforge://authoring/ui-bridge" })).resolves.toMatchObject({
-      contents: [expect.objectContaining({ text: expect.stringContaining("event.source === parent") })],
-    });
+    expect(client.getInstructions()).toContain('"requiredExecutables": []');
+    expect(client.getInstructions()).toContain("event.source === parent");
+    expect(client.getInstructions()).toContain("Write newline-delimited JSON events");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([
         expect.objectContaining({ name: "scriptforge_show_panel" }),

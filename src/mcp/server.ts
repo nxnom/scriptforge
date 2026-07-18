@@ -1,8 +1,7 @@
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ForgeCandidateRequest, ForgePanelRequest } from "../server/forge/types.js";
 import { forgeCandidateRequestSchema, forgePanelRequestSchema } from "../server/forge/types.js";
 import { forgeMcpInstructions } from "./instructions.js";
-import { authoringResource } from "./resources.js";
 
 type ForgeMcpPublishers = {
   panel: (panel: ForgePanelRequest) => Promise<void>;
@@ -11,24 +10,12 @@ type ForgeMcpPublishers = {
 
 export function createForgeMcpServer(publish: ForgeMcpPublishers) {
   const server = new McpServer({ name: "scriptforge", version: "0.1.0" }, { instructions: forgeMcpInstructions });
-  server.registerResource(
-    "scriptforge-authoring",
-    new ResourceTemplate("scriptforge://authoring/{document}", { list: undefined }),
-    {
-      title: "ScriptForge tool authoring contract",
-      description: "Exact tool-manifest, runner-event, and browser-host contracts.",
-      mimeType: "text/plain",
-    },
-    (uri, variables) => ({
-      contents: [{ uri: uri.href, mimeType: "text/plain", text: authoringResource(String(variables.document)) }],
-    }),
-  );
   server.registerTool(
     "scriptforge_show_panel",
     {
       title: "Show ScriptForge panel",
       description:
-        "Pause Forge and replace the terminal with required user questions or an explicit plan approval. The panel must contain a question or approval. HTML suggestions run in a Shadow DOM without Tailwind; use ordinary CSS and never JavaScript.",
+        "Use only when essential user clarification is required. Replaces the terminal with up to three short questions and an Approve & start action. Never use it for plans, status, implementation details, or summaries. Optional HTML suggestions use ordinary CSS in a Shadow DOM and no JavaScript.",
       inputSchema: forgePanelRequestSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
