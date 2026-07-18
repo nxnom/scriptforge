@@ -62,7 +62,7 @@ Completed and verified:
 
 - Codex installation and authentication preflight with manual setup guidance.
 - Browser-persisted model and reasoning-effort selection.
-- Safe `node-pty` launch in a dedicated staging directory with the selected GPT-5.6 model.
+- `node-pty` launch in a dedicated staging directory with the selected GPT-5.6 model while preserving the user's Codex permission configuration.
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
 - One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.

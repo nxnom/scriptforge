@@ -165,18 +165,7 @@ function codexArgs(
   sessionId: string,
   token: string,
 ) {
-  const args = [
-    "-c",
-    `model_reasoning_effort=${preferences.effort}`,
-    "-m",
-    preferences.model,
-    "--sandbox",
-    "workspace-write",
-    "--ask-for-approval",
-    "on-request",
-    "--cd",
-    directory,
-  ];
+  const args = ["-c", `model_reasoning_effort=${preferences.effort}`, "-m", preferences.model, "--cd", directory];
   if (!mcpRuntime) return args;
   const mcpArgs = [
     ...mcpRuntime.args,

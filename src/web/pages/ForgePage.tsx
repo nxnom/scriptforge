@@ -76,7 +76,12 @@ export function ForgePage() {
       {visibleSessionId ? (
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {panel ? (
-            <ForgeSidePanel sessionId={visibleSessionId} panel={panel} onResolved={() => setPanel(null)} />
+            <ForgeSidePanel
+              sessionId={visibleSessionId}
+              panel={panel}
+              onResolved={() => setPanel(null)}
+              onSubmissionError={() => setPanel(panel)}
+            />
           ) : (
             <div className="flex min-h-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
               <ForgeTerminal

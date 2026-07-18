@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 describe("Forge terminal sessions", () => {
-  it("spawns Codex in staging with explicit safe settings", async () => {
+  it("spawns Codex in staging without overriding the user's permission settings", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
     roots.push(root);
     const pty = fakePty();
@@ -31,7 +31,9 @@ describe("Forge terminal sessions", () => {
     const [command, args, options] = calls[0] as Parameters<typeof spawnPty>;
 
     expect(command).toMatch(/^codex(?:\.cmd)?$/);
-    expect(args).toEqual(expect.arrayContaining(["-m", "gpt-5.6-sol", "--sandbox", "workspace-write", "on-request"]));
+    expect(args).toEqual(expect.arrayContaining(["-m", "gpt-5.6-sol", "--cd", join(root, sessionId)]));
+    expect(args).not.toContain("--sandbox");
+    expect(args).not.toContain("--ask-for-approval");
     expect(args).not.toContain("--dangerously-bypass-approvals-and-sandbox");
     expect(options.cwd).toBe(join(root, sessionId));
     expect(options.env?.TERM).toBe("xterm-256color");

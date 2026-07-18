@@ -9,19 +9,22 @@ export function ForgeSidePanel({
   sessionId,
   panel,
   onResolved,
+  onSubmissionError,
 }: {
   sessionId: string;
   panel: ForgePanelDocument;
   onResolved: () => void;
+  onSubmissionError: () => void;
 }) {
   const sendFeedback = useWrite((api) => api("forge/sessions/:sessionId/feedback").POST());
   const submitFeedback = async (text: string) => {
-    const response = await sendFeedback.trigger({ params: { sessionId }, body: { text, dismiss: true } });
-    if (!response.data?.ok) {
-      toast.error("Feedback could not be sent to Codex.");
-      throw new Error("Forge feedback failed.");
-    }
+    const pending = sendFeedback.trigger({ params: { sessionId }, body: { text, dismiss: true } });
     onResolved();
+    const response = await pending;
+    if (!response.data?.ok) {
+      onSubmissionError();
+      toast.error("Feedback could not be sent to Codex.");
+    }
   };
 
   return (

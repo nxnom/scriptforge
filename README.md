@@ -17,7 +17,7 @@ The local application shell, bundled image-resizer workflow, and MCP-guided Forg
 - Sandboxed plain-HTML tool interfaces connected to a controlled host bridge
 - Bundled Sharp image resizer with progress, structured logs, before/after previews, and local result download
 - Codex CLI installation/authentication preflight with locally remembered model and effort choices
-- Real embedded Codex TUI launched safely in a staging directory, with terminal reconnection after browser refresh
+- Real embedded Codex TUI launched in a staging directory using the user's Codex permission configuration, with terminal reconnection after browser refresh
 - Mandatory plain-language kickoff approval with required questions and separate Markdown, Mermaid, and HTML blocks
 - Side-by-side terminal and sandboxed candidate preview with read-only Script and Details tabs
 - Kickoff-authorized standalone runner checks before Codex can present a candidate
@@ -87,8 +87,8 @@ The bundled image resizer accepts a local PNG, JPEG, or WebP file, so no separat
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
 - **GPT-5.6-powered features:** GPT-5.6 proposes each utility in plain language, asks structured questions when needed, waits for approval, builds and exercises the standalone runner with realistic input, repairs failures, and presents tested staged candidates for code and UI review beside the live terminal. Dependency diagnosis remains planned for Goal 4.
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the sandbox bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; blocking kickoff panels temporarily replace the terminal; kickoff approval authorizes bounded standalone checks in staging; candidate previews stay beside the terminal so revisions use one conversation surface; generated previews use a network-blocked sandboxed iframe; system installation, final tester execution, and saving remain separately controlled.
-- **Verification:** Biome checks, TypeScript typecheck, 27 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
+- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; Forge does not override the user's Codex sandbox or approval settings; blocking kickoff panels temporarily replace the terminal and close immediately on submission; kickoff approval authorizes standalone checks in staging; candidate previews stay beside the terminal so revisions use one conversation surface; generated previews use a network-blocked sandboxed iframe; final tester execution and saving remain separately controlled.
+- **Verification:** Biome checks, TypeScript typecheck, 29 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work
