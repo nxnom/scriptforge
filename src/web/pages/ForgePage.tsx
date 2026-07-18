@@ -1,8 +1,11 @@
 import { Button, Dialog } from "@geckoui/geckoui";
 import { Bot, Hammer, ShieldCheck, TerminalSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { useRead, useWrite } from "../api";
+import { CandidateReview } from "../forge/CandidateReview";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
+import { ForgeSidePanel } from "../forge/ForgeSidePanel";
 import { ForgeTerminal } from "../forge/ForgeTerminal";
 import { type ForgePreferences, loadForgePreferences } from "../forge/preferences";
 
@@ -11,6 +14,8 @@ export function ForgePage() {
   const [preferences, setPreferences] = useState<ForgePreferences>(loadForgePreferences);
   const [sessionId, setSessionId] = useState<string>();
   const [endedSessionId, setEndedSessionId] = useState<string>();
+  const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
+  const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
   const startForge = useWrite((api) => api("forge/sessions").POST());
   const restoredSessionId = activeSession.data?.sessionId ?? undefined;
@@ -28,6 +33,8 @@ export function ForgePage() {
             setPreferences(next);
             setSessionId(response.data.sessionId);
             setEndedSessionId(undefined);
+            setPanel(null);
+            setCandidate(null);
           }}
         />
       ),
@@ -43,6 +50,16 @@ export function ForgePage() {
   const endSession = useCallback((endedId: string) => {
     setEndedSessionId(endedId);
     setSessionId(undefined);
+    setPanel(null);
+    setCandidate(null);
+  }, []);
+  const showPanel = useCallback((next: ForgePanelDocument | null) => {
+    setPanel(next);
+    if (next) setCandidate(null);
+  }, []);
+  const showCandidate = useCallback((next: ForgeCandidateDocument | null) => {
+    setCandidate(next);
+    if (next) setPanel(null);
   }, []);
 
   return (
@@ -58,7 +75,24 @@ export function ForgePage() {
       </header>
 
       {visibleSessionId ? (
-        <ForgeTerminal sessionId={visibleSessionId} onSessionEnd={endSession} />
+        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+          {panel ? (
+            <ForgeSidePanel sessionId={visibleSessionId} panel={panel} onResolved={() => setPanel(null)} />
+          ) : candidate ? (
+            <CandidateReview
+              sessionId={visibleSessionId}
+              candidate={candidate}
+              onRequestChanges={() => setCandidate(null)}
+            />
+          ) : (
+            <ForgeTerminal
+              sessionId={visibleSessionId}
+              onSessionEnd={endSession}
+              onPanel={showPanel}
+              onCandidate={showCandidate}
+            />
+          )}
+        </div>
       ) : (
         <div className="grid min-h-0 flex-1 place-items-center overflow-hidden rounded-2xl border border-[#343434] bg-[#202020] p-8 text-center">
           <div className="grid max-w-md justify-items-center gap-4">

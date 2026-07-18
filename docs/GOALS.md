@@ -65,12 +65,12 @@ Completed and verified:
 - Safe `node-pty` launch in a dedicated staging directory with the selected GPT-5.6 model.
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
 - One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
+- Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
+- Blocking, validated question and approval panels that replace the terminal while Codex waits.
+- Staging-file candidate discovery with sandboxed `ui.html` preview and read-only `run.mjs` and `tool.json` review.
 
 Remaining in this goal:
 
-- ScriptForge stdio MCP server and Forge-specific Codex instructions.
-- Contextual side panel for questions, approvals, candidate review, and tester UI.
-- Candidate manifest/script/UI discovery, revision tracking, and read-only code review.
 - Explicitly approved candidate execution through the sandboxed tester bridge.
 - Saving the exact reviewed and successfully tested revision into the library.
 

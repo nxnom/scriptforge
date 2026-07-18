@@ -3,13 +3,21 @@ import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { type IPty, spawn as spawnPty } from "node-pty";
+import { forgeMcpInstructions } from "../../mcp/instructions";
 import { type CodexStatusChecker, CodexStatusService } from "../codex/status";
 import { ensureCodexTrusted } from "../codex/trust";
-import type { ForgePreferences, ForgeServerEvent } from "./types";
+import { readForgeCandidate } from "./candidate";
+import type { ForgeCandidateRequest, ForgePanelRequest, ForgePreferences, ForgeServerEvent } from "./types";
 
 type Listener = (event: ForgeServerEvent) => void;
 type PtyFactory = typeof spawnPty;
 type TrustDirectory = (directory: string) => Promise<void>;
+
+export type ForgeMcpRuntime = {
+  serverUrl: string;
+  command: string;
+  args: string[];
+};
 
 type ForgeSession = {
   id: string;
@@ -17,6 +25,9 @@ type ForgeSession = {
   history: ForgeServerEvent[];
   listeners: Set<Listener>;
   exited: boolean;
+  mcpToken: string;
+  panelVersion: number;
+  directory: string;
 };
 
 export class ForgeSessionService {
@@ -27,6 +38,7 @@ export class ForgeSessionService {
     private readonly stagingRoot = join(homedir(), ".scriptforge", "staging"),
     private readonly spawn: PtyFactory = spawnPty,
     private readonly trust: TrustDirectory = ensureCodexTrusted,
+    private readonly mcpRuntime?: ForgeMcpRuntime,
   ) {}
 
   async start(preferences: ForgePreferences) {
@@ -37,17 +49,27 @@ export class ForgeSessionService {
     if (this.session && !this.session.exited) this.stop(this.session.id);
 
     const id = randomUUID();
+    const mcpToken = randomUUID();
     const directory = join(this.stagingRoot, id);
     await mkdir(directory, { recursive: true });
     await this.trust(directory);
-    const pty = this.spawn(codexCommand(), codexArgs(preferences, directory), {
+    const pty = this.spawn(codexCommand(), codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken), {
       name: "xterm-256color",
       cols: 100,
       rows: 30,
       cwd: directory,
       env: { ...(process.env as Record<string, string>), TERM: "xterm-256color" },
     });
-    const session: ForgeSession = { id, pty, history: [], listeners: new Set(), exited: false };
+    const session: ForgeSession = {
+      id,
+      pty,
+      history: [],
+      listeners: new Set(),
+      exited: false,
+      mcpToken,
+      panelVersion: 0,
+      directory,
+    };
     this.session = session;
     pty.onData((data) => this.emit(session, { type: "output", data }));
     pty.onExit(({ exitCode, signal }) => {
@@ -81,6 +103,35 @@ export class ForgeSessionService {
     this.activeSession(sessionId).pty.resize(cols, rows);
   }
 
+  publishPanel(sessionId: string, token: string, request: ForgePanelRequest) {
+    const session = this.activeSession(sessionId);
+    if (token !== session.mcpToken) throw new Error("Invalid Forge MCP token.");
+    session.panelVersion += 1;
+    const panel = { ...request, version: session.panelVersion, createdAt: Date.now() };
+    this.emit(session, { type: "panel", panel });
+    return panel;
+  }
+
+  async publishCandidate(sessionId: string, token: string, request: ForgeCandidateRequest) {
+    const session = this.activeSession(sessionId);
+    if (token !== session.mcpToken) throw new Error("Invalid Forge MCP token.");
+    const candidate = await readForgeCandidate(session.directory, request);
+    this.emit(session, { type: "candidate", candidate });
+    return candidate;
+  }
+
+  sendFeedback(sessionId: string, text: string, dismiss = true) {
+    const session = this.activeSession(sessionId);
+    session.pty.write(`\x1b[200~${text}\x1b[201~`);
+    if (dismiss) {
+      this.emit(session, { type: "panel", panel: null });
+      this.emit(session, { type: "candidate", candidate: null });
+    }
+    setTimeout(() => {
+      if (!session.exited) session.pty.write("\r");
+    }, 50).unref();
+  }
+
   stop(sessionId: string) {
     const session = this.find(sessionId);
     if (!session || session.exited) return;
@@ -108,8 +159,14 @@ function codexCommand() {
   return process.platform === "win32" ? "codex.cmd" : "codex";
 }
 
-function codexArgs(preferences: ForgePreferences, directory: string) {
-  return [
+function codexArgs(
+  preferences: ForgePreferences,
+  directory: string,
+  mcpRuntime: ForgeMcpRuntime | undefined,
+  sessionId: string,
+  token: string,
+) {
+  const args = [
     "-c",
     `model_reasoning_effort=${preferences.effort}`,
     "-m",
@@ -120,5 +177,28 @@ function codexArgs(preferences: ForgePreferences, directory: string) {
     "on-request",
     "--cd",
     directory,
+  ];
+  if (!mcpRuntime) return args;
+  const mcpArgs = [
+    ...mcpRuntime.args,
+    "--server-url",
+    mcpRuntime.serverUrl,
+    "--session-id",
+    sessionId,
+    "--token",
+    token,
+  ];
+  return [
+    ...args,
+    "-c",
+    `developer_instructions=${JSON.stringify(forgeMcpInstructions)}`,
+    "-c",
+    `mcp_servers.scriptforge.command=${JSON.stringify(mcpRuntime.command)}`,
+    "-c",
+    `mcp_servers.scriptforge.args=${JSON.stringify(mcpArgs)}`,
+    "-c",
+    "mcp_servers.scriptforge.required=true",
+    "-c",
+    'mcp_servers.scriptforge.enabled_tools=["scriptforge_show_panel","scriptforge_present_candidate"]',
   ];
 }

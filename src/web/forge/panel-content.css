@@ -1,0 +1,44 @@
+:host {
+  color: #dedede;
+  color-scheme: dark;
+  font:
+    13px / 1.5 Inter,
+    system-ui,
+    sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.scriptforge-panel-html {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+img,
+video,
+svg,
+table,
+pre {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

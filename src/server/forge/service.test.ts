@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { IPty, spawn as spawnPty } from "node-pty";
@@ -95,7 +95,98 @@ describe("Forge terminal sessions", () => {
     expect(service.getSnapshot(previous.sessionId)).toBeUndefined();
     expect(service.getActiveSession()).toEqual({ sessionId: current.sessionId });
   });
+
+  it("connects the session-scoped MCP panel and returns feedback through the PTY", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const pty = fakePty();
+    const calls: Parameters<typeof spawnPty>[] = [];
+    const status = {
+      check: async () => ({ installed: true, authenticated: true, version: "0.144.5", authMethod: "ChatGPT" }),
+    };
+    const service = new ForgeSessionService(
+      status,
+      root,
+      (...args) => {
+        calls.push(args);
+        return pty.value;
+      },
+      async () => undefined,
+      { serverUrl: "http://127.0.0.1:4545", command: "/node", args: ["mcp.js"] },
+    );
+    const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
+    const codexArgs = (calls[0]?.[1] ?? []) as string[];
+    const config = codexArgs.find((arg) => arg.startsWith("mcp_servers.scriptforge.args="));
+    const mcpArgs = JSON.parse(config?.slice(config.indexOf("=") + 1) ?? "[]") as string[];
+    const token = mcpArgs[mcpArgs.indexOf("--token") + 1] ?? "";
+    const events: unknown[] = [];
+    service.subscribe(sessionId, (event) => events.push(event));
+
+    expect(codexArgs).toContain("mcp_servers.scriptforge.required=true");
+    expect(() => service.publishPanel(sessionId, "wrong", samplePanel())).toThrow("token");
+    expect(service.publishPanel(sessionId, token, samplePanel())).toMatchObject({ version: 1, title: "Choose" });
+
+    await writeCandidate(join(root, sessionId));
+    await expect(service.publishCandidate(sessionId, token, { summary: "Ready" })).resolves.toMatchObject({
+      name: "Tiny Tool",
+      requiredExecutables: [],
+    });
+    expect(events).toContainEqual({ type: "candidate", candidate: expect.objectContaining({ name: "Tiny Tool" }) });
+
+    vi.useFakeTimers();
+    try {
+      service.sendFeedback(sessionId, "Use PNG");
+      expect(pty.write).toHaveBeenCalledWith("\x1b[200~Use PNG\x1b[201~");
+      expect(events).toContainEqual({ type: "panel", panel: null });
+      expect(events).toContainEqual({ type: "candidate", candidate: null });
+      await vi.advanceTimersByTimeAsync(50);
+      expect(pty.write).toHaveBeenCalledWith("\r");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
+
+function samplePanel() {
+  return {
+    title: "Choose",
+    blocks: [
+      {
+        id: "format",
+        type: "question" as const,
+        prompt: "Which format?",
+        input: {
+          kind: "single_choice" as const,
+          name: "format",
+          required: true,
+          options: [{ value: "png", label: "PNG" }],
+        },
+      },
+    ],
+  };
+}
+
+async function writeCandidate(directory: string) {
+  await Promise.all([
+    writeFile(
+      join(directory, "tool.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "tiny-tool",
+        version: "1.0.0",
+        name: "Tiny Tool",
+        description: "A tiny tool.",
+        category: "Files",
+        icon: "file",
+        script: "run.mjs",
+        interface: { type: "html", entry: "ui.html" },
+        requiredExecutables: [],
+      }),
+    ),
+    writeFile(join(directory, "run.mjs"), 'console.log("ready")'),
+    writeFile(join(directory, "ui.html"), "<!doctype html><title>Tiny Tool</title>"),
+  ]);
+}
 
 function fakePty() {
   const write = vi.fn();

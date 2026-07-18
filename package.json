@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "pnpm build:web && pnpm build:server && pnpm build:tools",
+    "build": "node scripts/clean-dist.mjs && pnpm build:web && pnpm build:server && pnpm build:tools",
     "build:server": "tsup",
     "build:tools": "node scripts/copy-tools.mjs",
     "build:web": "vite build",
@@ -20,6 +20,7 @@
     "check": "biome check .",
     "format": "biome format --write .",
     "lint": "biome lint .",
+    "prepack": "pnpm build",
     "start": "node dist/cli.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -33,6 +34,7 @@
     "@geckoui/geckoui": "^1.6.3",
     "@hono/node-server": "^2.0.10",
     "@hookform/resolvers": "^5.4.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@spoosh/core": "^0.18.3",
     "@spoosh/hono": "^0.6.2",
     "@spoosh/plugin-cache": "^0.7.0",
@@ -48,7 +50,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.66.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.1",
+    "remark-gfm": "^4.0.1",
     "sharp": "^0.35.3",
     "ws": "^8.21.1",
     "zod": "^4.4.3"

@@ -2,15 +2,18 @@ import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import { Circle, TerminalSquare } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 
 type ConnectionState = "connecting" | "connected" | "exited" | "error";
 
 type ForgeTerminalProps = {
   sessionId: string;
   onSessionEnd: (sessionId: string) => void;
+  onPanel: (panel: ForgePanelDocument | null) => void;
+  onCandidate: (candidate: ForgeCandidateDocument | null) => void;
 };
 
-export function ForgeTerminal({ sessionId, onSessionEnd }: ForgeTerminalProps) {
+export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }: ForgeTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
 
@@ -68,6 +71,8 @@ export function ForgeTerminal({ sessionId, onSessionEnd }: ForgeTerminalProps) {
           try {
             const message = JSON.parse(String(event.data));
             if (message.type === "output") terminal.write(String(message.data));
+            if (message.type === "panel") onPanel(message.panel as ForgePanelDocument | null);
+            if (message.type === "candidate") onCandidate(message.candidate as ForgeCandidateDocument | null);
             if (message.type === "exit") {
               active = false;
               setConnection("exited");
@@ -123,10 +128,10 @@ export function ForgeTerminal({ sessionId, onSessionEnd }: ForgeTerminalProps) {
       socket?.close(1000);
       terminal.dispose();
     };
-  }, [onSessionEnd, sessionId]);
+  }, [onCandidate, onPanel, onSessionEnd, sessionId]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717]">
       <div className="flex shrink-0 items-center justify-between border-[#303030] border-b px-4 py-2.5 text-[11px]">
         <span className="inline-flex items-center gap-2 font-medium text-[#c9c9c9]">
           <TerminalSquare size={14} /> Interactive Codex

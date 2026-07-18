@@ -5,15 +5,24 @@ import { serve } from "@hono/node-server";
 import open from "open";
 import { WebSocketServer } from "ws";
 import { createApp } from "./server/app.js";
+import { CodexStatusService } from "./server/codex/status.js";
+import { ForgeSessionService } from "./server/forge/service.js";
 import { selectPort } from "./server/port.js";
 
 const host = "127.0.0.1";
 const port = await selectPort(4545);
 const currentDir = dirname(fileURLToPath(import.meta.url));
+const runningFromSource = fileURLToPath(import.meta.url).endsWith(".ts");
 const webRoot = resolve(currentDir, "web");
 const hasBuiltWeb = existsSync(resolve(webRoot, "index.html"));
-const app = createApp(hasBuiltWeb ? webRoot : undefined);
 const url = `http://${host}:${port}`;
+const mcpEntry = resolve(currentDir, runningFromSource ? "mcp.ts" : "mcp.js");
+const forgeSessions = new ForgeSessionService(new CodexStatusService(), undefined, undefined, undefined, {
+  serverUrl: url,
+  command: runningFromSource ? resolve(currentDir, "../node_modules/.bin/tsx") : process.execPath,
+  args: [mcpEntry],
+});
+const app = createApp(hasBuiltWeb ? webRoot : undefined, { forgeSessions });
 const webSocketServer = new WebSocketServer({ noServer: true });
 
 const server = serve({ fetch: app.fetch, hostname: host, port, websocket: { server: webSocketServer } }, async () => {

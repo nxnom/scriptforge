@@ -6,7 +6,7 @@ ScriptForge is a local app store where small utility apps do not exist until you
 
 ## Status
 
-The local application shell, typed API foundation, bundled image-resizer workflow, Forge preflight, and refresh-safe interactive Codex terminal are working. Candidate forging, the dependency Doctor, and submission assets are being built milestone by milestone.
+The local application shell, bundled image-resizer workflow, and MCP-guided Forge collaboration and candidate review are working. Candidate execution, saving, the dependency Doctor, and submission assets are being built milestone by milestone.
 
 ## Key Features
 
@@ -18,7 +18,9 @@ The local application shell, typed API foundation, bundled image-resizer workflo
 - Bundled Sharp image resizer with progress, structured logs, before/after previews, and local result download
 - Codex CLI installation/authentication preflight with locally remembered model and effort choices
 - Real embedded Codex TUI launched safely in a staging directory, with terminal reconnection after browser refresh
-- Planned MCP-guided staged tool generation, explicit approvals, and dependency Doctor
+- Blocking MCP questions and approvals with required-field validation
+- Actual staging-file review with sandboxed generated UI preview and read-only script and manifest tabs
+- Planned approved candidate execution, saving, and dependency Doctor
 
 ## Prerequisites
 
@@ -67,6 +69,8 @@ The repository is one publishable npm package:
 - Hono route types flow into Spoosh without a handwritten API schema.
 - REST handles request/response operations; WebSocket handles job events and Forge terminal streams.
 - Bundled and generated tools share a manifest, `run.mjs`, and sandboxed `ui.html` runtime contract.
+- A session-scoped stdio MCP server gives Codex structured question, approval, and candidate-presentation tools.
+- Forge prefers Node.js built-ins such as `fetch` before declaring system executables.
 
 ## Environment Variables
 
@@ -80,15 +84,15 @@ The bundled image resizer accepts a local PNG, JPEG, or WebP file, so no separat
 
 - **Track:** Apps for your life — ScriptForge lets people create focused local utilities for everyday files and workflows.
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
-- **GPT-5.6-powered features:** On-demand tool forging, dependency diagnosis, and plain-language review are planned for Goals 3 and 4.
+- **GPT-5.6-powered features:** GPT-5.6 collaborates in the embedded Forge terminal, asks structured questions, requests plan approval, and creates staged tool candidates for plain-language, code, and UI review. Dependency diagnosis remains planned for Goal 4.
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the sandbox bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; contextual Forge side panel; generated HTML isolated in a sandboxed iframe; transferable file descriptors across the host bridge; explicit execution and installation approval.
-- **Verification:** Biome checks, TypeScript typecheck, 17 automated host/API tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
+- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; blocking Forge panels replace the terminal while Codex waits; generated previews use a network-blocked sandboxed iframe; Node built-ins are preferred over external executables; execution and installation always require separate approval.
+- **Verification:** Biome checks, TypeScript typecheck, 24 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work
 
-- The Forge terminal is working; its MCP-guided candidate review, testing, and save workflow is not implemented yet.
+- MCP-guided candidate review is working; approved candidate execution, successful-test tracking, and saving are not implemented yet.
 - Dependency Doctor is not implemented yet.
 - Import/export sharing is intentionally postponed until after the hackathon MVP.
 - macOS is the first supported platform; Windows and Linux should fail clearly where a capability is unavailable.

@@ -1,6 +1,6 @@
 # Tool Authoring Contract
 
-This document records the interface contract that Codex must follow when it forges a ScriptForge tool. It is intended to become source material for the Forge system prompt.
+This document records the interface contract that Codex must follow when it forges a ScriptForge tool. Its operational rules are mirrored into the Forge instructions and discoverable MCP authoring resources in `src/mcp`; update both whenever this contract changes.
 
 ## Package shape
 

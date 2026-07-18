@@ -3,7 +3,13 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
 import type { ForgeSessionService } from "./service";
-import { type ForgeServerEvent, forgeEfforts, forgeModels } from "./types";
+import {
+  type ForgeServerEvent,
+  forgeCandidateRequestSchema,
+  forgeEfforts,
+  forgeModels,
+  forgePanelRequestSchema,
+} from "./types";
 
 const preferencesSchema = z.object({ model: z.enum(forgeModels), effort: z.enum(forgeEfforts) });
 const clientEventSchema = z.discriminatedUnion("type", [
@@ -14,10 +20,74 @@ const clientEventSchema = z.discriminatedUnion("type", [
     rows: z.number().int().min(1).max(500),
   }),
 ]);
+const feedbackSchema = z.object({
+  text: z.string().trim().min(1).max(64_000),
+  dismiss: z.boolean().optional(),
+});
 
 export function createForgeApiRoutes(service: ForgeSessionService) {
   return new Hono()
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
+    .post(
+      "/sessions/:sessionId/panel",
+      validator("json", (value, c) => {
+        const parsed = forgePanelRequestSchema.safeParse(value);
+        return parsed.success ? parsed.data : c.json({ ok: false as const, error: "Invalid panel content." }, 400);
+      }),
+      (c) => {
+        try {
+          const panel = service.publishPanel(
+            c.req.param("sessionId"),
+            c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "",
+            c.req.valid("json"),
+          );
+          return c.json({ ok: true as const, panel }, 201);
+        } catch (error) {
+          return c.json({ ok: false as const, error: error instanceof Error ? error.message : "Panel rejected." }, 403);
+        }
+      },
+    )
+    .post(
+      "/sessions/:sessionId/candidate",
+      validator("json", (value, c) => {
+        const parsed = forgeCandidateRequestSchema.safeParse(value);
+        return parsed.success ? parsed.data : c.json({ ok: false as const, error: "Invalid candidate summary." }, 400);
+      }),
+      async (c) => {
+        try {
+          const candidate = await service.publishCandidate(
+            c.req.param("sessionId"),
+            c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "",
+            c.req.valid("json"),
+          );
+          return c.json({ ok: true as const, candidate }, 201);
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: error instanceof Error ? error.message : "Candidate could not be read." },
+            409,
+          );
+        }
+      },
+    )
+    .post(
+      "/sessions/:sessionId/feedback",
+      validator("json", (value, c) => {
+        const parsed = feedbackSchema.safeParse(value);
+        return parsed.success ? parsed.data : c.json({ ok: false as const, error: "Feedback is required." }, 400);
+      }),
+      (c) => {
+        try {
+          const feedback = c.req.valid("json");
+          service.sendFeedback(c.req.param("sessionId"), feedback.text, feedback.dismiss);
+          return c.json({ ok: true as const });
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: error instanceof Error ? error.message : "Feedback could not be sent." },
+            409,
+          );
+        }
+      },
+    )
     .post(
       "/sessions",
       validator("json", (value, c) => {
