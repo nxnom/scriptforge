@@ -197,6 +197,7 @@ function samplePanel() {
           name: "format",
           required: true,
           options: [{ value: "png", label: "PNG" }],
+          defaultValue: "png",
         },
       },
     ],

@@ -24,6 +24,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("A manual Refresh button alone does not satisfy a live-update request");
     expect(client.getInstructions()).toContain("ask for the refresh interval");
     expect(client.getInstructions()).toContain("Do not silently choose a simpler behavior");
+    expect(client.getInstructions()).toContain("Use multi_choice checkboxes");
+    expect(client.getInstructions()).toContain("Which currencies should be available?");
+    expect(client.getInstructions()).toContain("Set defaultValue to the recommended option or options");
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([

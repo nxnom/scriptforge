@@ -30,12 +30,14 @@ const panelQuestionSchema = z.discriminatedUnion("kind", [
     name: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,79}$/),
     required: z.boolean().optional(),
     options: z.array(panelChoiceSchema).min(1).max(12),
+    defaultValue: z.string().min(1).max(120).optional(),
   }),
   z.object({
     kind: z.literal("multi_choice"),
     name: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,79}$/),
     required: z.boolean().optional(),
     options: z.array(panelChoiceSchema).min(1).max(12),
+    defaultValue: z.array(z.string().min(1).max(120)).max(12).optional(),
   }),
   z.object({
     kind: z.literal("text"),
@@ -43,6 +45,7 @@ const panelQuestionSchema = z.discriminatedUnion("kind", [
     required: z.boolean().optional(),
     placeholder: z.string().max(240).optional(),
     multiline: z.boolean().optional(),
+    defaultValue: z.string().max(8_000).optional(),
   }),
 ]);
 
@@ -83,6 +86,19 @@ export const forgePanelRequestSchema = z
   .refine((panel) => panel.blocks.some((block) => block.type === "question" || block.type === "approval"), {
     message: "A Forge panel must ask a question or request approval.",
     path: ["blocks"],
+  })
+  .superRefine((panel, context) => {
+    for (const [index, block] of panel.blocks.entries()) {
+      if (block.type !== "question" || block.input.kind === "text" || block.input.defaultValue === undefined) continue;
+      const allowed = new Set(block.input.options.map((option) => option.value));
+      const defaults = Array.isArray(block.input.defaultValue) ? block.input.defaultValue : [block.input.defaultValue];
+      if (defaults.every((value) => allowed.has(value))) continue;
+      context.addIssue({
+        code: "custom",
+        path: ["blocks", index, "input", "defaultValue"],
+        message: "Every default choice must match an option value.",
+      });
+    }
   });
 
 export const forgeCandidateRequestSchema = z.object({

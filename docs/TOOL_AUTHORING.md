@@ -37,6 +37,15 @@ Codex always presents a short plain-language kickoff panel before creating candi
 - Minor reversible defaults can be stated clearly in the proposal, but behavior-changing assumptions require a question or explicit approval.
 - Wait for the user's answers and approval before touching candidate files.
 
+Available question inputs:
+
+- `single_choice` renders radio buttons and is only for mutually exclusive answers where exactly one can be true.
+- `multi_choice` renders checkboxes and is for choosing a supported set such as currencies, formats, fields, or features.
+- `text` renders a short input or textarea for open-ended answers. Use a separate optional “Other…” text question when a predefined list may be incomplete; do not repurpose the general feedback note.
+- Every input supports `defaultValue`. Choice defaults must match option values and should preselect the recommended answer or answers.
+
+For example, a price tool that can switch currencies asks “Which currencies should be available?” with checkboxes, recommended defaults, and an optional “Other currencies” text field. It does not force one radio-button currency unless the product truly supports only one.
+
 ## Host bridge
 
 The interface and ScriptForge shell communicate only with `window.postMessage`.

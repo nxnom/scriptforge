@@ -28,7 +28,10 @@ export function PanelFeedbackForm({
     resolver: zodResolver(createFeedbackSchema(panel)),
     defaultValues: {
       answers: Object.fromEntries(
-        questions.map((question) => [question.input.name, question.input.kind === "multi_choice" ? [] : ""]),
+        questions.map((question) => [
+          question.input.name,
+          question.input.defaultValue ?? (question.input.kind === "multi_choice" ? [] : ""),
+        ]),
       ),
       note: "",
     },

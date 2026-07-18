@@ -43,6 +43,22 @@ describe("PanelFeedbackForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Request changes" }));
     await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("Make the chart optional")));
   });
+
+  it("preselects recommended checkbox defaults and includes them in the response", async () => {
+    const onFeedback = vi.fn(async () => undefined);
+    render(
+      <PanelFeedbackForm panel={currencyPanel()} onFeedback={onFeedback}>
+        <p>Choose supported currencies</p>
+      </PanelFeedbackForm>,
+    );
+
+    expect(screen.getByRole("checkbox", { name: /USD/ })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /THB/ })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /EUR/ })).not.toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Approve, build & check" }));
+
+    await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("USD, THB")));
+  });
 });
 
 function requiredPanel(): ForgePanelDocument {
@@ -74,6 +90,32 @@ function kickoffPanel(): ForgePanelDocument {
         description: "It will show the latest price and a small chart.",
         approveLabel: "Approve, build & check",
         rejectLabel: "Request changes",
+      },
+    ],
+  };
+}
+
+function currencyPanel(): ForgePanelDocument {
+  return {
+    title: "Live BTC price",
+    version: 1,
+    createdAt: Date.now(),
+    blocks: [
+      {
+        id: "currencies",
+        type: "question",
+        prompt: "Which currencies should be available?",
+        input: {
+          kind: "multi_choice",
+          name: "currencies",
+          required: true,
+          options: [
+            { value: "USD", label: "USD" },
+            { value: "THB", label: "THB" },
+            { value: "EUR", label: "EUR" },
+          ],
+          defaultValue: ["USD", "THB"],
+        },
       },
     ],
   };
