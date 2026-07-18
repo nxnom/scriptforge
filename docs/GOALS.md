@@ -83,7 +83,7 @@ Acceptance checks:
 
 ## Goal 4 — Dependency Doctor
 
-Status: In progress
+Status: Complete
 
 Completed and verified:
 
@@ -91,12 +91,11 @@ Completed and verified:
 - Keep tools installed and reviewable when requirements are missing while marking them Needs install.
 - Block only job execution until every declared executable requirement is satisfied.
 - Show manual install/retry guidance without launching Codex automatically.
-
-- Check the executables declared in `tool.json`.
-- Start a Doctor agent when an executable is missing.
-- Let the agent determine OS-specific installation commands dynamically.
-- Show commands and explanations before approval.
-- Stream approved installation output and verify the executable afterward.
+- Start a separate Codex Doctor only after the user explicitly requests help.
+- Let Doctor inspect the current OS and package managers without modifying the machine itself.
+- Present structured command-and-argument proposals with plain-language explanations.
+- Run only the exact proposal after the user clicks Install, with live terminal output.
+- Recheck requirements after installation and preserve the active in-memory Doctor session across refreshes.
 
 Acceptance checks:
 

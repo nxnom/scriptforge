@@ -5,6 +5,8 @@ import { Hono } from "hono";
 import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
 import { listBundledTools } from "../tools/registry";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
+import { createDoctorApiRoutes, createDoctorWebSocketRoutes } from "./doctor/routes";
+import { DoctorSessionService } from "./doctor/service";
 import { createForgeApiRoutes, createForgeWebSocketRoutes } from "./forge/routes";
 import { ForgeSessionService } from "./forge/service";
 import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
@@ -76,6 +78,7 @@ export function createApiRoutes(
   codexStatus: CodexStatusChecker = new CodexStatusService(),
   installedToolsRoot = defaultInstalledToolsRoot(),
   requirements = new RequirementService(),
+  doctorSessions?: DoctorSessionService,
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -111,15 +114,21 @@ export function createApiRoutes(
       });
     })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
+    .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
     .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
 const defaultCodexStatus = new CodexStatusService();
+const defaultRequirements = new RequirementService();
+const defaultDoctorSessions = new DoctorSessionService(defaultCodexStatus, defaultRequirements);
 export const apiRoutes = createApiRoutes(
-  new ToolJobService(),
+  new ToolJobService(undefined, undefined, undefined, defaultRequirements),
   new ForgeSessionService(defaultCodexStatus),
   defaultCodexStatus,
+  undefined,
+  defaultRequirements,
+  defaultDoctorSessions,
 );
 
 export type ApiRoutes = typeof apiRoutes;
@@ -134,6 +143,7 @@ export function createApp(
     forgeSessions?: ForgeSessionService;
     installedToolsRoot?: string;
     requirements?: RequirementService;
+    doctorSessions?: DoctorSessionService;
   } = {},
 ) {
   const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
@@ -141,10 +151,17 @@ export function createApp(
   const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot, installedToolsRoot, requirements);
   const codexStatus = options.codexStatus ?? new CodexStatusService();
   const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
+  const doctorSessions =
+    options.doctorSessions ??
+    new DoctorSessionService(codexStatus, requirements, installedToolsRoot, options.toolsRoot);
   const app = new Hono()
-    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot, requirements))
+    .route(
+      "/api",
+      createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot, requirements, doctorSessions),
+    )
     .route("/", createJobWebSocketRoutes(jobService))
-    .route("/", createForgeWebSocketRoutes(forgeSessions));
+    .route("/", createForgeWebSocketRoutes(forgeSessions))
+    .route("/", createDoctorWebSocketRoutes(doctorSessions));
 
   if (webRoot) {
     app.use("/*", serveStatic({ root: webRoot }));

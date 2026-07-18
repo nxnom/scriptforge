@@ -7,6 +7,7 @@ import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { ToolPage } from "./pages/ToolPage";
 
 const ForgePage = lazy(() => import("./pages/ForgePage").then((module) => ({ default: module.ForgePage })));
+const DoctorPage = lazy(() => import("./pages/DoctorPage").then((module) => ({ default: module.DoctorPage })));
 
 export function App() {
   return (
@@ -19,6 +20,14 @@ export function App() {
           element={
             <Suspense fallback={<Spinner className="m-auto" />}>
               <ForgePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="doctor/:toolId"
+          element={
+            <Suspense fallback={<Spinner className="m-auto" />}>
+              <DoctorPage />
             </Suspense>
           }
         />

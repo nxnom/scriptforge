@@ -6,8 +6,10 @@ import open from "open";
 import { WebSocketServer } from "ws";
 import { createApp } from "./server/app.js";
 import { CodexStatusService } from "./server/codex/status.js";
+import { DoctorSessionService } from "./server/doctor/service.js";
 import { ForgeSessionService } from "./server/forge/service.js";
 import { selectPort } from "./server/port.js";
+import { RequirementService } from "./server/requirements/service.js";
 
 const host = "127.0.0.1";
 const port = await selectPort(4545);
@@ -22,7 +24,22 @@ const forgeSessions = new ForgeSessionService(new CodexStatusService(), undefine
   command: runningFromSource ? resolve(currentDir, "../node_modules/.bin/tsx") : process.execPath,
   args: [mcpEntry],
 });
-const app = createApp(hasBuiltWeb ? webRoot : undefined, { forgeSessions });
+const requirements = new RequirementService();
+const doctorSessions = new DoctorSessionService(
+  new CodexStatusService(),
+  requirements,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  {
+    serverUrl: url,
+    command: runningFromSource ? resolve(currentDir, "../node_modules/.bin/tsx") : process.execPath,
+    args: [mcpEntry],
+  },
+);
+const app = createApp(hasBuiltWeb ? webRoot : undefined, { forgeSessions, requirements, doctorSessions });
 const webSocketServer = new WebSocketServer({ noServer: true });
 
 const server = serve({ fetch: app.fetch, hostname: host, port, websocket: { server: webSocketServer } }, async () => {

@@ -51,11 +51,14 @@ Before a tool runs, ScriptForge checks every declared executable. When one is mi
 2. Determines an appropriate installation command.
 3. Explains what will change and displays the exact command.
 4. Executes only after explicit user approval.
-5. Verifies that the executable is available afterward.
+5. Streams the approved command's real terminal output.
+6. Verifies that the executable is available afterward.
 
 The MVP is macOS-first. Unsupported platforms must receive a useful explanation rather than failing silently or running a guessed command.
 
 A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor.
+
+Doctor cannot install packages directly. It submits an executable-plus-arguments proposal through its dedicated MCP tool. ScriptForge displays that immutable proposal with Request changes and Install controls; Install is the separate approval boundary that starts `node-pty`. The proposal is dismissed immediately, the terminal shows the exact command and its output, and ScriptForge rechecks every declared requirement when the process ends.
 
 ## Technical Architecture
 

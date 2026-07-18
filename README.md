@@ -6,7 +6,7 @@ ScriptForge is a local app store where small utility apps do not exist until you
 
 ## Status
 
-The local application shell, bundled image-resizer workflow, and full MCP-guided Forge-to-library flow are working. Executable detection and run blocking are working; the opt-in Codex Doctor installer and submission assets are being built milestone by milestone.
+The local application shell, bundled image-resizer workflow, full MCP-guided Forge-to-library flow, and opt-in dependency Doctor are working. Submission assets are being completed milestone by milestone.
 
 ## Key Features
 
@@ -26,7 +26,7 @@ The local application shell, bundled image-resizer workflow, and full MCP-guided
 - Exact tested-revision saving into the filesystem-backed library
 - Explicit Stop control while the single Codex terminal is active, followed by Start session when it ends
 - Missing-executable and version detection that keeps tools installed while blocking only their execution
-- Planned opt-in Codex Doctor installation assistant
+- Opt-in Codex Doctor that proposes OS-specific commands, waits for a separate Install click, streams terminal output, and verifies requirements afterward
 
 ## Prerequisites
 
@@ -90,15 +90,14 @@ The bundled image resizer accepts a local PNG, JPEG, or WebP file, so no separat
 
 - **Track:** Apps for your life — ScriptForge lets people create focused local utilities for everyday files and workflows.
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
-- **GPT-5.6-powered features:** GPT-5.6 proposes each utility in plain language, asks structured questions when needed, waits for approval, builds and exercises the standalone runner with realistic input, repairs failures, and presents tested staged candidates for code and UI review beside the live terminal. Dependency diagnosis remains planned for Goal 4.
+- **GPT-5.6-powered features:** GPT-5.6 proposes each utility in plain language, asks structured questions when needed, waits for approval, builds and exercises the standalone runner with realistic input, repairs failures, and presents tested staged candidates for code and UI review beside the live terminal. When requested, the separate Doctor session diagnoses missing executables and proposes current-machine installation steps without executing them itself.
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the sandbox bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; Forge does not override the user's Codex sandbox or approval settings; blocking kickoff panels temporarily replace the terminal and close immediately on submission; kickoff approval authorizes standalone checks in staging; candidate testers run the exact presented revision; runner results match the tool as structured data and/or real file outputs instead of forced snapshots; generated interfaces use a network-blocked sandboxed iframe and default to ScriptForge's compact dark visual system; Save copies only the exact successfully tested revision and remains separately user-controlled.
-- **Verification:** Biome checks, TypeScript typecheck, 40 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks. The save integration test rejects an untested candidate, saves the successful exact revision, and runs the installed copy through the normal library runtime. Requirement tests keep missing-dependency tools installed while rejecting only their run.
+- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; Forge does not override the user's Codex sandbox or approval settings; blocking kickoff panels temporarily replace the terminal and close immediately on submission; kickoff approval authorizes standalone checks in staging; candidate testers run the exact presented revision; runner results match the tool as structured data and/or real file outputs instead of forced snapshots; generated interfaces use a network-blocked sandboxed iframe and default to ScriptForge's compact dark visual system; Save copies only the exact successfully tested revision and remains separately user-controlled. Missing dependencies never reject a valid saved tool: only execution is blocked. Doctor is user-launched, cannot mutate the machine directly, and its exact proposal requires a separate Install click.
+- **Verification:** Biome checks, TypeScript typecheck, 41 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks. The save integration test rejects an untested candidate, saves the successful exact revision, and runs the installed copy through the normal library runtime. Requirement tests keep missing-dependency tools installed while rejecting only their run. Doctor tests prove that Codex starts only on request and that no installer starts before approval, then verify the exact executable and arguments and the post-install requirement check.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work
 
-- Requirement detection is implemented; the user-launched Codex Doctor and approved installation terminal are still in progress.
 - Import/export sharing is intentionally postponed until after the hackathon MVP.
 - macOS is the first supported platform; Windows and Linux should fail clearly where a capability is unavailable.
 
