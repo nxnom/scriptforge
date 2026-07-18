@@ -4,6 +4,7 @@ import { ArrowLeft, Box, ShieldCheck } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRead, useWrite } from "../api";
+import { RequirementNotice } from "../components/RequirementNotice";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 export function ToolPage() {
@@ -11,6 +12,10 @@ export function ToolPage() {
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
+  const requirements = useRead((api) => api("tools/:toolId/requirements").GET({ params: { toolId: toolId ?? "" } }), {
+    enabled: Boolean(toolId),
+    staleTime: 5_000,
+  });
   const startJob = useWrite((api) => api("jobs").POST());
   const tool = tools.data?.tools.find((candidate) => candidate.id === toolId);
   const runTool = useCallback(
@@ -50,6 +55,13 @@ export function ToolPage() {
         </span>
       </header>
       {hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
+      {requirements.data?.ok && !requirements.data.ready && (
+        <RequirementNotice
+          requirements={requirements.data.requirements}
+          retry={requirements.trigger}
+          launchDoctor={() => navigate(`/doctor/${toolId}`)}
+        />
+      )}
       <iframe
         ref={iframeRef}
         className="min-h-180 w-full flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a] max-[680px]:min-h-225"

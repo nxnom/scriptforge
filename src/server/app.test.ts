@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app";
+import { RequirementService } from "./requirements/service";
 
 describe("local API", () => {
   it("reports health", async () => {
@@ -18,6 +19,40 @@ describe("local API", () => {
     const body = await response.json();
     expect(body.tools).toHaveLength(8);
     expect(body.tools[0]).toMatchObject({ id: "image-resizer", status: "ready" });
+  });
+
+  it("marks an installed tool as needing installation without removing it", async () => {
+    const installedToolsRoot = join(tmpdir(), `scriptforge-tools-${randomUUID()}`);
+    const toolDirectory = join(installedToolsRoot, "cli-tool");
+    const { mkdir, writeFile, rm } = await import("node:fs/promises");
+    await mkdir(toolDirectory, { recursive: true });
+    await Promise.all([
+      writeFile(
+        join(toolDirectory, "tool.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          id: "cli-tool",
+          version: "1.0.0",
+          name: "CLI Tool",
+          description: "Uses a CLI.",
+          category: "Files",
+          icon: "file",
+          script: "run.mjs",
+          interface: { type: "html", entry: "ui.html" },
+          requiredExecutables: [{ name: "missing-cli" }],
+        }),
+      ),
+      writeFile(join(toolDirectory, "run.mjs"), ""),
+      writeFile(join(toolDirectory, "ui.html"), "<!doctype html>"),
+    ]);
+    try {
+      const requirements = new RequirementService(async () => ({ found: false, version: null }));
+      const response = await createApp(undefined, { installedToolsRoot, requirements }).request("/api/tools");
+      const body = await response.json();
+      expect(body.tools).toContainEqual(expect.objectContaining({ id: "cli-tool", status: "needs-install" }));
+    } finally {
+      await rm(installedToolsRoot, { recursive: true, force: true });
+    }
   });
 
   it("reports Codex readiness without exposing credential details", async () => {

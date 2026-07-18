@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { toolManifestSchema } from "../tools/manifest";
 import { createApp } from "./app";
 import { ToolJobService } from "./jobs/service";
+import { RequirementService } from "./requirements/service";
 
 describe("tool runtime host", () => {
   let jobsRoot: string;
@@ -73,5 +74,37 @@ describe("tool runtime host", () => {
 
     await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
     expect(service.getSnapshot(jobId)?.events).toContainEqual({ type: "result", outputs: [], data: { price: 123 } });
+  });
+
+  it("keeps an installed tool but blocks its run when an executable is missing", async () => {
+    const installedRoot = join(jobsRoot, "installed");
+    const toolDirectory = join(installedRoot, "video-tool");
+    await mkdir(toolDirectory, { recursive: true });
+    await Promise.all([
+      writeFile(
+        join(toolDirectory, "tool.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          id: "video-tool",
+          version: "1.0.0",
+          name: "Video Tool",
+          description: "Converts a video.",
+          category: "Video",
+          icon: "video",
+          script: "run.mjs",
+          interface: { type: "html", entry: "ui.html" },
+          requiredExecutables: [{ name: "ffmpeg", version: ">= 7.0.0" }],
+        }),
+      ),
+      writeFile(join(toolDirectory, "run.mjs"), ""),
+      writeFile(join(toolDirectory, "ui.html"), "<!doctype html><title>Video Tool</title>"),
+    ]);
+    const requirements = new RequirementService(async () => ({ found: false, version: null }));
+    const service = new ToolJobService(join(jobsRoot, "jobs"), undefined, installedRoot, requirements);
+
+    await expect(service.start({ toolId: "video-tool", input: {}, files: [] })).rejects.toThrow(
+      "Install the required ffmpeg executable",
+    );
+    await expect(service.getToolUi("video-tool")).resolves.toContain("Video Tool");
   });
 });

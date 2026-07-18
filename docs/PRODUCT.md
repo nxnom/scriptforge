@@ -55,6 +55,8 @@ Before a tool runs, ScriptForge checks every declared executable. When one is mi
 
 The MVP is macOS-first. Unsupported platforms must receive a useful explanation rather than failing silently or running a guessed command.
 
+A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor.
+
 ## Technical Architecture
 
 ```text

@@ -6,6 +6,12 @@ import type { ToolJobEvent } from "./types";
 
 export function createToolRuntimeApiRoutes(service: ToolJobService) {
   return new Hono()
+    .get("/tools/:toolId/requirements", async (c) => {
+      const requirements = await service.getRequirements(c.req.param("toolId"));
+      return requirements
+        ? c.json({ ok: true as const, requirements, ready: requirements.every((item) => item.available) })
+        : c.json({ ok: false as const, error: "That tool is not installed." }, 404);
+    })
     .get("/tools/:toolId/ui", async (c) => {
       const html = await service.getToolUi(c.req.param("toolId"));
       if (!html) return c.json({ ok: false as const, error: "That tool interface is not available." }, 404);

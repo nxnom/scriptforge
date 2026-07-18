@@ -14,7 +14,10 @@ export function LibraryPage() {
       <header className="flex items-center justify-between gap-4 max-[560px]:flex-col max-[560px]:items-start">
         <div>
           <h1 className="m-0 font-[Geist_Variable] text-[23px] leading-tight">Library</h1>
-          <p className="mt-1.5 mb-0 text-[13px] text-[#b0b0b0]">8 tools ready to grow with your workflow.</p>
+          <p className="mt-1.5 mb-0 text-[13px] text-[#b0b0b0]">
+            {tools.data?.tools.filter((tool) => tool.status !== "planned").length ?? "Your"} tools ready to grow with
+            your workflow.
+          </p>
         </div>
         <div className="flex items-center gap-3 max-[560px]:w-full">
           <label className="flex w-47.5 items-center gap-2 rounded-[9px] border border-[#333] bg-[#242424] px-2.5 py-2 text-[#7a7a7a] max-[560px]:flex-1">

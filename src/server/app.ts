@@ -9,6 +9,7 @@ import { createForgeApiRoutes, createForgeWebSocketRoutes } from "./forge/routes
 import { ForgeSessionService } from "./forge/service";
 import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
 import { ToolJobService } from "./jobs/service";
+import { RequirementService } from "./requirements/service";
 
 const plannedTools = [
   {
@@ -74,6 +75,7 @@ export function createApiRoutes(
   forgeSessions: ForgeSessionService,
   codexStatus: CodexStatusChecker = new CodexStatusService(),
   installedToolsRoot = defaultInstalledToolsRoot(),
+  requirements = new RequirementService(),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -85,30 +87,27 @@ export function createApiRoutes(
     )
     .get("/tools", async (c) => {
       const installed = await listInstalledTools(installedToolsRoot);
-      const availableIds = new Set([
-        ...listBundledTools().map((tool) => tool.id),
-        ...installed.map((tool) => tool.manifest.id),
-      ]);
+      const bundled = listBundledTools();
+      const availableIds = new Set([...bundled.map((tool) => tool.id), ...installed.map((tool) => tool.manifest.id)]);
+      const readyTools = await Promise.all(
+        [...bundled, ...installed.map((tool) => tool.manifest)].map(async (manifest) => {
+          const executableStatuses = await requirements.check(manifest.requiredExecutables);
+          const { id, name, description, category, icon } = manifest;
+          return {
+            id,
+            name,
+            description,
+            category,
+            icon,
+            status: executableStatuses.every((item) => item.available)
+              ? ("ready" as const)
+              : ("needs-install" as const),
+            requirements: executableStatuses,
+          };
+        }),
+      );
       return c.json({
-        tools: [
-          ...listBundledTools().map(({ id, name, description, category, icon }) => ({
-            id,
-            name,
-            description,
-            category,
-            icon,
-            status: "ready" as const,
-          })),
-          ...installed.map(({ manifest: { id, name, description, category, icon } }) => ({
-            id,
-            name,
-            description,
-            category,
-            icon,
-            status: "ready" as const,
-          })),
-          ...plannedTools.filter((tool) => !availableIds.has(tool.id)),
-        ],
+        tools: [...readyTools, ...plannedTools.filter((tool) => !availableIds.has(tool.id))],
       });
     })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
@@ -134,14 +133,16 @@ export function createApp(
     codexStatus?: CodexStatusChecker;
     forgeSessions?: ForgeSessionService;
     installedToolsRoot?: string;
+    requirements?: RequirementService;
   } = {},
 ) {
   const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
-  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot, installedToolsRoot);
+  const requirements = options.requirements ?? new RequirementService();
+  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot, installedToolsRoot, requirements);
   const codexStatus = options.codexStatus ?? new CodexStatusService();
   const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
   const app = new Hono()
-    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot))
+    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot, requirements))
     .route("/", createJobWebSocketRoutes(jobService))
     .route("/", createForgeWebSocketRoutes(forgeSessions));
 

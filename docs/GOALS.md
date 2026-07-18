@@ -83,7 +83,14 @@ Acceptance checks:
 
 ## Goal 4 — Dependency Doctor
 
-Status: Pending
+Status: In progress
+
+Completed and verified:
+
+- Detect declared executables and basic version constraints from the current `PATH`.
+- Keep tools installed and reviewable when requirements are missing while marking them Needs install.
+- Block only job execution until every declared executable requirement is satisfied.
+- Show manual install/retry guidance without launching Codex automatically.
 
 - Check the executables declared in `tool.json`.
 - Start a Doctor agent when an executable is missing.

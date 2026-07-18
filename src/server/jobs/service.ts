@@ -8,6 +8,7 @@ import { resolveBundledToolDirectory } from "../../tools/directory";
 import { defaultInstalledToolsRoot, findInstalledTool } from "../../tools/installed";
 import type { ToolManifest } from "../../tools/manifest";
 import { findBundledTool } from "../../tools/registry";
+import { RequirementService } from "../requirements/service";
 import type { ToolJobEvent, ToolJobSnapshot, ToolOutput } from "./types";
 
 const scriptEventSchema = z.discriminatedUnion("type", [
@@ -62,18 +63,22 @@ export class ToolJobService {
     private readonly jobsRoot = join(homedir(), ".scriptforge", "jobs"),
     private readonly toolsRoot?: string,
     private readonly installedToolsRoot = defaultInstalledToolsRoot(),
+    private readonly requirements = new RequirementService(),
   ) {}
 
   async start({ toolId, input, files }: StartJobInput) {
     const manifest = findBundledTool(toolId);
-    if (manifest)
+    if (manifest) {
+      await this.requirements.assertAvailable(manifest.requiredExecutables);
       return this.startResolved(
         { toolId, input, files },
         resolveBundledToolDirectory(toolId, this.toolsRoot),
         manifest.script,
       );
+    }
     const installed = await findInstalledTool(toolId, this.installedToolsRoot);
     if (!installed) throw new Error("That tool is not installed.");
+    await this.requirements.assertAvailable(installed.manifest.requiredExecutables);
     return this.startResolved({ toolId, input, files }, installed.directory, installed.manifest.script);
   }
 
@@ -146,6 +151,13 @@ export class ToolJobService {
     const installed = await findInstalledTool(toolId, this.installedToolsRoot);
     if (installed?.manifest.interface.type !== "html") return;
     return readFile(join(installed.directory, installed.manifest.interface.entry), "utf8");
+  }
+
+  async getRequirements(toolId: string) {
+    const bundled = findBundledTool(toolId);
+    const manifest = bundled ?? (await findInstalledTool(toolId, this.installedToolsRoot))?.manifest;
+    if (!manifest) return;
+    return this.requirements.check(manifest.requiredExecutables);
   }
 
   private async execute(job: JobRecord, request: unknown) {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const executableSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._+-]*$/),
   version: z.string().min(1).optional(),
 });
 
