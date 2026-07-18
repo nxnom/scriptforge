@@ -56,7 +56,7 @@ Acceptance checks:
 
 ## Goal 3 — Forge with Codex
 
-Status: In progress
+Status: Complete
 
 Completed and verified:
 
@@ -70,23 +70,8 @@ Completed and verified:
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
-
-Remaining in this goal:
-
-- Saving the exact reviewed and successfully tested revision into the library.
-
-- Spawn the interactive Codex CLI through `node-pty`.
-- Stream terminal input, output, and resizing over WebSocket.
-- Register a local ScriptForge stdio MCP server with Codex.
-- Add the pre-Forge model/effort selector, persisted in browser `localStorage`.
-- Detect missing or unauthenticated Codex CLI and show setup guidance without blocking the library.
-- Generate candidate tool files only in staging.
-- Run realistic standalone checks in staging after kickoff approval, repair failures, and present only after the check passes.
-- Hide the terminal only for blocking kickoff questions/approval; keep it visible beside candidate previews and the tester interface.
-- Present read-only execution code, manifest, executable requirements, structured logs, and candidate status for review.
-- Run the generated HTML/JS tester inside a sandboxed iframe with a controlled host bridge.
-- Treat kickoff approval as authorization for bounded standalone checks; require a separate tester approval for the final reviewed revision.
-- Save only the reviewed candidate revision.
+- Explicit Stop and New session controls for the one active in-memory Codex terminal.
+- Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 
 Acceptance checks:
 

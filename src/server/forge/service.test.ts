@@ -75,6 +75,24 @@ describe("Forge terminal sessions", () => {
     expect(pty.kill).not.toHaveBeenCalled();
   });
 
+  it("stops the active terminal explicitly", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const pty = fakePty();
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      root,
+      () => pty.value,
+      async () => undefined,
+    );
+    const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
+
+    expect(service.stop(sessionId)).toBe(true);
+    expect(pty.kill).toHaveBeenCalledOnce();
+    expect(service.getActiveSession()).toEqual({ sessionId: null });
+    expect(service.stop(sessionId)).toBe(false);
+  });
+
   it("keeps only the newest Forge session in memory", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
     roots.push(root);

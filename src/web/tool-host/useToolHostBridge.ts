@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import type { JobStatus } from "../../server/jobs/types";
 
 const runMessageSchema = z.object({
   source: z.literal("scriptforge-tool"),
@@ -30,9 +31,11 @@ export function useToolHostBridge({
 }) {
   const [listening, setListening] = useState(false);
   const [hostError, setHostError] = useState<string>();
+  const [jobStatus, setJobStatus] = useState<JobStatus>();
   const [diagnostics, setDiagnostics] = useState<Array<{ id: string; message: string }>>([]);
 
   useEffect(() => {
+    setJobStatus(undefined);
     let socket: WebSocket | undefined;
     let diagnosticId = 0;
     const record = (message: string) =>
@@ -60,6 +63,7 @@ export function useToolHostBridge({
         try {
           const payload = JSON.parse(String(event.data));
           record(`Received job event ${String(payload.type)}`);
+          if (payload.type === "status") setJobStatus(payload.status as JobStatus);
           post(payload);
         } catch {
           fail("ScriptForge received an invalid job event.");
@@ -80,6 +84,7 @@ export function useToolHostBridge({
       const parsed = runMessageSchema.safeParse(event.data);
       if (!parsed.success) return fail("The tool interface sent an invalid run request.");
       setHostError(undefined);
+      setJobStatus("queued");
       record(`Run request validated with ${parsed.data.files.length} file(s)`);
       post({ type: "accepted" });
       try {
@@ -98,7 +103,7 @@ export function useToolHostBridge({
     };
   }, [iframeRef, startJob]);
 
-  return { listening, hostError, diagnostics };
+  return { listening, hostError, diagnostics, jobStatus };
 }
 
 export function normalizeToolFile(file: ToolRunMessage["files"][number]) {

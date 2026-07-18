@@ -36,6 +36,7 @@ type ForgeSession = {
   panelVersion: number;
   directory: string;
   candidate?: ForgeCandidateDocument;
+  candidateJobs: Map<string, string>;
 };
 
 export class ForgeSessionService {
@@ -77,6 +78,7 @@ export class ForgeSessionService {
       mcpToken,
       panelVersion: 0,
       directory,
+      candidateJobs: new Map(),
     };
     this.session = session;
     pty.onData((data) => this.emit(session, { type: "output", data }));
@@ -143,7 +145,18 @@ export class ForgeSessionService {
     return {
       directory: session.directory,
       manifest: toolManifestSchema.parse(JSON.parse(current.manifestSource)),
+      candidate: current,
     };
+  }
+
+  trackCandidateJob(sessionId: string, revision: string, jobId: string) {
+    const session = this.activeSession(sessionId);
+    if (session.candidate?.revision !== revision) throw new Error("That candidate revision is no longer current.");
+    session.candidateJobs.set(revision, jobId);
+  }
+
+  getCandidateJob(sessionId: string, revision: string) {
+    return this.activeSession(sessionId).candidateJobs.get(revision);
   }
 
   sendFeedback(sessionId: string, text: string, dismiss = true) {
@@ -159,8 +172,10 @@ export class ForgeSessionService {
 
   stop(sessionId: string) {
     const session = this.find(sessionId);
-    if (!session || session.exited) return;
+    if (!session || session.exited) return false;
     session.pty.kill();
+    session.exited = true;
+    return true;
   }
 
   private activeSession(sessionId: string) {

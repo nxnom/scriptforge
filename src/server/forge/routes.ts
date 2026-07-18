@@ -2,6 +2,8 @@ import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
+import { installTool } from "../../tools/installed";
+import { findBundledTool } from "../../tools/registry";
 import type { ToolJobService } from "../jobs/service";
 import type { ForgeSessionService } from "./service";
 import {
@@ -25,8 +27,9 @@ const feedbackSchema = z.object({
   text: z.string().trim().min(1).max(64_000),
   dismiss: z.boolean().optional(),
 });
+const candidateRevisionSchema = z.object({ revision: z.string().regex(/^[a-f0-9]{64}$/) });
 
-export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJobService) {
+export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJobService, installedToolsRoot?: string) {
   return new Hono()
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
     .post(
@@ -55,10 +58,47 @@ export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJob
             directory: runtime.directory,
             manifest: runtime.manifest,
           });
+          service.trackCandidateJob(c.req.param("sessionId"), request.revision, result.jobId);
           return c.json({ ok: true as const, ...result }, 202);
         } catch (error) {
           return c.json(
             { ok: false as const, error: error instanceof Error ? error.message : "The candidate could not start." },
+            409,
+          );
+        }
+      },
+    )
+    .post(
+      "/sessions/:sessionId/candidate/save",
+      validator("json", (value, c) => {
+        const parsed = candidateRevisionSchema.safeParse(value);
+        return parsed.success
+          ? parsed.data
+          : c.json({ ok: false as const, error: "The candidate revision is invalid." }, 400);
+      }),
+      async (c) => {
+        try {
+          const sessionId = c.req.param("sessionId");
+          const revision = c.req.valid("json").revision;
+          const runtime = await service.getCandidateRuntime(sessionId, revision);
+          if (findBundledTool(runtime.manifest.id)) throw new Error("A bundled tool already uses that name.");
+          const jobId = service.getCandidateJob(sessionId, revision);
+          if (!jobId || jobs.getSnapshot(jobId)?.status !== "succeeded") {
+            throw new Error("Run this exact candidate successfully in Preview before saving it.");
+          }
+          const installed = await installTool(
+            {
+              manifest: runtime.manifest,
+              manifestSource: runtime.candidate.manifestSource,
+              scriptSource: runtime.candidate.scriptSource,
+              interfaceHtml: runtime.candidate.interfaceHtml,
+            },
+            installedToolsRoot,
+          );
+          return c.json({ ok: true as const, tool: { id: installed.manifest.id, name: installed.manifest.name } }, 201);
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: error instanceof Error ? error.message : "The candidate could not be saved." },
             409,
           );
         }
@@ -145,7 +185,13 @@ export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJob
           );
         }
       },
-    );
+    )
+    .delete("/sessions/:sessionId", (c) => {
+      const stopped = service.stop(c.req.param("sessionId"));
+      return stopped
+        ? c.json({ ok: true as const })
+        : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
+    });
 }
 
 export function createForgeWebSocketRoutes(service: ForgeSessionService) {

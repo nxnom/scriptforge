@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { z } from "zod";
 import { resolveBundledToolDirectory } from "../../tools/directory";
+import { defaultInstalledToolsRoot, findInstalledTool } from "../../tools/installed";
 import type { ToolManifest } from "../../tools/manifest";
 import { findBundledTool } from "../../tools/registry";
 import type { ToolJobEvent, ToolJobSnapshot, ToolOutput } from "./types";
@@ -60,16 +61,20 @@ export class ToolJobService {
   constructor(
     private readonly jobsRoot = join(homedir(), ".scriptforge", "jobs"),
     private readonly toolsRoot?: string,
+    private readonly installedToolsRoot = defaultInstalledToolsRoot(),
   ) {}
 
   async start({ toolId, input, files }: StartJobInput) {
     const manifest = findBundledTool(toolId);
-    if (!manifest) throw new Error("That tool is not installed.");
-    return this.startResolved(
-      { toolId, input, files },
-      resolveBundledToolDirectory(toolId, this.toolsRoot),
-      manifest.script,
-    );
+    if (manifest)
+      return this.startResolved(
+        { toolId, input, files },
+        resolveBundledToolDirectory(toolId, this.toolsRoot),
+        manifest.script,
+      );
+    const installed = await findInstalledTool(toolId, this.installedToolsRoot);
+    if (!installed) throw new Error("That tool is not installed.");
+    return this.startResolved({ toolId, input, files }, installed.directory, installed.manifest.script);
   }
 
   async startCandidate({ toolId, input, files, directory, manifest }: StartCandidateJobInput) {
@@ -132,11 +137,15 @@ export class ToolJobService {
     return { output, data: await readFile(output.path) };
   }
 
-  getToolUi(toolId: string) {
+  async getToolUi(toolId: string) {
     const manifest = findBundledTool(toolId);
-    if (manifest?.interface.type !== "html") return;
-    const directory = resolveBundledToolDirectory(toolId, this.toolsRoot);
-    return readFile(join(directory, manifest.interface.entry), "utf8");
+    if (manifest?.interface.type === "html") {
+      const directory = resolveBundledToolDirectory(toolId, this.toolsRoot);
+      return readFile(join(directory, manifest.interface.entry), "utf8");
+    }
+    const installed = await findInstalledTool(toolId, this.installedToolsRoot);
+    if (installed?.manifest.interface.type !== "html") return;
+    return readFile(join(installed.directory, installed.manifest.interface.entry), "utf8");
   }
 
   private async execute(job: JobRecord, request: unknown) {

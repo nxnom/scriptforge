@@ -1,5 +1,5 @@
-import { Button, Dialog } from "@geckoui/geckoui";
-import { Bot, Hammer, ShieldCheck, TerminalSquare } from "lucide-react";
+import { Button, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
+import { Bot, Hammer, ShieldCheck, Square, TerminalSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { useRead, useWrite } from "../api";
@@ -18,6 +18,7 @@ export function ForgePage() {
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
   const startForge = useWrite((api) => api("forge/sessions").POST());
+  const stopForge = useWrite((api) => api("forge/sessions/:sessionId").DELETE());
   const restoredSessionId = activeSession.data?.sessionId ?? undefined;
   const visibleSessionId = sessionId ?? (restoredSessionId !== endedSessionId ? restoredSessionId : undefined);
 
@@ -60,6 +61,15 @@ export function ForgePage() {
     setCandidate(next);
     setPanel(null);
   }, []);
+  const stopSession = async () => {
+    if (!visibleSessionId) return;
+    const response = await stopForge.trigger({ params: { sessionId: visibleSessionId } });
+    if (!response.data?.ok) {
+      toast.error(forgeError(response.error));
+      return;
+    }
+    endSession(visibleSessionId);
+  };
 
   return (
     <section className="flex h-[calc(100dvh-52px)] min-h-0 flex-col gap-4 overflow-hidden max-[760px]:h-[calc(100dvh-88px)] max-[560px]:h-[calc(100dvh-80px)]">
@@ -68,9 +78,16 @@ export function ForgePage() {
           <h1 className="m-0 font-[Geist_Variable] text-2xl">Forge</h1>
           <p className="mt-1 mb-0 text-xs text-[#929292]">Build a focused local tool with the interactive Codex CLI.</p>
         </div>
-        <Button size="sm" onClick={openPreflight}>
-          <Hammer size={14} /> Configure forge
-        </Button>
+        <div className="flex items-center gap-2">
+          {visibleSessionId && (
+            <LoadingButton variant="ghost" size="sm" loading={stopForge.loading} onClick={stopSession}>
+              <Square size={12} /> Stop session
+            </LoadingButton>
+          )}
+          <Button size="sm" onClick={openPreflight}>
+            <Hammer size={14} /> {visibleSessionId ? "New session" : "Start session"}
+          </Button>
+        </div>
       </header>
 
       {visibleSessionId ? (
@@ -114,6 +131,9 @@ export function ForgePage() {
                 <ShieldCheck size={12} /> {preferences.effort} effort
               </span>
             </div>
+            <Button size="sm" onClick={openPreflight}>
+              <Hammer size={14} /> Start new session
+            </Button>
           </div>
         </div>
       )}

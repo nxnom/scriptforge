@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
 import { listBundledTools } from "../tools/registry";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
 import { createForgeApiRoutes, createForgeWebSocketRoutes } from "./forge/routes";
@@ -72,6 +73,7 @@ export function createApiRoutes(
   jobService: ToolJobService,
   forgeSessions: ForgeSessionService,
   codexStatus: CodexStatusChecker = new CodexStatusService(),
+  installedToolsRoot = defaultInstalledToolsRoot(),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -81,8 +83,13 @@ export function createApiRoutes(
         version: "0.1.0",
       }),
     )
-    .get("/tools", (c) =>
-      c.json({
+    .get("/tools", async (c) => {
+      const installed = await listInstalledTools(installedToolsRoot);
+      const availableIds = new Set([
+        ...listBundledTools().map((tool) => tool.id),
+        ...installed.map((tool) => tool.manifest.id),
+      ]);
+      return c.json({
         tools: [
           ...listBundledTools().map(({ id, name, description, category, icon }) => ({
             id,
@@ -92,12 +99,20 @@ export function createApiRoutes(
             icon,
             status: "ready" as const,
           })),
-          ...plannedTools,
+          ...installed.map(({ manifest: { id, name, description, category, icon } }) => ({
+            id,
+            name,
+            description,
+            category,
+            icon,
+            status: "ready" as const,
+          })),
+          ...plannedTools.filter((tool) => !availableIds.has(tool.id)),
         ],
-      }),
-    )
+      });
+    })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
-    .route("/forge", createForgeApiRoutes(forgeSessions, jobService))
+    .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
@@ -118,13 +133,15 @@ export function createApp(
     stagingRoot?: string;
     codexStatus?: CodexStatusChecker;
     forgeSessions?: ForgeSessionService;
+    installedToolsRoot?: string;
   } = {},
 ) {
-  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot);
+  const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
+  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot, installedToolsRoot);
   const codexStatus = options.codexStatus ?? new CodexStatusService();
   const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
   const app = new Hono()
-    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus))
+    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot))
     .route("/", createJobWebSocketRoutes(jobService))
     .route("/", createForgeWebSocketRoutes(forgeSessions));
 

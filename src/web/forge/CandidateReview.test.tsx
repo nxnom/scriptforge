@@ -9,6 +9,7 @@ describe("CandidateReview", () => {
 
     expect(screen.getByTitle("Tiny Tool interface preview")).toBeVisible();
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save tool" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/changes/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Tiny Tool")).not.toBeInTheDocument();
