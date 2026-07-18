@@ -23,6 +23,16 @@ Write newline-delimited JSON events to stdout:
 
 Choose the result shape for the actual tool. Use data for information, live readings, analysis, or other results that do not naturally create a file. Use outputs only when the tool genuinely creates downloadable files; never invent snapshots or files merely to satisfy the contract. Write real file outputs inside request.outputDir. Revalidate all input in run.mjs. Emit useful startup, major-stage, completion, and failure logs. Emit result only after its data is ready and every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
 
+export const uiStyleGuide = `Unless the user explicitly requests another visual style, make ui.html look native to ScriptForge:
+- Use a compact dark theme with #151515 page background, #1d1d1d or #242424 surfaces, #343434 borders, near-white primary text, #929292 muted text, and white primary buttons with dark text. Use system-ui fonts.
+- Treat the tester as a narrow utility panel, not a marketing page. Use a short 18-22px title and at most one brief description line. Do not add eyebrow labels, hero copy, oversized headings, decorative introductions, or repeated explanations.
+- Use 12-16px outer padding, 8-12px gaps, compact controls, and restrained card padding. Avoid large empty areas. Keep file selection, essential controls, status, and the primary action visible in the first panel viewport whenever practical.
+- Make the layout responsive down to 360px. Do not require horizontal scrolling. Avoid fixed page heights and large minimum heights; let only result collections grow and scroll when needed.
+- An empty file picker may be a compact drop zone. As soon as files are selected, replace that empty drop zone in the same space with compact thumbnails or a file row plus Change/Add and Remove actions. Never keep a large Choose files area above a second duplicate selected-file preview.
+- Reveal results in the existing layout or a compact section. Use a grid or list appropriate to the data, truncate long filenames, and keep primary result actions easy to reach.
+- Show loading, progress, success, and failure without shifting the whole layout unnecessarily. Keep diagnostics and verbose logs collapsed unless they are needed.
+Use ordinary CSS in ui.html; Tailwind is unavailable.`;
+
 export const uiBridgeGuide = `ui.html installs its message listener before sending:
 parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*")
 

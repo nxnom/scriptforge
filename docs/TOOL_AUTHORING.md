@@ -12,6 +12,20 @@ Each tool contains:
 
 Generated interfaces do not use React, GeckoUI, npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access.
 
+## Default visual system
+
+Unless the user explicitly requests a different style, generated tools use ScriptForge's compact dark visual system:
+
+- Page background `#151515`; surfaces `#1d1d1d` or `#242424`; borders `#343434`; near-white primary text; muted text `#929292`; white primary actions with dark text; system UI fonts.
+- Treat the iframe as a narrow utility panel rather than a marketing page. Use a short 18–22px title and no more than one brief description line. Do not add eyebrow labels, hero copy, oversized headings, decorative introductions, or repeated explanations.
+- Use 12–16px outer padding, 8–12px gaps, compact controls, and restrained card padding. Keep file selection, essential controls, status, and the primary action in the first visible panel viewport whenever practical.
+- Remain usable at 360px wide without horizontal scrolling. Avoid fixed page heights, large minimum heights, and large empty areas. Result collections may grow or scroll as needed.
+- Once files are selected, replace the empty drop zone in the same footprint with compact thumbnails or file rows and Change/Add and Remove actions. Do not retain a large empty “Choose files” area above a duplicate selected-file preview.
+- Reveal results in the existing layout or a compact result section. Truncate long filenames and keep result actions easy to reach.
+- Show loading, progress, success, and failure without unnecessary layout shifts. Keep verbose logs collapsed unless needed.
+
+Generated interfaces use ordinary CSS because their runtime HTML cannot depend on the React application's Tailwind build.
+
 ## Host bridge
 
 The interface and ScriptForge shell communicate only with `window.postMessage`.
@@ -63,6 +77,9 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 
 - The interface reaches its `ready` handshake after listeners are installed.
 - Clicking the primary action immediately shows a local loading state.
+- The default UI matches ScriptForge's compact dark theme unless the user requested another style.
+- Essential controls and the primary action fit in the initial tester viewport whenever practical.
+- Selecting files replaces the empty picker instead of creating a second, duplicate file-preview area.
 - Selected files cross the bridge as `ArrayBuffer` descriptors.
 - Inputs are validated again by the execution script; the UI is not trusted.
 - Progress and logs describe the real execution stages.

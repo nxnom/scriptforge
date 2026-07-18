@@ -18,6 +18,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("Write newline-delimited JSON events");
     expect(client.getInstructions()).toContain("You may execute commands, run the candidate");
     expect(client.getInstructions()).toContain("Only after that standalone check passes");
+    expect(client.getInstructions()).toContain("Treat the tester as a narrow utility panel");
+    expect(client.getInstructions()).toContain("replace that empty drop zone in the same space");
+    expect(client.getInstructions()).toContain("#151515 page background");
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([

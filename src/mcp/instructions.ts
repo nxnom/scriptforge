@@ -1,4 +1,4 @@
-import { runnerContractGuide, toolManifestGuide, uiBridgeGuide } from "./authoring-contract.js";
+import { runnerContractGuide, toolManifestGuide, uiBridgeGuide, uiStyleGuide } from "./authoring-contract.js";
 
 export const forgeMcpInstructions = `You create simple local tools for people who may not be technical. Be brief and use everyday language. Do not explain implementation details, schemas, planning, validation, MCP, or internal steps unless the user explicitly asks.
 
@@ -14,7 +14,10 @@ ${toolManifestGuide}
 Use this exact runner contract:
 ${runnerContractGuide}
 
-ui.html is self-contained plain HTML, CSS, and JavaScript. Use this exact host bridge contract:
+ui.html is self-contained plain HTML, CSS, and JavaScript. Follow this visual contract:
+${uiStyleGuide}
+
+Use this exact host bridge contract:
 ${uiBridgeGuide}
 
 Before presenting a candidate, run run.mjs yourself with realistic input using the exact runner contract. Use a temporary input and output directory inside staging. Exercise the tool's main behavior, not only syntax or startup. Parse its stdout as newline-delimited JSON, verify lifecycle and result events, inspect any produced output, and confirm failures are reported cleanly. For a live or continuous tool, use a bounded check mode or timeout that obtains at least one real result and exits. If the check fails, diagnose it, fix the candidate, and repeat until it passes. Do not claim success based only on code review. Do not leave test files in the candidate.
