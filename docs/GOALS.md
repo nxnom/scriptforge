@@ -66,7 +66,7 @@ Completed and verified:
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
 - One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
-- Blocking, validated question and approval panels that replace the terminal while Codex waits.
+- Blocking, validated question panels with separate Markdown, Mermaid, HTML, and input blocks that replace the terminal while Codex waits.
 - Staging-file candidate discovery with sandboxed `ui.html` preview and read-only `run.mjs` and `tool.json` review.
 
 Remaining in this goal:

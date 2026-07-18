@@ -2,10 +2,14 @@ import { ShieldAlert } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ForgePanelBlock } from "../../server/forge/types";
+import { MermaidBlock } from "./MermaidBlock";
 import { ShadowHtmlBlock } from "./ShadowHtmlBlock";
 
 export function PanelBlockRenderer({ block }: { block: ForgePanelBlock }) {
   if (block.type === "html") return <ShadowHtmlBlock body={block.body} />;
+  if (block.type === "diagram") {
+    return <MermaidBlock id={block.id} source={block.source} caption={block.caption} />;
+  }
   if (block.type === "approval") {
     return (
       <div className="rounded-xl border border-[#614f2e] bg-[#2a2419] p-3">

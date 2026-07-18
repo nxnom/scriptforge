@@ -28,6 +28,13 @@ describe("ScriptForge MCP server", () => {
         title: "Pick a format",
         blocks: [
           {
+            id: "flow",
+            type: "diagram",
+            format: "mermaid",
+            source: "flowchart LR; Input-->Output",
+            caption: "What the tool will do",
+          },
+          {
             id: "format",
             type: "question",
             prompt: "Which format?",

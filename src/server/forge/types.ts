@@ -56,6 +56,13 @@ export const forgePanelRequestSchema = z
           z.object({ id: z.string().min(1).max(80), type: z.literal("html"), body: z.string().max(80_000) }),
           z.object({
             id: z.string().min(1).max(80),
+            type: z.literal("diagram"),
+            format: z.literal("mermaid"),
+            source: z.string().min(1).max(40_000),
+            caption: z.string().max(500).optional(),
+          }),
+          z.object({
+            id: z.string().min(1).max(80),
             type: z.literal("question"),
             prompt: z.string().min(1).max(1_000),
             input: panelQuestionSchema,

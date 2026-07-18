@@ -15,7 +15,7 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers) {
     {
       title: "Show ScriptForge panel",
       description:
-        "Use only when essential user clarification is required. Replaces the terminal with up to three short questions and an Approve & start action. Never use it for plans, status, implementation details, or summaries. Optional HTML suggestions use ordinary CSS in a Shadow DOM and no JavaScript.",
+        "Use only when essential user clarification is required. Replaces the terminal with ordered markdown, Mermaid diagram, CSS-styled HTML mockup, and interactive question blocks plus an Approve & start action. Ask every genuinely necessary question, but never use this for unsolicited plans, status, implementation details, or summaries. Mermaid belongs in a diagram block, not Markdown. HTML runs in a Shadow DOM with ordinary CSS and no JavaScript.",
       inputSchema: forgePanelRequestSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
