@@ -39,7 +39,7 @@ Acceptance checks:
 
 ## Goal 2 — Image Resizer End to End
 
-Status: Pending
+Status: Complete
 
 - Define the minimal internal tool manifest and registry.
 - Ship one bundled image-resizer tool using `sharp`.
