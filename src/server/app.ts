@@ -4,6 +4,8 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { listBundledTools } from "../tools/registry";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
+import { createForgeApiRoutes, createForgeWebSocketRoutes } from "./forge/routes";
+import { ForgeSessionService } from "./forge/service";
 import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
 import { ToolJobService } from "./jobs/service";
 
@@ -68,6 +70,7 @@ const plannedTools = [
 
 export function createApiRoutes(
   jobService: ToolJobService,
+  forgeSessions: ForgeSessionService,
   codexStatus: CodexStatusChecker = new CodexStatusService(),
 ) {
   return new Hono()
@@ -94,21 +97,36 @@ export function createApiRoutes(
       }),
     )
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
+    .route("/forge", createForgeApiRoutes(forgeSessions))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
-export const apiRoutes = createApiRoutes(new ToolJobService());
+const defaultCodexStatus = new CodexStatusService();
+export const apiRoutes = createApiRoutes(
+  new ToolJobService(),
+  new ForgeSessionService(defaultCodexStatus),
+  defaultCodexStatus,
+);
 
 export type ApiRoutes = typeof apiRoutes;
 
 export function createApp(
   webRoot?: string,
-  options: { jobsRoot?: string; toolsRoot?: string; codexStatus?: CodexStatusChecker } = {},
+  options: {
+    jobsRoot?: string;
+    toolsRoot?: string;
+    stagingRoot?: string;
+    codexStatus?: CodexStatusChecker;
+    forgeSessions?: ForgeSessionService;
+  } = {},
 ) {
   const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot);
+  const codexStatus = options.codexStatus ?? new CodexStatusService();
+  const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
   const app = new Hono()
-    .route("/api", createApiRoutes(jobService, options.codexStatus))
-    .route("/", createJobWebSocketRoutes(jobService));
+    .route("/api", createApiRoutes(jobService, forgeSessions, codexStatus))
+    .route("/", createJobWebSocketRoutes(jobService))
+    .route("/", createForgeWebSocketRoutes(forgeSessions));
 
   if (webRoot) {
     app.use("/*", serveStatic({ root: webRoot }));

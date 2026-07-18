@@ -1,9 +1,12 @@
+import { Spinner } from "@geckoui/geckoui";
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
-import { ForgePage } from "./pages/ForgePage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { ToolPage } from "./pages/ToolPage";
+
+const ForgePage = lazy(() => import("./pages/ForgePage").then((module) => ({ default: module.ForgePage })));
 
 export function App() {
   return (
@@ -11,7 +14,14 @@ export function App() {
       <Route element={<AppLayout />}>
         <Route index element={<LibraryPage />} />
         <Route path="tools/:toolId" element={<ToolPage />} />
-        <Route path="forge" element={<ForgePage />} />
+        <Route
+          path="forge"
+          element={
+            <Suspense fallback={<Spinner className="m-auto" />}>
+              <ForgePage />
+            </Suspense>
+          }
+        />
         <Route
           path="settings"
           element={<PlaceholderPage title="Settings" description="Settings will grow with the local runtime." />}

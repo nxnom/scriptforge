@@ -29,4 +29,15 @@ describe("local API", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, ...(await codexStatus.check()) });
   });
+
+  it("rejects unsupported Forge model selections before starting a terminal", async () => {
+    const response = await createApp().request("/api/forge/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "unexpected-model", effort: "medium" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ ok: false });
+  });
 });

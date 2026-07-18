@@ -1,0 +1,95 @@
+import { upgradeWebSocket } from "@hono/node-server";
+import { Hono } from "hono";
+import { validator } from "hono/validator";
+import { z } from "zod";
+import type { ForgeSessionService } from "./service";
+import { type ForgeServerEvent, forgeEfforts, forgeModels } from "./types";
+
+const preferencesSchema = z.object({ model: z.enum(forgeModels), effort: z.enum(forgeEfforts) });
+const clientEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("input"), data: z.string().max(64_000) }),
+  z.object({
+    type: z.literal("resize"),
+    cols: z.number().int().min(2).max(1_000),
+    rows: z.number().int().min(1).max(500),
+  }),
+]);
+
+export function createForgeApiRoutes(service: ForgeSessionService) {
+  return new Hono()
+    .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
+    .post(
+      "/sessions",
+      validator("json", (value, c) => {
+        const parsed = preferencesSchema.safeParse(value);
+        return parsed.success
+          ? parsed.data
+          : c.json({ ok: false as const, error: "Choose a valid model and effort." }, 400);
+      }),
+      async (c) => {
+        try {
+          return c.json({ ok: true as const, ...(await service.start(c.req.valid("json"))) }, 201);
+        } catch (error) {
+          return c.json(
+            {
+              ok: false as const,
+              error: error instanceof Error ? error.message : "The Forge terminal could not start.",
+            },
+            400,
+          );
+        }
+      },
+    );
+}
+
+export function createForgeWebSocketRoutes(service: ForgeSessionService) {
+  return new Hono().get(
+    "/ws/forge/:sessionId",
+    upgradeWebSocket((c) => {
+      const sessionId = c.req.param("sessionId") ?? "";
+      let unsubscribe: (() => boolean) | undefined;
+      const disconnect = () => {
+        unsubscribe?.();
+        unsubscribe = undefined;
+      };
+      return {
+        onOpen(_event, socket) {
+          const snapshot = service.getSnapshot(sessionId);
+          if (!snapshot) {
+            socket.send(
+              JSON.stringify({
+                type: "error",
+                message: "That Forge session does not exist.",
+              } satisfies ForgeServerEvent),
+            );
+            socket.close(1008, "Unknown Forge session");
+            return;
+          }
+          unsubscribe = service.subscribe(sessionId, (event) => socket.send(JSON.stringify(event)));
+          for (const event of snapshot.events) socket.send(JSON.stringify(event));
+        },
+        onMessage(event, socket) {
+          try {
+            const parsed = clientEventSchema.safeParse(JSON.parse(String(event.data)));
+            if (!parsed.success) throw new Error("Invalid Forge terminal event.");
+            if (parsed.data.type === "input") service.write(sessionId, parsed.data.data);
+            else service.resize(sessionId, parsed.data.cols, parsed.data.rows);
+          } catch (error) {
+            socket.send(
+              JSON.stringify({
+                type: "error",
+                message: error instanceof Error ? error.message : "Invalid Forge terminal event.",
+              } satisfies ForgeServerEvent),
+            );
+          }
+        },
+        onClose() {
+          disconnect();
+        },
+        onError() {
+          disconnect();
+        },
+      };
+    }),
+  );
+}

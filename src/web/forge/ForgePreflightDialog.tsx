@@ -1,6 +1,7 @@
 import { Alert, Button, Label, LoadingButton, RHFError, RHFSelect, SelectOption, Spinner } from "@geckoui/geckoui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Copy, Hammer } from "lucide-react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useRead } from "../api";
 import {
@@ -14,10 +15,12 @@ import {
 
 type Props = {
   dismiss: () => void;
-  onContinue: (preferences: ForgePreferences) => void;
+  onContinue: (preferences: ForgePreferences) => Promise<void>;
 };
 
 export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
+  const [startError, setStartError] = useState<string>();
+  const [starting, setStarting] = useState(false);
   const status = useRead((api) => api("codex/status").GET(), { staleTime: 5_000 });
   const methods = useForm<ForgePreferences>({
     resolver: zodResolver(forgePreferencesSchema),
@@ -25,10 +28,17 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
   });
   const ready = Boolean(status.data?.installed && status.data.authenticated);
 
-  const submit = methods.handleSubmit((preferences) => {
-    saveForgePreferences(preferences);
-    onContinue(preferences);
-    dismiss();
+  const submit = methods.handleSubmit(async (preferences) => {
+    setStartError(undefined);
+    setStarting(true);
+    try {
+      await onContinue(preferences);
+      saveForgePreferences(preferences);
+      dismiss();
+    } catch (error) {
+      setStartError(error instanceof Error ? error.message : "The Forge terminal could not start.");
+      setStarting(false);
+    }
   });
 
   return (
@@ -47,6 +57,7 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
         </header>
 
         <CodexReadiness status={status} />
+        {startError && <Alert variant="error" condensed title="Forge could not start" description={startError} />}
 
         <div className="grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
           <div className="grid gap-1.5">
@@ -73,7 +84,12 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
           <Button type="button" variant="ghost" onClick={dismiss}>
             Cancel
           </Button>
-          <LoadingButton type="submit" disabled={!ready} loading={status.loading} loadingText="Checking Codex…">
+          <LoadingButton
+            type="submit"
+            disabled={!ready}
+            loading={status.loading || starting}
+            loadingText={starting ? "Starting Codex…" : "Checking Codex…"}
+          >
             Continue to Forge
           </LoadingButton>
         </footer>

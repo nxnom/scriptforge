@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { forgeEfforts, forgeModels } from "../../server/forge/types";
 
 export const modelOptions = [
   { value: "gpt-5.6-sol", label: "GPT-5.6 Sol (default)" },
@@ -11,11 +12,11 @@ export const modelOptions = [
   { value: "gpt-5.2", label: "GPT-5.2" },
 ] as const;
 
-export const effortOptions = ["minimal", "low", "medium", "high", "xhigh"] as const;
+export const effortOptions = forgeEfforts;
 
 export const forgePreferencesSchema = z.object({
-  model: z.enum(modelOptions.map(({ value }) => value) as [string, ...string[]]),
-  effort: z.enum(effortOptions),
+  model: z.enum(forgeModels),
+  effort: z.enum(forgeEfforts),
 });
 
 export type ForgePreferences = z.infer<typeof forgePreferencesSchema>;
