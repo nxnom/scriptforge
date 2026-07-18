@@ -83,6 +83,12 @@ export function PanelFeedbackForm({
           ))}
         </div>
         <div className="flex shrink-0 flex-col gap-3 border-[#333] border-t bg-[#1d1d1d] p-4">
+          {approval && (
+            <p className="m-0 text-[10px] leading-4 text-[#888]">
+              Approval lets Codex build and check this tool locally. System installs still ask first, and nothing is
+              saved to your library.
+            </p>
+          )}
           <RHFTextarea name="note" placeholder="Add feedback (required when requesting changes)" rows={2} />
           <RHFError name="note" />
           <div className="flex justify-end gap-2">
@@ -97,12 +103,12 @@ export function PanelFeedbackForm({
                   loading={form.formState.isSubmitting}
                   onClick={() => decide("approved")}
                 >
-                  {approval.approveLabel ?? "Approve & start"}
+                  {approval.approveLabel ?? "Approve, build & check"}
                 </LoadingButton>
               </>
             ) : (
               <LoadingButton type="submit" size="sm" loading={form.formState.isSubmitting}>
-                Approve &amp; start
+                Approve, build &amp; check
               </LoadingButton>
             )}
           </div>
@@ -147,10 +153,12 @@ function composeFeedback(panel: ForgePanelDocument, values: FeedbackValues) {
     const formatted = Array.isArray(answer) ? answer.join(", ") : answer;
     sections.push(`**${block.prompt}**\n${formatted || "(not answered)"}`);
   }
-  if (!values.decision) sections.push("**Approved. Start building now.**");
+  if (!values.decision) sections.push("**Approved. Build and run the standalone check now.**");
   if (values.decision)
     sections.push(
-      values.decision === "approved" ? "**Approved. Start building now.**" : "**Not approved. Revise the proposal.**",
+      values.decision === "approved"
+        ? "**Approved. Build and run the standalone check now.**"
+        : "**Not approved. Revise the proposal.**",
     );
   if (values.note.trim()) sections.push(values.note.trim());
   return sections.join("\n\n");

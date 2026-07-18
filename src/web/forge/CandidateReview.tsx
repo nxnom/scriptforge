@@ -1,4 +1,4 @@
-import { Code2, Eye, FileJson, PackageCheck } from "lucide-react";
+import { CheckCircle2, Code2, Eye, FileJson, PackageCheck } from "lucide-react";
 import { useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 
@@ -23,6 +23,10 @@ export function CandidateReview({ candidate }: { candidate: ForgeCandidateDocume
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-[#333] border-b px-4 py-3 text-[11px] leading-5 text-[#aaa]">
           <p className="m-0 line-clamp-2">{candidate.summary}</p>
+          <p className="mt-1.5 mb-0 flex items-start gap-1.5 text-[10px] text-[#9cc6a2]">
+            <CheckCircle2 className="mt-0.5 shrink-0" size={11} />
+            <span>Standalone check passed: {candidate.testSummary}</span>
+          </p>
           <p className="mt-1 mb-0 text-[10px] text-[#777]">
             {candidate.requiredExecutables.length
               ? `Needs ${candidate.requiredExecutables.map((item) => item.name).join(", ")}`

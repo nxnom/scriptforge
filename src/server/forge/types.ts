@@ -87,6 +87,7 @@ export const forgePanelRequestSchema = z
 
 export const forgeCandidateRequestSchema = z.object({
   summary: z.string().min(1).max(4_000),
+  testSummary: z.string().min(1).max(1_000),
   risks: z.array(z.string().min(1).max(1_000)).max(12).optional(),
 });
 

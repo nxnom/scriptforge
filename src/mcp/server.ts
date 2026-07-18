@@ -15,7 +15,7 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers) {
     {
       title: "Show ScriptForge panel",
       description:
-        "Required before creating a new candidate. Replace the terminal with a short, nontechnical description of what the user will get, any genuinely necessary questions, and an approval block labeled Approve & start / Request changes. Markdown, Mermaid diagrams, and CSS-styled HTML mockups may support the decision. Never include technical implementation details or use this for build progress. Mermaid belongs in a diagram block; HTML uses ordinary CSS in a Shadow DOM and no JavaScript.",
+        "Required before creating a new candidate. Replace the terminal with a short, nontechnical description of what the user will get, any genuinely necessary questions, and an approval block labeled Approve, build & check / Request changes. Explain that approval allows a local standalone check before review. Never include technical implementation details or use this for build progress.",
       inputSchema: forgePanelRequestSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -36,7 +36,7 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers) {
     {
       title: "Present ScriptForge candidate",
       description:
-        "Present the actual tool.json, run.mjs, and ui.html from staging after they are coherent. The preview opens beside the interactive terminal so revisions continue there. ScriptForge validates and reads the files; provide only a short user-facing summary and meaningful risks.",
+        "Present the actual tool.json, run.mjs, and ui.html from staging only after run.mjs passes a realistic standalone check. The preview opens beside the interactive terminal so revisions continue there. Provide a short user-facing summary, what was actually tested in testSummary, and meaningful risks.",
       inputSchema: forgeCandidateRequestSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },

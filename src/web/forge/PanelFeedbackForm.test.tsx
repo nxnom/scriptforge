@@ -14,13 +14,15 @@ describe("PanelFeedbackForm", () => {
       </PanelFeedbackForm>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Approve & start" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve, build & check" }));
     expect(await screen.findByText("This answer is required.")).toBeVisible();
     expect(onFeedback).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByPlaceholderText("Describe it"), { target: { value: "Use short names" } });
-    fireEvent.click(screen.getByRole("button", { name: "Approve & start" }));
-    await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("Use short names")));
+    fireEvent.click(screen.getByRole("button", { name: "Approve, build & check" }));
+    await waitFor(() =>
+      expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("Build and run the standalone check now")),
+    );
   });
 
   it("requires feedback before requesting kickoff changes", async () => {
@@ -70,7 +72,7 @@ function kickoffPanel(): ForgePanelDocument {
         type: "approval",
         title: "Create this tool?",
         description: "It will show the latest price and a small chart.",
-        approveLabel: "Approve & start",
+        approveLabel: "Approve, build & check",
         rejectLabel: "Request changes",
       },
     ],

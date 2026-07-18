@@ -13,12 +13,16 @@ afterEach(async () => {
 describe("Forge candidate reader", () => {
   it("loads and fingerprints the three review files", async () => {
     const root = await candidateDirectory();
-    const candidate = await readForgeCandidate(root, { summary: "Ready to review" });
+    const candidate = await readForgeCandidate(root, {
+      summary: "Ready to review",
+      testSummary: "Processed a sample successfully.",
+    });
 
     expect(candidate).toMatchObject({
       name: "Tiny Tool",
       requiredExecutables: [],
       summary: "Ready to review",
+      testSummary: "Processed a sample successfully.",
     });
     expect(candidate.revision).toMatch(/^[a-f0-9]{64}$/);
     expect(candidate.scriptSource).toContain("started");
@@ -32,16 +36,18 @@ describe("Forge candidate reader", () => {
     await rm(join(root, "run.mjs"));
     await symlink(outside, join(root, "run.mjs"));
 
-    await expect(readForgeCandidate(root, { summary: "Ready" })).rejects.toThrow("unsafe");
+    await expect(
+      readForgeCandidate(root, { summary: "Ready", testSummary: "Processed a sample successfully." }),
+    ).rejects.toThrow("unsafe");
   });
 
   it("returns the exact invalid manifest fields", async () => {
     const root = await candidateDirectory();
     await writeFile(join(root, "tool.json"), JSON.stringify({ name: "Incomplete" }));
 
-    await expect(readForgeCandidate(root, { summary: "Ready" })).rejects.toThrow(
-      /schemaVersion:.*id:.*version:.*requiredExecutables:/,
-    );
+    await expect(
+      readForgeCandidate(root, { summary: "Ready", testSummary: "Processed a sample successfully." }),
+    ).rejects.toThrow(/schemaVersion:.*id:.*version:.*requiredExecutables:/);
   });
 });
 

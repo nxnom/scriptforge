@@ -77,7 +77,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 1. Codex may create and modify candidate files only inside a dedicated staging directory before Save.
 2. Do not launch Codex with `--dangerously-bypass-approvals-and-sandbox`.
 3. Generating files in staging does not authorize executing them.
-4. Running candidate code, running candidate tests, installing executables, and saving a tool are explicit user-controlled actions.
+4. Approving the Forge kickoff explicitly authorizes Codex to run bounded standalone checks of the candidate inside staging. Installing executables and saving a tool remain separate explicit user-controlled actions.
 5. Installation commands are generated for the current machine at run time; they are never embedded in a shared or local tool manifest.
 6. A tool may invoke only the executables it declares. Surface undeclared executable attempts as errors.
 7. Generated browser code must not receive direct Node.js, shell, or unrestricted filesystem access.
@@ -134,7 +134,7 @@ If the repository is public, include an appropriate license and ensure no secret
 11. Do not implement postponed import/export work unless the project owner explicitly brings it back into scope.
 12. Keep React component and form modules focused and roughly 200 lines or fewer. Treat 250 lines as the maximum; split larger files by page, component, schema, or responsibility before adding more behavior.
 13. Build forms with React Hook Form, Zod schemas, `zodResolver`, and GeckoUI RHF components. Do not duplicate form state in ad-hoc `useState` hooks. Move substantial schemas and reusable field groups into their own focused files.
-14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. Candidate behavior is tested through an explicit user-approved run in the sandboxed tester iframe. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.
+14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. After kickoff approval, Codex must exercise the standalone runner with realistic temporary input, fix failures, rerun it, and report the successful check before presenting the candidate. The exact candidate revision is then tested through an explicit user-approved run in the sandboxed tester iframe before Save. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.
 15. Style the React ScriptForge shell with Tailwind utility classes directly in components. Keep global CSS limited to imports, design tokens, base element rules, and targeted GeckoUI theme overrides. Self-contained tool `ui.html` files may use ordinary CSS classes and do not depend on Tailwind.
 
 ## Evidence Log

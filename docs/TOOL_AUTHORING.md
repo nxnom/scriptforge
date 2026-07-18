@@ -59,6 +59,8 @@ Rules:
 
 ## Review checklist for a candidate
 
+Before opening the candidate preview, Codex runs `run.mjs` directly with a realistic request and temporary inputs inside staging. It parses the emitted JSON-line events, inspects real outputs, fixes any failure, and repeats the check until it passes. Live tools must complete a bounded check that obtains at least one real result. This check uses temporary data and commands rather than adding a test file to the tool package.
+
 - The interface reaches its `ready` handshake after listeners are installed.
 - Clicking the primary action immediately shows a local loading state.
 - Selected files cross the bridge as `ArrayBuffer` descriptors.
@@ -68,4 +70,5 @@ Rules:
 - Preview failures and run failures are visible inside the tool interface.
 - No generated browser code calls `fetch`, opens a WebSocket, or accesses Node.js or the filesystem.
 - The manifest declares every external executable the script may invoke.
+- The candidate presentation states what standalone check actually ran and what result was verified.
 - The exact reviewed candidate revision is the revision that is tested and saved.

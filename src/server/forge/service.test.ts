@@ -127,9 +127,15 @@ describe("Forge terminal sessions", () => {
     expect(service.publishPanel(sessionId, token, samplePanel())).toMatchObject({ version: 1, title: "Choose" });
 
     await writeCandidate(join(root, sessionId));
-    await expect(service.publishCandidate(sessionId, token, { summary: "Ready" })).resolves.toMatchObject({
+    await expect(
+      service.publishCandidate(sessionId, token, {
+        summary: "Ready",
+        testSummary: "Processed a sample successfully.",
+      }),
+    ).resolves.toMatchObject({
       name: "Tiny Tool",
       requiredExecutables: [],
+      testSummary: "Processed a sample successfully.",
     });
     expect(events).toContainEqual({ type: "candidate", candidate: expect.objectContaining({ name: "Tiny Tool" }) });
 

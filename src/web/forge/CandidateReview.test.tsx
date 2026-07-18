@@ -11,6 +11,7 @@ describe("CandidateReview", () => {
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/changes/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Standalone check passed: Processed a realistic sample.")).toBeVisible();
     expect(screen.getByText(/No extra apps needed.*Ask for changes in the terminal/)).toBeVisible();
   });
 });
@@ -20,6 +21,7 @@ function candidate(): ForgeCandidateDocument {
     name: "Tiny Tool",
     description: "Does one small thing.",
     summary: "A focused local utility.",
+    testSummary: "Processed a realistic sample.",
     requiredExecutables: [],
     manifestSource: "{}",
     scriptSource: "",
