@@ -19,6 +19,7 @@ The local application shell, bundled image-resizer workflow, and full MCP-guided
 - Codex CLI installation/authentication preflight with locally remembered model and effort choices
 - Real embedded Codex TUI launched in a staging directory using the user's Codex permission configuration, with terminal reconnection after browser refresh
 - Mandatory plain-language kickoff approval with required questions and separate Markdown, Mermaid, and HTML blocks
+- Behavior-aware kickoff discovery that resolves core automation, timing, and output decisions instead of silently narrowing the request
 - Side-by-side terminal and sandboxed candidate preview with read-only Script and Details tabs
 - Kickoff-authorized standalone runner checks before Codex can present a candidate
 - Candidate tester with lifecycle events, bridge diagnostics, zero-file runs, and data or file results

@@ -21,6 +21,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("Treat the tester as a narrow utility panel");
     expect(client.getInstructions()).toContain("replace that empty drop zone in the same space");
     expect(client.getInstructions()).toContain("#151515 page background");
+    expect(client.getInstructions()).toContain("A manual Refresh button alone does not satisfy a live-update request");
+    expect(client.getInstructions()).toContain("ask for the refresh interval");
+    expect(client.getInstructions()).toContain("Do not silently choose a simpler behavior");
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([

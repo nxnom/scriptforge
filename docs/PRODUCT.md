@@ -33,6 +33,8 @@ Generated tools follow the bridge, lifecycle, preview, and logging rules in [TOO
 
 The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls, actions, and result presentation appropriate to the specific task, such as live readings, tables, charts, drag-and-drop input, progress, before/after previews, playable media, genuine downloadable output, or metadata. Unless the user requests another style, generated interfaces use ScriptForge's compact dark visual system, avoid marketing-style introductions, keep the primary flow in the initial panel viewport when practical, and replace empty file drop zones with compact selected-file content instead of duplicating both states. Tools are not required to accept files or create a downloadable snapshot. The interface runs in a sandboxed iframe and communicates only through a controlled ScriptForge host bridge.
 
+Before building, Codex's kickoff panel asks every unresolved question that materially changes user-facing behavior and suggests a focused set of relevant options. Request terms such as “live,” “automatic,” “monitor,” and “sync” are treated as requirements rather than labels. For live tools, the kickoff resolves cadence and automatic versus Start/Pause behavior; a manual refresh-only result is rejected as incomplete.
+
 For the MVP, each tool uses a JavaScript `run.mjs` orchestration entrypoint. Node.js is already guaranteed by `npx scriptforge`, while the entrypoint may invoke any external executables declared by the tool.
 
 Tool packages do not contain generated test files. Candidate behavior is exercised through a user-approved run in the sandboxed tester iframe; ScriptForge itself tests the shared host bridge, runner, validation, and safety boundaries.

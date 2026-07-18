@@ -26,6 +26,17 @@ Unless the user explicitly requests a different style, generated tools use Scrip
 
 Generated interfaces use ordinary CSS because their runtime HTML cannot depend on the React application's Tailwind build.
 
+## Kickoff discovery
+
+Codex always presents a short plain-language kickoff panel before creating candidate files. Before showing it, Codex identifies every unresolved user-facing decision that would materially change the tool's behavior, automation, timing, inputs, outputs, destructive actions, data source, format, quality, or privacy.
+
+- Ask all behavior-changing questions together and require answers where needed. Do not silently choose an easier or narrower behavior.
+- Treat words such as “live,” “automatically,” “watch,” “monitor,” “sync,” “continuous,” “recurring,” and “update” as core requirements.
+- A live or monitoring tool must perform repeated automatic updates. If cadence or controls are unspecified, ask for the refresh interval and whether updates start automatically or use Start/Pause controls. A manual Refresh button alone is not a live-update implementation.
+- Suggest a small set of relevant optional features for the specific tool. Do not overwhelm a nontechnical user with unrelated possibilities.
+- Minor reversible defaults can be stated clearly in the proposal, but behavior-changing assumptions require a question or explicit approval.
+- Wait for the user's answers and approval before touching candidate files.
+
 ## Host bridge
 
 The interface and ScriptForge shell communicate only with `window.postMessage`.
@@ -76,6 +87,7 @@ Rules:
 Before opening the candidate preview, Codex runs `run.mjs` directly with a realistic request and temporary inputs inside staging. It parses the emitted JSON-line events, inspects real outputs, fixes any failure, and repeats the check until it passes. Live tools must complete a bounded check that obtains at least one real result. This check uses temporary data and commands rather than adding a test file to the tool package.
 
 - The interface reaches its `ready` handshake after listeners are installed.
+- The implemented behavior matches the user's request and every approved kickoff decision; “live” behavior is actually automatic and recurring.
 - Clicking the primary action immediately shows a local loading state.
 - The default UI matches ScriptForge's compact dark theme unless the user requested another style.
 - Essential controls and the primary action fit in the initial tester viewport whenever practical.
