@@ -66,8 +66,8 @@ Completed and verified:
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
 - One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
-- Blocking, validated question panels with separate Markdown, Mermaid, HTML, and input blocks that replace the terminal while Codex waits.
-- Staging-file candidate discovery with sandboxed `ui.html` preview and read-only `run.mjs` and `tool.json` review.
+- Mandatory plain-language kickoff approval with validated questions and separate Markdown, Mermaid, HTML, and input blocks that replace the terminal while Codex waits.
+- Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 
 Remaining in this goal:
 
@@ -80,7 +80,7 @@ Remaining in this goal:
 - Add the pre-Forge model/effort selector, persisted in browser `localStorage`.
 - Detect missing or unauthenticated Codex CLI and show setup guidance without blocking the library.
 - Generate candidate tool files only in staging.
-- Keep the terminal full-width by default and open a contextual side panel for MCP questions, approvals, and the tester interface.
+- Hide the terminal only for blocking kickoff questions/approval; keep it visible beside candidate previews and the future tester interface.
 - Present read-only execution code, manifest, executable requirements, structured logs, and candidate status for review.
 - Run the generated HTML/JS tester inside a sandboxed iframe with a controlled host bridge.
 - Require approval before candidate tests or execution.

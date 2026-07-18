@@ -55,11 +55,10 @@ export function ForgePage() {
   }, []);
   const showPanel = useCallback((next: ForgePanelDocument | null) => {
     setPanel(next);
-    if (next) setCandidate(null);
   }, []);
-  const showCandidate = useCallback((next: ForgeCandidateDocument | null) => {
+  const showCandidate = useCallback((next: ForgeCandidateDocument) => {
     setCandidate(next);
-    if (next) setPanel(null);
+    setPanel(null);
   }, []);
 
   return (
@@ -78,19 +77,16 @@ export function ForgePage() {
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {panel ? (
             <ForgeSidePanel sessionId={visibleSessionId} panel={panel} onResolved={() => setPanel(null)} />
-          ) : candidate ? (
-            <CandidateReview
-              sessionId={visibleSessionId}
-              candidate={candidate}
-              onRequestChanges={() => setCandidate(null)}
-            />
           ) : (
-            <ForgeTerminal
-              sessionId={visibleSessionId}
-              onSessionEnd={endSession}
-              onPanel={showPanel}
-              onCandidate={showCandidate}
-            />
+            <div className="flex min-h-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
+              <ForgeTerminal
+                sessionId={visibleSessionId}
+                onSessionEnd={endSession}
+                onPanel={showPanel}
+                onCandidate={showCandidate}
+              />
+              {candidate && <CandidateReview candidate={candidate} />}
+            </div>
           )}
         </div>
       ) : (

@@ -83,7 +83,8 @@ export function PanelFeedbackForm({
           ))}
         </div>
         <div className="flex shrink-0 flex-col gap-3 border-[#333] border-t bg-[#1d1d1d] p-4">
-          <RHFTextarea name="note" placeholder="Add feedback for Codex (optional)" rows={2} />
+          <RHFTextarea name="note" placeholder="Add feedback (required when requesting changes)" rows={2} />
+          <RHFError name="note" />
           <div className="flex justify-end gap-2">
             {approval ? (
               <>
@@ -96,7 +97,7 @@ export function PanelFeedbackForm({
                   loading={form.formState.isSubmitting}
                   onClick={() => decide("approved")}
                 >
-                  {approval.approveLabel ?? "Approve & continue"}
+                  {approval.approveLabel ?? "Approve & start"}
                 </LoadingButton>
               </>
             ) : (
@@ -113,8 +114,11 @@ export function PanelFeedbackForm({
 
 function createFeedbackSchema(panel: ForgePanelDocument) {
   return baseFeedbackSchema.superRefine((values, context) => {
+    if (values.decision === "rejected" && !values.note.trim()) {
+      context.addIssue({ code: "custom", path: ["note"], message: "Tell Codex what you want changed." });
+    }
     for (const block of panel.blocks) {
-      if (block.type !== "question" || !block.input.required) continue;
+      if (values.decision === "rejected" || block.type !== "question" || !block.input.required) continue;
       const answer = values.answers[block.input.name];
       if ((Array.isArray(answer) && answer.length > 0) || (typeof answer === "string" && answer.trim())) continue;
       context.addIssue({
@@ -146,7 +150,7 @@ function composeFeedback(panel: ForgePanelDocument, values: FeedbackValues) {
   if (!values.decision) sections.push("**Approved. Start building now.**");
   if (values.decision)
     sections.push(
-      values.decision === "approved" ? "**Approved. Continue now.**" : "**Not approved. Revise the plan.**",
+      values.decision === "approved" ? "**Approved. Start building now.**" : "**Not approved. Revise the proposal.**",
     );
   if (values.note.trim()) sections.push(values.note.trim());
   return sections.join("\n\n");

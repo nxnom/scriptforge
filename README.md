@@ -18,8 +18,8 @@ The local application shell, bundled image-resizer workflow, and MCP-guided Forg
 - Bundled Sharp image resizer with progress, structured logs, before/after previews, and local result download
 - Codex CLI installation/authentication preflight with locally remembered model and effort choices
 - Real embedded Codex TUI launched safely in a staging directory, with terminal reconnection after browser refresh
-- Blocking MCP questions with required-field validation and separate Markdown, Mermaid, and HTML presentation blocks
-- Actual staging-file review with sandboxed generated UI preview and read-only script and manifest tabs
+- Mandatory plain-language kickoff approval with required questions and separate Markdown, Mermaid, and HTML blocks
+- Side-by-side terminal and sandboxed candidate preview with read-only Script and Details tabs
 - Planned approved candidate execution, saving, and dependency Doctor
 
 ## Prerequisites
@@ -84,10 +84,10 @@ The bundled image resizer accepts a local PNG, JPEG, or WebP file, so no separat
 
 - **Track:** Apps for your life — ScriptForge lets people create focused local utilities for everyday files and workflows.
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
-- **GPT-5.6-powered features:** GPT-5.6 collaborates in the embedded Forge terminal, asks structured questions, requests plan approval, and creates staged tool candidates for plain-language, code, and UI review. Dependency diagnosis remains planned for Goal 4.
+- **GPT-5.6-powered features:** GPT-5.6 proposes each utility in plain language, asks structured questions when needed, waits for approval, and creates staged candidates for code and UI review beside the live terminal. Dependency diagnosis remains planned for Goal 4.
 - **Codex acceleration:** Codex helped define the safety model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the sandbox bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; blocking Forge panels replace the terminal while Codex waits; generated previews use a network-blocked sandboxed iframe; Node built-ins are preferred over external executables; execution and installation always require separate approval.
-- **Verification:** Biome checks, TypeScript typecheck, 25 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
+- **Key decisions:** Filesystem manifests instead of a database; localhost-only server; one server-owned in-memory Forge PTY; blocking kickoff panels temporarily replace the terminal; candidate previews stay beside the terminal so revisions use one conversation surface; generated previews use a network-blocked sandboxed iframe; execution and installation always require separate approval.
+- **Verification:** Biome checks, TypeScript typecheck, 27 automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness and CSP checks, npm package dry runs, a manual image resize/preview/download acceptance run, and manual Codex terminal input/resize/refresh-reconnect checks.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 ## Limitations and Future Work

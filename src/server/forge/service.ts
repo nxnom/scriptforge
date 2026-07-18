@@ -125,7 +125,6 @@ export class ForgeSessionService {
     session.pty.write(`\x1b[200~${text}\x1b[201~`);
     if (dismiss) {
       this.emit(session, { type: "panel", panel: null });
-      this.emit(session, { type: "candidate", candidate: null });
     }
     setTimeout(() => {
       if (!session.exited) session.pty.write("\r");

@@ -108,6 +108,6 @@ export type ForgeCandidateDocument = ForgeCandidateRequest & {
 export type ForgeServerEvent =
   | { type: "output"; data: string }
   | { type: "panel"; panel: ForgePanelDocument | null }
-  | { type: "candidate"; candidate: ForgeCandidateDocument | null }
+  | { type: "candidate"; candidate: ForgeCandidateDocument }
   | { type: "exit"; exitCode: number; signal?: number }
   | { type: "error"; message: string };

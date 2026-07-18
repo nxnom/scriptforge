@@ -10,7 +10,7 @@ type ForgeTerminalProps = {
   sessionId: string;
   onSessionEnd: (sessionId: string) => void;
   onPanel: (panel: ForgePanelDocument | null) => void;
-  onCandidate: (candidate: ForgeCandidateDocument | null) => void;
+  onCandidate: (candidate: ForgeCandidateDocument) => void;
 };
 
 export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }: ForgeTerminalProps) {
@@ -72,7 +72,7 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
             const message = JSON.parse(String(event.data));
             if (message.type === "output") terminal.write(String(message.data));
             if (message.type === "panel") onPanel(message.panel as ForgePanelDocument | null);
-            if (message.type === "candidate") onCandidate(message.candidate as ForgeCandidateDocument | null);
+            if (message.type === "candidate") onCandidate(message.candidate as ForgeCandidateDocument);
             if (message.type === "exit") {
               active = false;
               setConnection("exited");

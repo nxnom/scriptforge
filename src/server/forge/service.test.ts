@@ -138,7 +138,6 @@ describe("Forge terminal sessions", () => {
       service.sendFeedback(sessionId, "Use PNG");
       expect(pty.write).toHaveBeenCalledWith("\x1b[200~Use PNG\x1b[201~");
       expect(events).toContainEqual({ type: "panel", panel: null });
-      expect(events).toContainEqual({ type: "candidate", candidate: null });
       await vi.advanceTimersByTimeAsync(50);
       expect(pty.write).toHaveBeenCalledWith("\r");
     } finally {

@@ -15,7 +15,7 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers) {
     {
       title: "Show ScriptForge panel",
       description:
-        "Use only when essential user clarification is required. Replaces the terminal with ordered markdown, Mermaid diagram, CSS-styled HTML mockup, and interactive question blocks plus an Approve & start action. Ask every genuinely necessary question, but never use this for unsolicited plans, status, implementation details, or summaries. Mermaid belongs in a diagram block, not Markdown. HTML runs in a Shadow DOM with ordinary CSS and no JavaScript.",
+        "Required before creating a new candidate. Replace the terminal with a short, nontechnical description of what the user will get, any genuinely necessary questions, and an approval block labeled Approve & start / Request changes. Markdown, Mermaid diagrams, and CSS-styled HTML mockups may support the decision. Never include technical implementation details or use this for build progress. Mermaid belongs in a diagram block; HTML uses ordinary CSS in a Shadow DOM and no JavaScript.",
       inputSchema: forgePanelRequestSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -36,14 +36,19 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers) {
     {
       title: "Present ScriptForge candidate",
       description:
-        "Present the actual tool.json, run.mjs, and ui.html from staging after they are coherent. ScriptForge validates and reads the files; provide only a summary and unresolved risks.",
+        "Present the actual tool.json, run.mjs, and ui.html from staging after they are coherent. The preview opens beside the interactive terminal so revisions continue there. ScriptForge validates and reads the files; provide only a short user-facing summary and meaningful risks.",
       inputSchema: forgeCandidateRequestSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (candidate) => {
       await publish.candidate(candidate);
       return {
-        content: [{ type: "text", text: "The candidate review is visible. Wait for approval or requested changes." }],
+        content: [
+          {
+            type: "text",
+            text: "The candidate preview is visible beside the terminal. Continue the conversation there and present again after revisions.",
+          },
+        ],
       };
     },
   );
