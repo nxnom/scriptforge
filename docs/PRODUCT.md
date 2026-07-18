@@ -68,7 +68,7 @@ Generated HTML/JS tool UI
 
 The main application uses GeckoUI with Tailwind utility classes directly in React components. Generated tool interfaces intentionally use neither React nor GeckoUI: they are lightweight, self-contained HTML/CSS/JS authored for the tool.
 
-The Forge workspace displays the real interactive Codex TUI through xterm.js, with explicit Stop and New session controls. Its GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, then installs an atomic copy under `~/.scriptforge/tools`.
+The Forge workspace displays one real interactive Codex TUI through xterm.js. While that session is active the header offers Stop session; Start session is shown only when no session is active, so the interface never implies unsupported multi-session behavior. Its GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, then installs an atomic copy under `~/.scriptforge/tools`.
 
 ## Local Data
 

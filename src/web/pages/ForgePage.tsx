@@ -84,9 +84,11 @@ export function ForgePage() {
               <Square size={12} /> Stop session
             </LoadingButton>
           )}
-          <Button size="sm" onClick={openPreflight}>
-            <Hammer size={14} /> {visibleSessionId ? "New session" : "Start session"}
-          </Button>
+          {!visibleSessionId && (
+            <Button size="sm" onClick={openPreflight}>
+              <Hammer size={14} /> Start session
+            </Button>
+          )}
         </div>
       </header>
 

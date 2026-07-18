@@ -70,7 +70,7 @@ Completed and verified:
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
-- Explicit Stop and New session controls for the one active in-memory Codex terminal.
+- Explicit Stop control for the one active in-memory Codex terminal and Start session only when none is active.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 
 Acceptance checks:

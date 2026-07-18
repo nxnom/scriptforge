@@ -23,7 +23,7 @@ The local application shell, bundled image-resizer workflow, and full MCP-guided
 - Kickoff-authorized standalone runner checks before Codex can present a candidate
 - Candidate tester with lifecycle events, bridge diagnostics, zero-file runs, and data or file results
 - Exact tested-revision saving into the filesystem-backed library
-- Explicit Stop and New session controls for the embedded Codex terminal
+- Explicit Stop control while the single Codex terminal is active, followed by Start session when it ends
 - Planned dependency Doctor
 
 ## Prerequisites
