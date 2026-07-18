@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { listBundledTools } from "../tools/registry";
+import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
 import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
 import { ToolJobService } from "./jobs/service";
 
@@ -65,7 +66,10 @@ const plannedTools = [
   },
 ] as const;
 
-export function createApiRoutes(jobService: ToolJobService) {
+export function createApiRoutes(
+  jobService: ToolJobService,
+  codexStatus: CodexStatusChecker = new CodexStatusService(),
+) {
   return new Hono()
     .get("/health", (c) =>
       c.json({
@@ -89,6 +93,7 @@ export function createApiRoutes(jobService: ToolJobService) {
         ],
       }),
     )
+    .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
@@ -96,9 +101,14 @@ export const apiRoutes = createApiRoutes(new ToolJobService());
 
 export type ApiRoutes = typeof apiRoutes;
 
-export function createApp(webRoot?: string, options: { jobsRoot?: string; toolsRoot?: string } = {}) {
+export function createApp(
+  webRoot?: string,
+  options: { jobsRoot?: string; toolsRoot?: string; codexStatus?: CodexStatusChecker } = {},
+) {
   const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot);
-  const app = new Hono().route("/api", createApiRoutes(jobService)).route("/", createJobWebSocketRoutes(jobService));
+  const app = new Hono()
+    .route("/api", createApiRoutes(jobService, options.codexStatus))
+    .route("/", createJobWebSocketRoutes(jobService));
 
   if (webRoot) {
     app.use("/*", serveStatic({ root: webRoot }));
