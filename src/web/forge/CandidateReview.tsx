@@ -60,7 +60,8 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
             </TabButton>
           </div>
           <LoadingButton
-            size="sm"
+            variant="outlined"
+            size="xs"
             loading={saveCandidate.loading}
             disabled={bridge.jobStatus !== "succeeded" || saved}
             title={bridge.jobStatus === "succeeded" ? undefined : "Run this candidate successfully in Preview first"}

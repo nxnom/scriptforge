@@ -9,7 +9,10 @@ describe("CandidateReview", () => {
 
     expect(screen.getByTitle("Tiny Tool interface preview")).toBeVisible();
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Save tool" })).toBeDisabled();
+    const saveButton = screen.getByRole("button", { name: "Save tool" });
+    expect(saveButton).toBeDisabled();
+    expect(saveButton).toHaveAttribute("data-variant", "outlined");
+    expect(saveButton).toHaveAttribute("data-size", "xs");
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/changes/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Tiny Tool")).not.toBeInTheDocument();
