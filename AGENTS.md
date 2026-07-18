@@ -147,7 +147,7 @@ Maintain a section named **Build Week Evidence** in the README throughout develo
 - Specific examples of work accelerated by Codex.
 - Important product and technical decisions, including tradeoffs.
 - Tests or evaluations used to verify quality.
-- Primary Codex Session ID: `TBD — obtain with /feedback before submission`.
+- Primary Codex Session ID: `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
 
 Do not fabricate metrics, model identifiers, session IDs, user feedback, or evaluation results.
 
