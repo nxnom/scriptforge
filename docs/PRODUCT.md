@@ -123,12 +123,16 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 
 The first end-to-end tool is an image resizer using the bundled `sharp` package. It supports file selection or drag-and-drop, resize controls, progress, and a before/after result. It requires no external executable.
 
+## Portable Tool Archives
+
+An installed tool exports as one `.forge` file containing its complete directory. Import validates the archive envelope, relative paths, manifest, required entry files, size limits, and identifier collisions before atomically reconstructing the tool under `~/.scriptforge/tools`. Import never loads or executes the runner.
+
+After import, the normal requirement check marks the tool Ready or Needs install. A missing executable is not an import error: the interface remains reviewable, execution stays blocked, and the user may install it independently or explicitly launch Doctor.
+
 ## Deferred Scope
 
-- Importing tools from other people
-- AI security summaries during import
-- Exporting a tool as one shareable file
-- Final cross-platform sharing format
+- Archive signing, provenance, and compatibility metadata
+- Remote publishing or a shared marketplace
 - A broad starter-tool catalog beyond what the demo needs
 
 ## Open Decisions

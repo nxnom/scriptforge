@@ -34,6 +34,7 @@ export interface ToolSummary {
   category: string;
   icon: string;
   status: string;
+  origin?: "bundled" | "installed";
 }
 
 export function ToolCard({ tool }: { tool: ToolSummary }) {

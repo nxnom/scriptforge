@@ -105,6 +105,22 @@ Acceptance checks:
 - Successful installation unblocks the tool.
 - Unsupported systems receive actionable guidance.
 
+## Goal 4.5 — Portable Tool Archives
+
+Status: Complete
+
+- Export every installed tool file into one dependency-free `.forge` archive.
+- Import the archive through a validated, traversal-safe, atomic extraction path.
+- Never execute code during import.
+- Keep valid imported tools when executables are missing and hand them to the existing Doctor flow.
+
+Acceptance checks:
+
+- Nested supporting files survive an export/import round trip.
+- Invalid paths, duplicate paths, malformed manifests, oversized archives, and bundled-ID collisions are rejected.
+- An imported tool with a missing executable appears as Needs install.
+- Only execution is blocked until Doctor or the user supplies the dependency.
+
 ## Goal 5 — Hackathon Submission
 
 Status: Pending
@@ -123,11 +139,9 @@ Acceptance checks:
 - The video shows the product and explains both GPT-5.6 and Codex usage.
 - Every item in the `AGENTS.md` submission checklist is complete.
 
-## Post-Hackathon — Sharing
+## Post-Hackathon — Extended Sharing
 
 Status: Deferred
 
-- Export a tool as one file.
-- Import a shared tool without executing it.
-- Use AI to explain imported code in plain language.
-- Add integrity, compatibility, and provenance checks.
+- Add archive signing, provenance, and compatibility metadata.
+- Add remote publishing or a shared catalog only if the product direction calls for it.

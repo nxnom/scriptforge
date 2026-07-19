@@ -30,7 +30,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - `tool.json` declares required executable names and optional version constraints. It never contains installation commands.
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
-- Import, export, and single-file sharing are postponed until after the hackathon MVP.
+- Installed tools can be exported as one `.forge` archive and imported back into the local library. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
 
 ## Technical Direction
 
@@ -131,7 +131,7 @@ If the repository is public, include an appropriate license and ensure no secret
 8. Use only assets, datasets, libraries, and media that can legally be included or demonstrated. Record attribution and licenses when required.
 9. Keep changes focused. Preserve unrelated user work and do not use destructive version-control commands.
 10. Verify important behavior with automated tests where practical and manually test the complete demo path before calling the project complete.
-11. Do not implement postponed import/export work unless the project owner explicitly brings it back into scope.
+11. Keep sharing limited to the owner-approved `.forge` archive import/export flow. Do not add marketplaces, remote publishing, provenance services, or AI import explanations unless the project owner explicitly requests them.
 12. Keep React component and form modules focused and roughly 200 lines or fewer. Treat 250 lines as the maximum; split larger files by page, component, schema, or responsibility before adding more behavior.
 13. Build forms with React Hook Form, Zod schemas, `zodResolver`, and GeckoUI RHF components. Do not duplicate form state in ad-hoc `useState` hooks. Move substantial schemas and reusable field groups into their own focused files.
 14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. After kickoff approval, Codex must exercise the standalone runner with realistic temporary input, fix failures, rerun it, and report the successful check before presenting the candidate. The exact candidate revision is then tested through an explicit user-approved run in the sandboxed tester iframe before Save. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.

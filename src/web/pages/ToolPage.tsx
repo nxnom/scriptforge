@@ -1,6 +1,6 @@
 import { Alert, Button } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { ArrowLeft, Box, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Box, Download, ShieldCheck } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRead, useWrite } from "../api";
@@ -50,9 +50,16 @@ export function ToolPage() {
             <p className="mt-0.5 mb-0 text-[10px] text-[#7a7a7a]">Sandboxed tool interface</p>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#333] px-2.5 py-1.5 text-[10px] text-[#b0b0b0] max-[680px]:justify-self-end">
-          <ShieldCheck size={13} /> Local execution
-        </span>
+        <div className="flex items-center gap-2 max-[680px]:justify-self-end">
+          {tool && "origin" in tool && tool.origin === "installed" && (
+            <Button size="sm" variant="outlined" onClick={() => window.location.assign(`/api/tools/${toolId}/export`)}>
+              <Download size={13} /> Export
+            </Button>
+          )}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#333] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
+            <ShieldCheck size={13} /> Local execution
+          </span>
+        </div>
       </header>
       {hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
       {requirements.data?.ok && !requirements.data.ready && (

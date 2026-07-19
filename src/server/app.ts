@@ -2,8 +2,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { ToolArchiveService } from "../tools/archive";
 import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
 import { listBundledTools } from "../tools/registry";
+import { createToolArchiveRoutes } from "./archive/routes";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
 import { createDoctorApiRoutes, createDoctorWebSocketRoutes } from "./doctor/routes";
 import { DoctorSessionService } from "./doctor/service";
@@ -79,6 +81,7 @@ export function createApiRoutes(
   installedToolsRoot = defaultInstalledToolsRoot(),
   requirements = new RequirementService(),
   doctorSessions?: DoctorSessionService,
+  archives = new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id))),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -93,7 +96,10 @@ export function createApiRoutes(
       const bundled = listBundledTools();
       const availableIds = new Set([...bundled.map((tool) => tool.id), ...installed.map((tool) => tool.manifest.id)]);
       const readyTools = await Promise.all(
-        [...bundled, ...installed.map((tool) => tool.manifest)].map(async (manifest) => {
+        [
+          ...bundled.map((manifest) => ({ manifest, origin: "bundled" as const })),
+          ...installed.map((tool) => ({ manifest: tool.manifest, origin: "installed" as const })),
+        ].map(async ({ manifest, origin }) => {
           const executableStatuses = await requirements.check(manifest.requiredExecutables);
           const { id, name, description, category, icon } = manifest;
           return {
@@ -105,6 +111,7 @@ export function createApiRoutes(
             status: executableStatuses.every((item) => item.available)
               ? ("ready" as const)
               : ("needs-install" as const),
+            origin,
             requirements: executableStatuses,
           };
         }),
@@ -114,6 +121,7 @@ export function createApiRoutes(
       });
     })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
+    .route("/", createToolArchiveRoutes(archives, requirements))
     .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
     .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot))
     .route("/", createToolRuntimeApiRoutes(jobService));
@@ -122,6 +130,10 @@ export function createApiRoutes(
 const defaultCodexStatus = new CodexStatusService();
 const defaultRequirements = new RequirementService();
 const defaultDoctorSessions = new DoctorSessionService(defaultCodexStatus, defaultRequirements);
+const defaultArchives = new ToolArchiveService(
+  defaultInstalledToolsRoot(),
+  new Set(listBundledTools().map((tool) => tool.id)),
+);
 export const apiRoutes = createApiRoutes(
   new ToolJobService(undefined, undefined, undefined, defaultRequirements),
   new ForgeSessionService(defaultCodexStatus),
@@ -129,6 +141,7 @@ export const apiRoutes = createApiRoutes(
   undefined,
   defaultRequirements,
   defaultDoctorSessions,
+  defaultArchives,
 );
 
 export type ApiRoutes = typeof apiRoutes;
@@ -144,6 +157,7 @@ export function createApp(
     installedToolsRoot?: string;
     requirements?: RequirementService;
     doctorSessions?: DoctorSessionService;
+    archives?: ToolArchiveService;
   } = {},
 ) {
   const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
@@ -154,10 +168,20 @@ export function createApp(
   const doctorSessions =
     options.doctorSessions ??
     new DoctorSessionService(codexStatus, requirements, installedToolsRoot, options.toolsRoot);
+  const archives =
+    options.archives ?? new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id)));
   const app = new Hono()
     .route(
       "/api",
-      createApiRoutes(jobService, forgeSessions, codexStatus, installedToolsRoot, requirements, doctorSessions),
+      createApiRoutes(
+        jobService,
+        forgeSessions,
+        codexStatus,
+        installedToolsRoot,
+        requirements,
+        doctorSessions,
+        archives,
+      ),
     )
     .route("/", createJobWebSocketRoutes(jobService))
     .route("/", createForgeWebSocketRoutes(forgeSessions))

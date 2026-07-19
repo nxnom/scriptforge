@@ -1,7 +1,8 @@
 import { Alert, Button, Spinner } from "@geckoui/geckoui";
-import { Files, Hammer, Plus, Search, Sparkles } from "lucide-react";
+import { Hammer, Plus, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRead } from "../api";
+import { ToolArchiveImport } from "../components/ToolArchiveImport";
 import { ToolCard } from "../components/ToolCard";
 
 export function LibraryPage() {
@@ -34,15 +35,7 @@ export function LibraryPage() {
         </div>
       </header>
 
-      <section className="flex items-center justify-between rounded-xl border border-[#454545] bg-[#303030] px-4 py-3">
-        <div className="flex items-center gap-3 text-xs text-[#b0b0b0]">
-          <Files size={16} />
-          <span>Drop files here to find a matching tool</span>
-        </div>
-        <Button className="border-[#454545] text-[#ececec]" variant="outlined" size="sm">
-          Browse files
-        </Button>
-      </section>
+      <ToolArchiveImport />
 
       {health.error && (
         <Alert
