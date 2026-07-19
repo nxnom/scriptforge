@@ -7,6 +7,7 @@ import { invalidate, useRead, useWrite } from "../api";
 import { ToolActions } from "../components/ToolActions";
 import { openInstalledConfiguration } from "../configuration/ToolConfigurationDialog";
 import { ToolDoctorPanel } from "../doctor/ToolDoctorPanel";
+import { ToolInfoSidebar } from "../tool-detail/ToolInfoSidebar";
 import { ToolReview } from "../tool-detail/ToolReview";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
@@ -65,22 +66,24 @@ export function ToolPage() {
   if (!toolId) return null;
 
   return (
-    <section className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-3.5 overflow-hidden max-[760px]:overflow-y-auto">
-      <header className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-3.5 max-[680px]:grid-cols-[auto_1fr]">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+    <section className="mx-auto flex min-h-0 w-full max-w-350 flex-1 flex-col gap-4 overflow-hidden max-[760px]:overflow-y-auto">
+      <header className="flex min-h-13 items-center gap-4 border-[#303030] border-b pb-3 max-[680px]:flex-wrap">
+        <Button className="shrink-0" variant="outlined" size="sm" onClick={() => navigate("/")}>
           <ArrowLeft size={14} /> Library
         </Button>
-        <div className="flex items-center gap-2.5 max-[680px]:order-first max-[680px]:col-span-full">
+        <span aria-hidden="true" className="h-7 w-px bg-[#303030]" />
+        <div className="min-w-0 flex-1">
           <div>
-            <h1 className="m-0 font-[Geist_Variable] text-base">{tool?.name ?? "Tool"}</h1>
-            <p className="mt-0.5 mb-0 text-[10px] text-[#7a7a7a]">Sandboxed tool interface</p>
+            <h1 className="m-0 truncate font-[Geist_Variable] text-[17px]">{tool?.name ?? "Tool"}</h1>
+            <p className="mt-0.5 mb-0 text-[10px] text-[#858585]">Sandboxed tool interface</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 max-[680px]:justify-self-end">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {configuration.data?.ok && configuration.data.fields.length > 0 && (
             <Tooltip content="Tool configuration" triggerAsChild>
               <Button
                 aria-label="Tool configuration"
+                className="size-9"
                 variant="icon"
                 size="sm"
                 onClick={() => navigate(`/tools/${toolId}/settings`)}
@@ -92,28 +95,31 @@ export function ToolPage() {
           {tool && "origin" in tool && tool.origin === "installed" && (
             <ToolActions toolId={toolId} toolName={tool.name} />
           )}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#333] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
+          <span className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#333] bg-[#202020] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
             <ShieldCheck size={13} /> Local execution
           </span>
         </div>
       </header>
       {toolReady && hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
-      <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[760px]:min-h-225">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden max-[760px]:min-h-225">
         {doctorVisible && (
           <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
         )}
-        {!doctorVisible && requirements.data?.ok && (
-          <ToolReview
-            toolId={toolId}
-            toolName={tool?.name ?? "ScriptForge tool"}
-            toolReady={toolReady}
-            listening={listening}
-            configurationLoading={configuration.loading}
-            iframeRef={iframeRef}
-            requirements={requirements.data.requirements}
-            retryRequirements={requirements.trigger}
-            launchDoctor={() => setDoctorOpen(true)}
-          />
+        {!doctorVisible && requirements.data?.ok && tool && "origin" in tool && (
+          <div className="flex min-h-0 min-w-0 flex-1 gap-5 overflow-hidden max-[960px]:flex-col max-[760px]:overflow-visible">
+            <ToolInfoSidebar tool={tool} requirements={requirements.data.requirements} />
+            <ToolReview
+              toolId={toolId}
+              toolName={tool.name}
+              toolReady={toolReady}
+              listening={listening}
+              configurationLoading={configuration.loading}
+              iframeRef={iframeRef}
+              requirements={requirements.data.requirements}
+              retryRequirements={requirements.trigger}
+              launchDoctor={() => setDoctorOpen(true)}
+            />
+          </div>
         )}
       </div>
     </section>

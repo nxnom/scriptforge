@@ -65,19 +65,19 @@ export function ToolActions({
   return (
     <div className="flex items-center gap-1.5">
       <Tooltip content="Export tool" triggerAsChild>
-        <Button aria-label="Export tool" className="size-10" size="md" variant="icon" onClick={exportTool}>
-          <Download size={18} strokeWidth={1.8} />
+        <Button aria-label="Export tool" className="size-9" size="sm" variant="icon" onClick={exportTool}>
+          <Download size={15} strokeWidth={1.8} />
         </Button>
       </Tooltip>
       <Tooltip content="Delete tool" triggerAsChild>
         <Button
           aria-label="Delete tool"
-          className="size-10 text-[#d98279]"
-          size="md"
+          className="size-9 text-[#d98279]"
+          size="sm"
           variant="icon"
           onClick={confirmDelete}
         >
-          <Trash2 size={18} strokeWidth={1.8} />
+          <Trash2 size={15} strokeWidth={1.8} />
         </Button>
       </Tooltip>
     </div>

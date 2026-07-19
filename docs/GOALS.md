@@ -155,6 +155,7 @@ Acceptance checks:
 Status: Pending
 
 - Polish the primary library into a compact, sidebar-free workspace with a fixed header/filter area, scrollable tool results, and a pinned import action.
+- Polish tool detail pages from Pencil node `y4sqS` with a compact metadata sidebar, underline review tabs, a focused preview workspace, and the current `#5468ff` tool-interface theme.
 - Polish the primary demo path.
 - Add only the starter tools needed to strengthen the demo.
 - Complete README setup, architecture, evidence, limitations, and license sections.

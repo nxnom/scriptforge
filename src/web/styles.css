@@ -103,6 +103,10 @@
   background: var(--surface-soft);
 }
 
+.GeckoUIDialog__backdrop {
+  background: rgba(0, 0, 0, 0.8);
+}
+
 * {
   box-sizing: border-box;
 }

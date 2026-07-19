@@ -31,6 +31,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
 
 export interface ToolSummary {
   id: string;
+  version?: string;
   name: string;
   description: string;
   categories: string[];

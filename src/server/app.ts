@@ -123,9 +123,10 @@ export function createApiRoutes(
               .getStatus(manifest)
               .then((status) => status.ready)
               .catch(() => false));
-          const { id, name, description, categories, icon } = manifest;
+          const { id, version, name, description, categories, icon } = manifest;
           return {
             id,
+            version,
             name,
             description,
             categories,

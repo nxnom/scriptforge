@@ -18,7 +18,7 @@ describe("local API", () => {
     }).request("/api/tools");
     const body = await response.json();
     expect(body.tools).toHaveLength(8);
-    expect(body.tools[0]).toMatchObject({ id: "image-resizer", status: "ready" });
+    expect(body.tools[0]).toMatchObject({ id: "image-resizer", version: "1.0.0", status: "ready" });
   });
 
   it("marks an installed tool as needing installation without removing it", async () => {

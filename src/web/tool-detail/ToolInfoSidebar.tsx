@@ -1,0 +1,92 @@
+import { Box, Check, CircleAlert, HardDrive, Image, PackageCheck, Wrench } from "lucide-react";
+import type { ComponentType } from "react";
+import type { Requirement } from "../components/RequirementNotice";
+import type { ToolSummary } from "../components/ToolCard";
+
+const icons: Record<string, ComponentType<{ size?: number }>> = { image: Image };
+
+export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; requirements: Requirement[] }) {
+  const Icon = icons[tool.icon] ?? Wrench;
+
+  return (
+    <aside className="flex min-h-0 w-70 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[960px]:w-full max-[960px]:overflow-visible max-[960px]:pr-0">
+      <section className="rounded-2xl border border-[#333] bg-[#242424] p-4">
+        <span className="grid size-11 place-items-center rounded-xl bg-[#5468ff] text-white shadow-[0_8px_24px_-12px_#5468ff]">
+          <Icon size={20} />
+        </span>
+        <h2 className="mt-3.5 mb-1 font-[650] font-[Geist_Variable] text-[17px] leading-tight">{tool.name}</h2>
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {tool.categories.map((category) => (
+            <Badge key={category}>{category}</Badge>
+          ))}
+          <Badge>{tool.origin === "bundled" ? "Built-in" : "Local"}</Badge>
+        </div>
+        <p className="m-0 text-[11px] text-[#a7a7a7] leading-[1.55]">{tool.description}</p>
+      </section>
+
+      <InfoCard title="Specifications">
+        <InfoRow icon={HardDrive} label="Runs" value="On this device" good />
+        <InfoRow icon={PackageCheck} label="Version" value={tool.version ?? "—"} />
+        <InfoRow icon={Box} label="Source" value={tool.origin === "bundled" ? "Built-in" : "Saved tool"} />
+        <InfoRow icon={Wrench} label="Runtime" value="Node.js" />
+      </InfoCard>
+
+      <InfoCard title="Requirements">
+        {requirements.length === 0 ? (
+          <InfoRow icon={Check} label="Extra apps" value="None required" good />
+        ) : (
+          requirements.map((requirement) => {
+            const available = requirement.reason === "available";
+            return (
+              <InfoRow
+                key={requirement.name}
+                icon={available ? Check : CircleAlert}
+                label={requirement.name}
+                value={available ? (requirement.detectedVersion ?? "Available") : "Needs install"}
+                good={available}
+                warning={!available}
+              />
+            );
+          })
+        )}
+      </InfoCard>
+    </aside>
+  );
+}
+
+function Badge({ children }: React.PropsWithChildren) {
+  return <span className="rounded-full bg-[#303030] px-2 py-1 text-[9px] text-[#b9b9b9]">{children}</span>;
+}
+
+function InfoCard({ title, children }: React.PropsWithChildren<{ title: string }>) {
+  return (
+    <section className="rounded-2xl border border-[#333] bg-[#242424] px-4 py-3.5">
+      <h3 className="mt-0 mb-2.5 font-[650] text-[11px] text-[#d4d4d4] uppercase tracking-[0.08em]">{title}</h3>
+      <div className="grid gap-2.5">{children}</div>
+    </section>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  good = false,
+  warning = false,
+}: {
+  icon: ComponentType<{ size?: number }>;
+  label: string;
+  value: string;
+  good?: boolean;
+  warning?: boolean;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[16px_minmax(0,1fr)_auto] items-center gap-2 text-[10px]">
+      <Icon size={13} />
+      <span className="truncate text-[#929292]">{label}</span>
+      <span className={`max-w-28 truncate ${good ? "text-[#8bc895]" : warning ? "text-[#e0a24e]" : "text-[#d0d0d0]"}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
