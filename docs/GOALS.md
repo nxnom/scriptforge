@@ -66,13 +66,13 @@ Completed and verified:
 - Browser-persisted model and reasoning-effort selection.
 - `node-pty` launch in a dedicated staging directory with the selected GPT-5.6 model, preserving the user's Codex permission configuration by default and offering an explicit, warned preflight opt-in to bypass approval and sandbox prompts.
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
-- One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
+- Server-owned in-memory Forge sessions that reconnect and replay output after browser refresh, scoped to one new-tool session plus one update session per installed tool.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
 - Contextual plain-language question panels with validated Markdown, Mermaid, HTML, and input blocks; clear requests begin immediately without a mandatory kickoff approval.
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
-- Explicit Stop control for the one active in-memory Codex terminal and Start session only when none is active.
+- Explicit Stop controls end only their owning Codex terminal; unrelated new-tool and per-tool update sessions remain active.
 - Confirm explicit Forge stops, return to the Library after stopping, and keep candidate Save beside the session control once Preview testing succeeds.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.

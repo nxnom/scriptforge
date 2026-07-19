@@ -29,6 +29,20 @@ vi.mock("../api", () => ({
         loading: false,
       };
     }
+    if (path === "forge/sessions/active") {
+      return {
+        data: {
+          sessionId: "create-1",
+          toolId: null,
+          sessions: [
+            { sessionId: "create-1", toolId: null, scope: "create" },
+            { sessionId: "update-other", toolId: "another-tool", scope: "update" },
+          ],
+        },
+        trigger: vi.fn(),
+        loading: false,
+      };
+    }
     return { data: {}, trigger: vi.fn(), loading: false };
   },
   useWrite: () => ({ trigger: vi.fn(), loading: false }),
@@ -72,6 +86,7 @@ describe("ToolPage", () => {
     expect(mocks.openConfiguration).toHaveBeenCalledWith("configurable-tool");
     await waitFor(() => expect(mocks.refreshConfiguration).toHaveBeenCalled());
     expect(screen.getByText("Tool preview")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Update tool" })).toBeEnabled();
   });
 });
 

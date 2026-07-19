@@ -33,6 +33,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
 - A successful first Save keeps the owning Forge Codex session alive and changes the action to Update; only the explicit Stop action ends the session. Installed user-tool detail pages can open their own terminal-and-tool update workspace, while bundled tools cannot be updated.
+- Forge sessions are scoped rather than globally exclusive: one new-tool session may run alongside one update session per installed tool. Starting or stopping one scope never replaces or ends the others.
 - User tools saved from Forge or added through Import can be exported as one `.forge` archive or deleted after confirmation. Bundled starter tools cannot be deleted. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
 
 ## Technical Direction

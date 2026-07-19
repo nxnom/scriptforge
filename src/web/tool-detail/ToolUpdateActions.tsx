@@ -6,7 +6,6 @@ export function ToolUpdateActions({
   sessionActive,
   candidateReady,
   candidateTested,
-  anotherSessionActive,
   stopping,
   saving,
   start,
@@ -17,7 +16,6 @@ export function ToolUpdateActions({
   sessionActive: boolean;
   candidateReady: boolean;
   candidateTested: boolean;
-  anotherSessionActive: boolean;
   stopping: boolean;
   saving: boolean;
   start: () => void;
@@ -28,14 +26,7 @@ export function ToolUpdateActions({
     <>
       {installed && !sessionActive && (
         <Tooltip content="Update tool" triggerAsChild>
-          <Button
-            aria-label="Update tool"
-            className="size-9"
-            size="sm"
-            variant="icon"
-            disabled={anotherSessionActive}
-            onClick={start}
-          >
+          <Button aria-label="Update tool" className="size-9" size="sm" variant="icon" onClick={start}>
             <Pencil size={14} />
           </Button>
         </Tooltip>

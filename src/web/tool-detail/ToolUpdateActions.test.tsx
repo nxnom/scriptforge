@@ -18,7 +18,6 @@ const state = {
   sessionActive: false,
   candidateReady: false,
   candidateTested: false,
-  anotherSessionActive: false,
   stopping: false,
   saving: false,
 };

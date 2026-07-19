@@ -109,7 +109,11 @@ describe("Forge candidate save", () => {
       body: JSON.stringify({ revision: candidate.revision }),
     });
     expect(saved.status).toBe(201);
-    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "tiny-tool" });
+    expect(service.getActiveSession()).toEqual({
+      sessionId,
+      toolId: "tiny-tool",
+      sessions: [{ sessionId, toolId: "tiny-tool", scope: "create" }],
+    });
     expect(pty.kill).not.toHaveBeenCalled();
     await expect(readFile(join(installedRoot, "tiny-tool", "ui.html"), "utf8")).resolves.toContain("Tiny Tool");
     await expect(configuration.resolve(runtime.manifest)).resolves.toMatchObject({
@@ -147,7 +151,11 @@ describe("Forge candidate save", () => {
     await expect(readFile(join(installedRoot, "tiny-tool", "support", "fixture.txt"), "utf8")).resolves.toBe(
       "preserved",
     );
-    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "tiny-tool" });
+    expect(service.getActiveSession()).toEqual({
+      sessionId,
+      toolId: "tiny-tool",
+      sessions: [{ sessionId, toolId: "tiny-tool", scope: "create" }],
+    });
     expect(pty.kill).not.toHaveBeenCalled();
   });
 });

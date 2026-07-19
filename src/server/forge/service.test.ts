@@ -96,7 +96,11 @@ describe("Forge terminal sessions", () => {
     );
 
     await expect(readFile(join(staging, sessionId, "ui.html"), "utf8")).resolves.toContain("Installed");
-    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "installed-tool" });
+    expect(service.getActiveSession()).toEqual({
+      sessionId: null,
+      toolId: null,
+      sessions: [{ sessionId, toolId: "installed-tool", scope: "update" }],
+    });
     expect(((calls[0]?.[1] ?? []) as string[]).find((arg) => arg.startsWith("developer_instructions="))).toContain(
       "This session updates the installed tool",
     );
@@ -162,7 +166,11 @@ describe("Forge terminal sessions", () => {
     );
     const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
 
-    expect(service.getActiveSession()).toEqual({ sessionId, toolId: null });
+    expect(service.getActiveSession()).toEqual({
+      sessionId,
+      toolId: null,
+      sessions: [{ sessionId, toolId: null, scope: "create" }],
+    });
     expect(pty.kill).not.toHaveBeenCalled();
   });
 
@@ -180,31 +188,64 @@ describe("Forge terminal sessions", () => {
 
     expect(service.stop(sessionId)).toBe(true);
     expect(pty.kill).toHaveBeenCalledOnce();
-    expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null });
+    expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null, sessions: [] });
     expect(service.stop(sessionId)).toBe(false);
   });
 
-  it("keeps only the newest Forge session in memory", async () => {
+  it("keeps one create session and one update session per tool active concurrently", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
     roots.push(root);
-    const first = fakePty();
-    const second = fakePty();
-    const sessions = [first.value, second.value];
+    const alpha = join(root, "alpha");
+    const beta = join(root, "beta");
+    await Promise.all([writeUpdateSource(alpha, "Alpha"), writeUpdateSource(beta, "Beta")]);
+    const createPty = fakePty();
+    const alphaPty = fakePty();
+    const betaPty = fakePty();
+    const ptys = [createPty.value, alphaPty.value, betaPty.value];
     const status = {
       check: async () => ({ installed: true, authenticated: true, version: "0.144.5", authMethod: "ChatGPT" }),
     };
     const service = new ForgeSessionService(
       status,
-      root,
-      () => sessions.shift() as IPty,
+      join(root, "staging"),
+      () => ptys.shift() as IPty,
       async () => undefined,
     );
-    const previous = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
-    const current = await service.start({ model: "gpt-5.6-sol", effort: "high" });
+    const create = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
+    const updateAlpha = await service.start(
+      { model: "gpt-5.6-sol", effort: "high" },
+      { id: "alpha", name: "Alpha", directory: alpha },
+    );
+    const updateBeta = await service.start(
+      { model: "gpt-5.6-sol", effort: "low" },
+      { id: "beta", name: "Beta", directory: beta },
+    );
 
-    expect(first.kill).toHaveBeenCalledOnce();
-    expect(service.getSnapshot(previous.sessionId)).toBeUndefined();
-    expect(service.getActiveSession()).toEqual({ sessionId: current.sessionId, toolId: null });
+    expect(createPty.kill).not.toHaveBeenCalled();
+    expect(alphaPty.kill).not.toHaveBeenCalled();
+    expect(service.getSnapshot(create.sessionId)).toBeDefined();
+    expect(service.getSnapshot(updateAlpha.sessionId)).toBeDefined();
+    expect(service.getActiveSession()).toEqual({
+      sessionId: create.sessionId,
+      toolId: null,
+      sessions: [
+        { sessionId: create.sessionId, toolId: null, scope: "create" },
+        { sessionId: updateAlpha.sessionId, toolId: "alpha", scope: "update" },
+        { sessionId: updateBeta.sessionId, toolId: "beta", scope: "update" },
+      ],
+    });
+    await expect(service.start({ model: "gpt-5.6-sol", effort: "medium" })).rejects.toThrow(
+      "new-tool session is already active",
+    );
+    await expect(
+      service.start({ model: "gpt-5.6-sol", effort: "medium" }, { id: "alpha", name: "Alpha", directory: alpha }),
+    ).rejects.toThrow("update session for Alpha is already active");
+
+    expect(service.stop(updateAlpha.sessionId)).toBe(true);
+    expect(alphaPty.kill).toHaveBeenCalledOnce();
+    expect(createPty.kill).not.toHaveBeenCalled();
+    expect(betaPty.kill).not.toHaveBeenCalled();
+    expect(service.getActiveSession().sessions).toHaveLength(2);
   });
 
   it("connects the session-scoped MCP panel and returns feedback through the PTY", async () => {
@@ -320,6 +361,15 @@ async function writeCandidate(directory: string) {
     ),
     writeFile(join(directory, "run.mjs"), 'console.log("ready")'),
     writeFile(join(directory, "ui.html"), "<!doctype html><title>Tiny Tool</title>"),
+  ]);
+}
+
+async function writeUpdateSource(directory: string, name: string) {
+  await mkdir(directory, { recursive: true });
+  await Promise.all([
+    writeFile(join(directory, "tool.json"), JSON.stringify({ id: name.toLowerCase() })),
+    writeFile(join(directory, "run.mjs"), 'console.log("ready")'),
+    writeFile(join(directory, "ui.html"), `<title>${name}</title>`),
   ]);
 }
 

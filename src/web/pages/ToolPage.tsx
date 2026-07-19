@@ -44,7 +44,9 @@ export function ToolPage() {
   const stopUpdate = useWrite((api) => api("forge/sessions/:sessionId").DELETE());
   const saveUpdate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
   const tool = tools.data?.tools.find((candidate) => candidate.id === toolId);
-  const restoredUpdateId = activeForge.data?.toolId === toolId ? (activeForge.data?.sessionId ?? undefined) : undefined;
+  const restoredUpdateId = activeForge.data?.sessions?.find(
+    (session) => session.scope === "update" && session.toolId === toolId,
+  )?.sessionId;
   const visibleUpdateId = updateSessionId ?? (restoredUpdateId !== endedSessionId ? restoredUpdateId : undefined);
   const runTool = useCallback(
     async (message: ToolRunMessage) => {
@@ -148,9 +150,6 @@ export function ToolPage() {
   };
   if (!toolId) return null;
   const installedTool = Boolean(tool && "origin" in tool && tool.origin === "installed");
-  const anotherForgeActive = Boolean(
-    activeForge.data?.sessionId && activeForge.data.sessionId !== endedSessionId && !visibleUpdateId,
-  );
 
   return (
     <section className="flex min-h-0 w-full flex-1 flex-col overflow-hidden max-[760px]:overflow-y-auto">
@@ -166,7 +165,6 @@ export function ToolPage() {
                 sessionActive={Boolean(visibleUpdateId)}
                 candidateReady={Boolean(candidate)}
                 candidateTested={candidateTested}
-                anotherSessionActive={anotherForgeActive}
                 stopping={stopUpdate.loading}
                 saving={saveUpdate.loading}
                 start={openUpdate}

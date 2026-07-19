@@ -40,6 +40,7 @@ type ForgeSession = {
   candidate?: ForgeCandidateDocument;
   candidateJobs: Map<string, string>;
   toolId?: string;
+  scope: "create" | "update";
 };
 
 export type ForgeUpdateTarget = {
@@ -49,7 +50,7 @@ export type ForgeUpdateTarget = {
 };
 
 export class ForgeSessionService {
-  private session?: ForgeSession;
+  private readonly sessions = new Map<string, ForgeSession>();
 
   constructor(
     private readonly codexStatus: CodexStatusChecker = new CodexStatusService(),
@@ -65,7 +66,16 @@ export class ForgeSessionService {
     if (!readiness.installed) throw new Error("Install the Codex CLI before starting Forge.");
     if (!readiness.authenticated) throw new Error("Run codex login before starting Forge.");
 
-    if (this.session && !this.session.exited) this.stop(this.session.id);
+    const conflicting = this.activeSessions().find((session) =>
+      updateTarget ? session.scope === "update" && session.toolId === updateTarget.id : session.scope === "create",
+    );
+    if (conflicting) {
+      throw new Error(
+        updateTarget
+          ? `An update session for ${updateTarget.name} is already active.`
+          : "A new-tool session is already active.",
+      );
+    }
 
     const id = randomUUID();
     const mcpToken = randomUUID();
@@ -102,8 +112,9 @@ export class ForgeSessionService {
       directory,
       candidateJobs: new Map(),
       toolId: updateTarget?.id,
+      scope: updateTarget ? "update" : "create",
     };
-    this.session = session;
+    this.sessions.set(session.id, session);
     pty.onData((data) => this.emit(session, { type: "output", data }));
     pty.onExit(({ exitCode, signal }) => {
       session.exited = true;
@@ -118,9 +129,17 @@ export class ForgeSessionService {
   }
 
   getActiveSession() {
-    return this.session && !this.session.exited
-      ? { sessionId: this.session.id, toolId: this.session.toolId ?? null }
-      : { sessionId: null, toolId: null };
+    const sessions = this.activeSessions().map((session) => ({
+      sessionId: session.id,
+      toolId: session.toolId ?? null,
+      scope: session.scope,
+    }));
+    const createSession = sessions.find((session) => session.scope === "create");
+    return {
+      sessionId: createSession?.sessionId ?? null,
+      toolId: createSession?.toolId ?? null,
+      sessions,
+    };
   }
 
   getTargetToolId(sessionId: string) {
@@ -223,7 +242,11 @@ export class ForgeSessionService {
   }
 
   private find(sessionId: string) {
-    return this.session?.id === sessionId ? this.session : undefined;
+    return this.sessions.get(sessionId);
+  }
+
+  private activeSessions() {
+    return [...this.sessions.values()].filter((session) => !session.exited);
   }
 
   private emit(session: ForgeSession, event: ForgeServerEvent) {
