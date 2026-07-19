@@ -24,25 +24,25 @@ export function RequirementNotice({
     <Alert
       variant="warning"
       condensed
-      title="Missing requirement"
+      title={missing.length === 1 ? "Missing requirement" : `${missing.length} missing requirements`}
       description={
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 pt-1">
-          <span className="text-[11px] text-[#b9aa92]">
+        <div className="grid min-w-0 gap-3 pt-1">
+          <p className="m-0 text-[11px] text-[#b9aa92]">
             Install it yourself or let Codex Doctor prepare the commands.
-          </span>
-          <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+          </p>
+          <div className="flex min-w-0 flex-wrap gap-1.5">
             {missing.map((requirement) => (
               <code
-                className="rounded-md border border-[#5a4324] bg-[#211d17] px-2 py-1 text-[10px] text-[#d8c7aa]"
+                className="whitespace-nowrap rounded-md border border-[#5a4324] bg-[#211d17] px-2 py-1 text-[10px] text-[#d8c7aa]"
                 key={requirement.name}
               >
                 {requirement.name}
                 {requirement.version ? ` ${requirement.version}` : ""}
-                {requirement.detectedVersion ? ` · ${requirement.detectedVersion}` : " · not found"}
+                {requirement.detectedVersion ? ` · found ${requirement.detectedVersion}` : " · not found"}
               </code>
             ))}
           </div>
-          <div className="ml-auto flex shrink-0 gap-1.5">
+          <div className="flex justify-end gap-1.5 border-[#443825] border-t pt-2.5">
             <Button type="button" size="xs" variant="ghost" onClick={retry}>
               <RefreshCw size={12} /> Retry
             </Button>
