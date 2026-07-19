@@ -28,6 +28,14 @@ describe("ToolCard", () => {
     expect(screen.getByRole("link")).toBeVisible();
     expect(screen.queryByText("Tool detail route")).not.toBeInTheDocument();
   });
+
+  it("does not create a transformed stacking context that can cover its menu", () => {
+    renderCard(tool());
+
+    const card = screen.getByRole("article");
+    expect(card.className).not.toContain("translate");
+    expect(card.className).not.toContain("transform");
+  });
 });
 
 function renderCard(value: ToolSummary) {

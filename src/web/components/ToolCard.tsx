@@ -45,7 +45,7 @@ export function ToolCard({ tool }: { tool: ToolSummary }) {
 
   return (
     <article
-      className={`relative min-h-44 rounded-2xl border border-[#333] bg-[#242424] transition-[border-color,transform] duration-150 ${available ? "hover:-translate-y-px hover:border-[#454545]" : ""} ${ready ? "shadow-[0_4px_16px_-4px_#00000038]" : ""}`}
+      className={`relative min-h-44 rounded-2xl border border-[#333] bg-[#242424] transition-colors duration-150 ${available ? "hover:border-[#454545]" : ""} ${ready ? "shadow-[0_4px_16px_-4px_#00000038]" : ""}`}
     >
       {available && (
         <Link
