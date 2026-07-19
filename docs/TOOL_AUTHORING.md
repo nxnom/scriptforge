@@ -28,12 +28,16 @@ Generated interfaces do not use React, GeckoUI, npm packages, or direct Node.js 
 Unless the user explicitly requests a different style, generated tools use ScriptForge's compact dark visual system:
 
 - Page background `#151515`; surfaces `#1d1d1d` or `#242424`; borders `#343434`; near-white primary text; muted text `#929292`; white primary actions with dark text; system UI fonts.
-- Treat the iframe as a narrow utility panel rather than a marketing page. Use a short 18–22px title and no more than one brief description line. Do not add eyebrow labels, hero copy, oversized headings, decorative introductions, or repeated explanations.
-- Use 12–16px outer padding, 8–12px gaps, compact controls, and restrained card padding. Keep file selection, essential controls, status, and the primary action in the first visible panel viewport whenever practical.
-- Remain usable at 360px wide without horizontal scrolling. Avoid fixed page heights, large minimum heights, and large empty areas. Result collections may grow or scroll as needed.
+- The same interface appears in both a 420–620px Forge tester and a much wider installed Tool page. Build one fluid utility workspace that uses the full iframe width at both sizes. Do not place the whole interface inside a centered `max-width` wrapper or center the entire app in a large empty canvas.
+- Use border-box sizing. Give `html`, `body`, and the root workspace `width: 100%`, `min-width: 0`, and `min-height: 100%`; remove the default body margin. The root may use `min-height: 100vh`, but controls and content panels must not use fixed viewport heights.
+- Use a short 18–22px title and no more than one brief description line. Do not add eyebrow labels, hero copy, oversized headings, decorative introductions, or repeated explanations.
+- Use 12–16px outer padding, 8–12px gaps, compact controls, and restrained card padding. Keep file selection, essential controls, current status, and the primary action in the first visible panel viewport whenever practical.
+- Choose a tool-specific layout instead of defaulting to one centered form card. When inputs and results are both meaningful, stack them in the narrow tester and use a balanced side-by-side or dashboard composition on wide canvases. For a compact single control group, keep the controls readable while status, history, results, or details use the remaining width. Empty messages belong inside their future result region rather than leaving the page blank.
+- Remain usable at 360px without horizontal scrolling. Use fluid grids with `minmax(0, 1fr)`, wrapping controls, and a deliberate breakpoint around 700–800px. Avoid fixed page heights, large minimum heights, and large empty areas. Result collections may grow or scroll as needed.
 - Once files are selected, replace the empty drop zone in the same footprint with compact thumbnails or file rows and Change/Add and Remove actions. Do not retain a large empty “Choose files” area above a duplicate selected-file preview.
-- Reveal results in the existing layout or a compact result section. Truncate long filenames and keep result actions easy to reach.
+- Give the tool an intentional hierarchy of controls, current state, primary result, and secondary logs/details. Reveal results in the existing result region or a compact section using the grid, table, media preview, reading, or list appropriate to the data. Truncate long filenames and keep result actions easy to reach.
 - Show loading, progress, success, and failure without unnecessary layout shifts. Keep verbose logs collapsed unless needed.
+- Before presenting the candidate, inspect the CSS at representative 480px and 1200px iframe widths. Nothing may clip or scroll horizontally at 480px; at 1200px the workspace must use the canvas intentionally instead of leaving a narrow centered island and unused space.
 
 Generated interfaces use ordinary CSS because their runtime HTML cannot depend on the React application's Tailwind build.
 
@@ -110,6 +114,7 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - The implemented behavior matches the user's request and every approved kickoff decision; “live” behavior is actually automatic and recurring.
 - Clicking the primary action immediately shows a local loading state.
 - The default UI matches ScriptForge's compact dark theme unless the user requested another style.
+- The page shell fills the iframe and adapts cleanly at representative 480px and 1200px widths without a centered max-width island.
 - Essential controls and the primary action fit in the initial tester viewport whenever practical.
 - Selecting files replaces the empty picker instead of creating a second, duplicate file-preview area.
 - Selected files cross the bridge as `ArrayBuffer` descriptors.

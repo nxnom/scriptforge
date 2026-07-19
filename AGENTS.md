@@ -59,6 +59,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 - The Forge screen embeds the real interactive Codex TUI with xterm.js.
 - The Forge side panel is hidden by default. Reveal it contextually when Codex asks for human input or approval, or when a candidate tester UI is ready.
 - Render the generated tester interface in the side panel. Do not show its HTML source in the normal review flow.
+- Generated interfaces must fluidly use the full iframe width and adapt between the narrow Forge tester and wide installed Tool page. Do not default the entire app to a centered max-width wrapper; use responsive, tool-appropriate input and result regions.
 - Show the generated execution script in a read-only code viewer. Changes are requested through the Codex conversation.
 - Run generated HTML/JS inside a sandboxed iframe. Its only application access is a controlled host bridge for input selection, execution, lifecycle, progress, structured logs, cancellation, and safe result URLs.
 - Use a JavaScript `run.mjs` orchestration entrypoint for the MVP. It may invoke any executable declared in `tool.json` through the controlled runtime context.

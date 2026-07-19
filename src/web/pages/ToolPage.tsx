@@ -1,6 +1,6 @@
 import { Alert, Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { ArrowLeft, Box, Settings2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Settings2, ShieldCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { invalidate, useRead, useWrite } from "../api";
@@ -71,7 +71,6 @@ export function ToolPage() {
           <ArrowLeft size={14} /> Library
         </Button>
         <div className="flex items-center gap-2.5 max-[680px]:order-first max-[680px]:col-span-full">
-          <Box className="box-content rounded-[10px] bg-[#2e2e2e] p-2" size={17} />
           <div>
             <h1 className="m-0 font-[Geist_Variable] text-base">{tool?.name ?? "Tool"}</h1>
             <p className="mt-0.5 mb-0 text-[10px] text-[#7a7a7a]">Sandboxed tool interface</p>

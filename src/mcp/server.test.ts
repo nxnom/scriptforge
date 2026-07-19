@@ -18,7 +18,10 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("Write newline-delimited JSON events");
     expect(client.getInstructions()).toContain("You may execute commands, run the candidate");
     expect(client.getInstructions()).toContain("Only after that standalone check passes");
-    expect(client.getInstructions()).toContain("Treat the tester as a narrow utility panel");
+    expect(client.getInstructions()).toContain("both a 420-620px Forge tester and a much wider installed Tool page");
+    expect(client.getInstructions()).toContain("Do not put the whole interface inside a centered max-width wrapper");
+    expect(client.getInstructions()).toContain("balanced side-by-side or dashboard layout");
+    expect(client.getInstructions()).toContain("as if the iframe were 480px wide and again at 1200px");
     expect(client.getInstructions()).toContain("replace that empty drop zone in the same space");
     expect(client.getInstructions()).toContain("#151515 page background");
     expect(client.getInstructions()).toContain("A manual Refresh button alone does not satisfy a live-update request");
