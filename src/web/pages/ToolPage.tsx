@@ -99,14 +99,18 @@ export function ToolPage() {
         </div>
       </header>
       {toolReady && hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
-      {requirements.data?.ok && !toolReady && !doctorVisible && (
-        <RequirementNotice
-          requirements={requirements.data.requirements}
-          retry={requirements.trigger}
-          launchDoctor={() => setDoctorOpen(true)}
-        />
-      )}
       <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[760px]:min-h-225">
+        {requirements.data?.ok && !toolReady && !doctorVisible && (
+          <div className="grid min-h-0 flex-1 place-items-center px-4 pb-[8vh]">
+            <div className="w-full max-w-2xl">
+              <RequirementNotice
+                requirements={requirements.data.requirements}
+                retry={requirements.trigger}
+                launchDoctor={() => setDoctorOpen(true)}
+              />
+            </div>
+          </div>
+        )}
         {doctorVisible && (
           <ToolDoctorPanel toolId={toolId} standalone={!toolReady} onComplete={completeDoctor} onClose={closeDoctor} />
         )}
