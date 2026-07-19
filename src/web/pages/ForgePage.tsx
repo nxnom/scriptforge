@@ -21,12 +21,14 @@ export function ForgePage() {
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
   const [candidateTested, setCandidateTested] = useState(false);
+  const [savedToolId, setSavedToolId] = useState<string>();
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
   const startForge = useWrite((api) => api("forge/sessions").POST());
   const stopForge = useWrite((api) => api("forge/sessions/:sessionId").DELETE());
   const saveCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
   const restoredSessionId = activeSession.data?.sessionId ?? undefined;
   const visibleSessionId = sessionId ?? (restoredSessionId !== endedSessionId ? restoredSessionId : undefined);
+  const targetToolId = savedToolId ?? activeSession.data?.toolId ?? undefined;
 
   const openPreflight = useCallback(() => {
     Dialog.show({
@@ -44,6 +46,7 @@ export function ForgePage() {
             setPanel(null);
             setCandidate(null);
             setCandidateTested(false);
+            setSavedToolId(undefined);
           }}
         />
       ),
@@ -56,6 +59,7 @@ export function ForgePage() {
     setPanel(null);
     setCandidate(null);
     setCandidateTested(false);
+    setSavedToolId(undefined);
   }, []);
   const showPanel = useCallback((next: ForgePanelDocument | null) => {
     setPanel(next);
@@ -97,8 +101,14 @@ export function ForgePage() {
     });
     if (!response.data?.ok) return toast.error(forgeError(response.error));
     invalidate("tools");
-    toast.success(`${response.data.tool.name} was saved to your library.`);
-    navigate(`/tools/${response.data.tool.id}`, { replace: true });
+    invalidate("forge/sessions/active");
+    setSavedToolId(response.data.tool.id);
+    setCandidateTested(false);
+    toast.success(
+      response.data.action === "updated"
+        ? `${response.data.tool.name} was updated.`
+        : `${response.data.tool.name} was saved to your library.`,
+    );
   };
 
   return (
@@ -123,7 +133,7 @@ export function ForgePage() {
                 title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
                 onClick={save}
               >
-                <Save size={13} /> Save tool
+                <Save size={13} /> {targetToolId ? "Update tool" : "Save tool"}
               </LoadingButton>
             )}
             {!visibleSessionId && (

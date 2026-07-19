@@ -18,7 +18,7 @@ export function createForgeMcpServer(publish: ForgeMcpPublishers, options: { all
     {
       title: "Show ScriptForge panel",
       description:
-        "Required before creating a new candidate. Replace the terminal with a short, nontechnical description of what the user will get, any genuinely necessary questions, and an approval block labeled Approve, build & check / Request changes. Explain that approval allows a local standalone check before review. Never include technical implementation details or use this for build progress.",
+        "Use only when unresolved user-facing questions or a genuinely separate high-impact approval blocks work. Replace the terminal with concise, nontechnical context and the necessary inputs. Do not request approval merely to build or run bounded staging checks, and never use this for build progress.",
       inputSchema: forgePanelRequestSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },

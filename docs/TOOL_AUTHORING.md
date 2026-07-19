@@ -43,7 +43,9 @@ Generated interfaces use ordinary CSS because their runtime HTML cannot depend o
 
 ## Kickoff discovery
 
-Codex always presents a short plain-language kickoff panel before creating candidate files. Before showing it, Codex identifies every unresolved user-facing decision that would materially change the tool's behavior, automation, timing, inputs, outputs, destructive actions, data source, format, quality, or privacy.
+Before creating candidate files, Codex identifies every unresolved user-facing decision that would materially change the tool's behavior, automation, timing, inputs, outputs, destructive actions, data source, format, quality, or privacy. It presents a short plain-language question panel only when such decisions remain; a clear request begins immediately without a separate kickoff approval.
+
+Codex runs a realistic standalone runner check for the first candidate and repeats it when `tool.json` or `run.mjs` changes. A later `ui.html`-only revision reuses that runner evidence and proceeds directly to interface review; the exact revised interface must still pass Preview before Save.
 
 - Ask all behavior-changing questions together and require answers where needed. Do not silently choose an easier or narrower behavior.
 - Treat words such as “live,” “automatically,” “watch,” “monitor,” “sync,” “continuous,” “recurring,” and “update” as core requirements.
@@ -112,7 +114,7 @@ Rules:
 Before opening the candidate preview, Codex runs `run.mjs` directly with a realistic request and temporary inputs inside staging. It parses the emitted JSON-line events, inspects real outputs, fixes any failure, and repeats the check until it passes. Live tools must complete a bounded check that obtains at least one real result. This check uses temporary data and commands rather than adding a test file to the tool package.
 
 - The interface reaches its `ready` handshake after listeners are installed.
-- The implemented behavior matches the user's request and every approved kickoff decision; “live” behavior is actually automatic and recurring.
+- The implemented behavior matches the user's request and every resolved clarification; “live” behavior is actually automatic and recurring.
 - Clicking the primary action immediately shows a local loading state.
 - The default UI matches ScriptForge's compact dark theme unless the user requested another style.
 - The page shell fills the iframe and adapts cleanly at representative 480px and 1200px widths without a centered max-width island.

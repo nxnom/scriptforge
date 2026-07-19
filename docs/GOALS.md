@@ -68,7 +68,7 @@ Completed and verified:
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
 - One server-owned in-memory Forge session that reconnects and replays output after browser refresh.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
-- Mandatory plain-language kickoff approval with validated questions and separate Markdown, Mermaid, HTML, and input blocks that replace the terminal while Codex waits.
+- Contextual plain-language question panels with validated Markdown, Mermaid, HTML, and input blocks; clear requests begin immediately without a mandatory kickoff approval.
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
@@ -76,7 +76,7 @@ Completed and verified:
 - Confirm explicit Forge stops, return to the Library after stopping, and keep candidate Save beside the session control once Preview testing succeeds.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
-- Successful Save stops the Forge Codex session and redirects to the installed tool detail page.
+- Save keeps the Forge Codex session alive, changes the action to Update, and leaves Stop as the only explicit session-ending action.
 
 Acceptance checks:
 
@@ -164,6 +164,7 @@ Status: Pending
 - Ship an offline PDF Toolkit for mixed PDFs and images, page reorder, rotation, split, image page layout, and clearly labeled scan flattening/compression without a system executable.
 - Ship a Silicon-backed Code Screenshot Studio with a focused paste-to-PNG interface and the normal Dependency Doctor path when Silicon is missing.
 - Ship a zero-install App Icon Exporter that packages Apple and Android assets into one ZIP and treats Icon Composer's layered `.icon` format honestly.
+- Ship an authorized-content Video Downloader backed by declared `yt-dlp`, with single-video and playlist ranges, honest no-FFmpeg quality choices, and memory-safe streamed results.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Record a public demo shorter than three minutes.
 - Capture the primary `/feedback` Codex Session ID.

@@ -80,6 +80,22 @@ describe("tool configuration", () => {
       accessToken: "candidate-secret",
     });
   });
+
+  it("copies configuration without removing the candidate values", async () => {
+    const root = await temporaryRoot();
+    const service = new ToolConfigurationService(join(root, "config"), join(root, "secure", "master.key"));
+    const manifest = configuredManifest();
+    await service.save(manifest, { username: "candidate", accessToken: "candidate-secret" }, [], "candidate-session");
+
+    await service.copy("candidate-session", manifest.id);
+
+    await expect(service.resolve(manifest)).resolves.toMatchObject({
+      config: { username: "candidate", accessToken: "candidate-secret" },
+    });
+    await expect(service.resolve(manifest, "candidate-session")).resolves.toMatchObject({
+      config: { username: "candidate", accessToken: "candidate-secret" },
+    });
+  });
 });
 
 async function temporaryRoot() {

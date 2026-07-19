@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { IPty, spawn as spawnPty } from "node-pty";
@@ -66,6 +66,42 @@ describe("Forge terminal sessions", () => {
     expect(spawn.mock.calls[0]?.[1]).toContain("--dangerously-bypass-approvals-and-sandbox");
   });
 
+  it("starts an installed-tool update from a staged copy with update-specific instructions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const installed = join(root, "installed-tool");
+    const staging = join(root, "staging");
+    await mkdir(installed);
+    await Promise.all([
+      writeFile(join(installed, "tool.json"), '{"id":"installed-tool"}'),
+      writeFile(join(installed, "run.mjs"), 'console.log("installed")'),
+      writeFile(join(installed, "ui.html"), "<title>Installed</title>"),
+    ]);
+    const pty = fakePty();
+    const calls: Parameters<typeof spawnPty>[] = [];
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      staging,
+      (...args) => {
+        calls.push(args);
+        return pty.value;
+      },
+      async () => undefined,
+      { serverUrl: "http://127.0.0.1:4545", command: "node", args: ["mcp.js"] },
+    );
+
+    const { sessionId } = await service.start(
+      { model: "gpt-5.6-sol", effort: "medium" },
+      { id: "installed-tool", name: "Installed Tool", directory: installed },
+    );
+
+    await expect(readFile(join(staging, sessionId, "ui.html"), "utf8")).resolves.toContain("Installed");
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "installed-tool" });
+    expect(((calls[0]?.[1] ?? []) as string[]).find((arg) => arg.startsWith("developer_instructions="))).toContain(
+      "This session updates the installed tool",
+    );
+  });
+
   it("pre-authorizes required candidate dependencies only in bypass instructions", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
     roots.push(root);
@@ -126,7 +162,7 @@ describe("Forge terminal sessions", () => {
     );
     const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
 
-    expect(service.getActiveSession()).toEqual({ sessionId });
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: null });
     expect(pty.kill).not.toHaveBeenCalled();
   });
 
@@ -144,7 +180,7 @@ describe("Forge terminal sessions", () => {
 
     expect(service.stop(sessionId)).toBe(true);
     expect(pty.kill).toHaveBeenCalledOnce();
-    expect(service.getActiveSession()).toEqual({ sessionId: null });
+    expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null });
     expect(service.stop(sessionId)).toBe(false);
   });
 
@@ -168,7 +204,7 @@ describe("Forge terminal sessions", () => {
 
     expect(first.kill).toHaveBeenCalledOnce();
     expect(service.getSnapshot(previous.sessionId)).toBeUndefined();
-    expect(service.getActiveSession()).toEqual({ sessionId: current.sessionId });
+    expect(service.getActiveSession()).toEqual({ sessionId: current.sessionId, toolId: null });
   });
 
   it("connects the session-scoped MCP panel and returns feedback through the PTY", async () => {

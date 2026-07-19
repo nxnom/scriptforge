@@ -41,7 +41,11 @@ export function ForgeLaunchButton({
     <Button
       className={`shrink-0 gap-2 rounded-[10px] ${className}`}
       size="sm"
-      onClick={() => (activeSession.data?.sessionId ? navigate("/forge") : openDialog())}
+      onClick={() =>
+        activeSession.data?.sessionId
+          ? navigate(activeSession.data.toolId ? `/tools/${activeSession.data.toolId}` : "/forge")
+          : openDialog()
+      }
     >
       {activeSession.data?.sessionId ? <ArrowRight size={16} /> : <Plus size={16} />}
       <span className="max-[480px]:hidden">{activeSession.data?.sessionId ? activeLabel : idleLabel}</span>

@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from "node:crypto";
-import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { z } from "zod";
@@ -112,6 +112,19 @@ export class ToolConfigurationService {
     await mkdir(this.configRoot, { recursive: true, mode: 0o700 });
     await rm(this.pathFor(toScope), { force: true });
     await rename(source, this.pathFor(toScope));
+  }
+
+  async copy(fromScope: string, toScope: string) {
+    const source = this.pathFor(fromScope);
+    try {
+      await readFile(source);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    await mkdir(this.configRoot, { recursive: true, mode: 0o700 });
+    await copyFile(source, this.pathFor(toScope));
+    await chmod(this.pathFor(toScope), 0o600).catch(() => undefined);
   }
 
   private missingFields(fields: ToolConfigurationField[], store: StoredConfig) {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { copyFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { type IPty, spawn as spawnPty } from "node-pty";
@@ -39,6 +39,13 @@ type ForgeSession = {
   directory: string;
   candidate?: ForgeCandidateDocument;
   candidateJobs: Map<string, string>;
+  toolId?: string;
+};
+
+export type ForgeUpdateTarget = {
+  id: string;
+  name: string;
+  directory: string;
 };
 
 export class ForgeSessionService {
@@ -53,7 +60,7 @@ export class ForgeSessionService {
     private readonly categories: CategoryProvider = async () => [],
   ) {}
 
-  async start(preferences: ForgePreferences) {
+  async start(preferences: ForgePreferences, updateTarget?: ForgeUpdateTarget) {
     const readiness = await this.codexStatus.check();
     if (!readiness.installed) throw new Error("Install the Codex CLI before starting Forge.");
     if (!readiness.authenticated) throw new Error("Run codex login before starting Forge.");
@@ -64,11 +71,18 @@ export class ForgeSessionService {
     const mcpToken = randomUUID();
     const directory = join(this.stagingRoot, id);
     await mkdir(directory, { recursive: true });
+    if (updateTarget) {
+      await Promise.all(
+        ["tool.json", "run.mjs", "ui.html"].map((file) =>
+          copyFile(join(updateTarget.directory, file), join(directory, file)),
+        ),
+      );
+    }
     await this.trust(directory);
     const existingCategories = await this.categories().catch(() => []);
     const pty = this.spawn(
       codexCommand(),
-      codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken, existingCategories),
+      codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken, existingCategories, updateTarget),
       {
         name: "xterm-256color",
         cols: 100,
@@ -87,6 +101,7 @@ export class ForgeSessionService {
       panelVersion: 0,
       directory,
       candidateJobs: new Map(),
+      toolId: updateTarget?.id,
     };
     this.session = session;
     pty.onData((data) => this.emit(session, { type: "output", data }));
@@ -103,7 +118,17 @@ export class ForgeSessionService {
   }
 
   getActiveSession() {
-    return this.session && !this.session.exited ? { sessionId: this.session.id } : { sessionId: null };
+    return this.session && !this.session.exited
+      ? { sessionId: this.session.id, toolId: this.session.toolId ?? null }
+      : { sessionId: null, toolId: null };
+  }
+
+  getTargetToolId(sessionId: string) {
+    return this.activeSession(sessionId).toolId;
+  }
+
+  markSaved(sessionId: string, toolId: string) {
+    this.activeSession(sessionId).toolId = toolId;
   }
 
   subscribe(sessionId: string, listener: Listener) {
@@ -227,6 +252,7 @@ function codexArgs(
   sessionId: string,
   token: string,
   existingCategories: string[],
+  updateTarget?: ForgeUpdateTarget,
 ) {
   const args = ["-c", `model_reasoning_effort=${preferences.effort}`, "-m", preferences.model, "--cd", directory];
   if (preferences.dangerouslyBypassApprovalsAndSandbox) {
@@ -247,10 +273,13 @@ function codexArgs(
   const instructions = createForgeMcpInstructions({
     allowDependencyInstalls: preferences.dangerouslyBypassApprovalsAndSandbox === true,
   });
+  const updateInstructions = updateTarget
+    ? `\n\nThis session updates the installed tool ${JSON.stringify(updateTarget.name)} (${updateTarget.id}). Its current tool.json, run.mjs, and ui.html are already in the staging directory. Preserve its manifest id exactly. Ask what the user wants changed, use the question panel only for unresolved decisions, then follow the standalone-check, presentation, Preview-test, and Save workflow. Do not rebuild or alter unrelated behavior unless requested.`
+    : "";
   return [
     ...args,
     "-c",
-    `developer_instructions=${JSON.stringify(`${instructions}\n\nExisting ScriptForge categories on this machine: ${existingCategories.length ? existingCategories.join(", ") : "none yet"}.`)}`,
+    `developer_instructions=${JSON.stringify(`${instructions}${updateInstructions}\n\nExisting ScriptForge categories on this machine: ${existingCategories.length ? existingCategories.join(", ") : "none yet"}.`)}`,
     "-c",
     `mcp_servers.scriptforge.command=${JSON.stringify(mcpRuntime.command)}`,
     "-c",

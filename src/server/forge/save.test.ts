@@ -18,6 +18,30 @@ afterEach(async () => {
 });
 
 describe("Forge candidate save", () => {
+  it("rejects update sessions for bundled tools", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-save-"));
+    roots.push(root);
+    const spawn = vi.fn((..._args: Parameters<typeof spawnPty>) => fakePty());
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      join(root, "staging"),
+      spawn,
+      async () => undefined,
+    );
+    const jobs = new ToolJobService(join(root, "jobs"), undefined, join(root, "tools"));
+    const app = new Hono().route("/api/forge", createForgeApiRoutes(service, jobs, join(root, "tools")));
+
+    const response = await app.request("/api/forge/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "gpt-5.6-sol", effort: "medium", toolId: "image-resizer" }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "Built-in tools cannot be updated." });
+    expect(spawn).not.toHaveBeenCalled();
+  });
+
   it("saves only the exact successfully tested revision and makes it runnable", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-save-"));
     roots.push(root);
@@ -85,8 +109,8 @@ describe("Forge candidate save", () => {
       body: JSON.stringify({ revision: candidate.revision }),
     });
     expect(saved.status).toBe(201);
-    expect(service.getActiveSession()).toEqual({ sessionId: null });
-    expect(pty.kill).toHaveBeenCalledOnce();
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "tiny-tool" });
+    expect(pty.kill).not.toHaveBeenCalled();
     await expect(readFile(join(installedRoot, "tiny-tool", "ui.html"), "utf8")).resolves.toContain("Tiny Tool");
     await expect(configuration.resolve(runtime.manifest)).resolves.toMatchObject({
       config: { accessToken: "candidate-secret" },
@@ -94,6 +118,37 @@ describe("Forge candidate save", () => {
 
     const installedRun = await jobs.start({ toolId: "tiny-tool", input: {}, files: [] });
     await expect.poll(() => jobs.getSnapshot(installedRun.jobId)?.status).toBe("succeeded");
+
+    await mkdir(join(installedRoot, "tiny-tool", "support"));
+    await writeFile(join(installedRoot, "tiny-tool", "support", "fixture.txt"), "preserved");
+    await writeFile(join(stagingRoot, sessionId, "ui.html"), "<!doctype html><title>Tiny Tool Updated</title>");
+    const updatedCandidate = await service.publishCandidate(sessionId, token, {
+      summary: "Updated and ready to review.",
+      testSummary: "Updated standalone check passed.",
+    });
+    const updateForm = new FormData();
+    updateForm.append("revision", updatedCandidate.revision);
+    updateForm.append("input", "{}");
+    const updateRun = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, {
+      method: "POST",
+      body: updateForm,
+    });
+    const { jobId: updateJobId } = (await updateRun.json()) as { jobId: string };
+    await expect.poll(() => jobs.getSnapshot(updateJobId)?.status).toBe("succeeded");
+
+    const updated = await app.request(`/api/forge/sessions/${sessionId}/candidate/save`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ revision: updatedCandidate.revision }),
+    });
+    expect(updated.status).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({ action: "updated" });
+    await expect(readFile(join(installedRoot, "tiny-tool", "ui.html"), "utf8")).resolves.toContain("Updated");
+    await expect(readFile(join(installedRoot, "tiny-tool", "support", "fixture.txt"), "utf8")).resolves.toBe(
+      "preserved",
+    );
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "tiny-tool" });
+    expect(pty.kill).not.toHaveBeenCalled();
   });
 });
 

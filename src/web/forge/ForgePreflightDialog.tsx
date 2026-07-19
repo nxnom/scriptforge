@@ -26,9 +26,11 @@ import {
 type Props = {
   dismiss: () => void;
   onContinue: (preferences: ForgePreferences) => Promise<void>;
+  mode?: "forge" | "update";
+  toolName?: string;
 };
 
-export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
+export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", toolName }: Props) {
   const [startError, setStartError] = useState<string>();
   const [starting, setStarting] = useState(false);
   const status = useRead((api) => api("codex/status").GET(), { staleTime: 5_000 });
@@ -46,7 +48,7 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
       saveForgePreferences(preferences);
       dismiss();
     } catch (error) {
-      setStartError(error instanceof Error ? error.message : "The Forge terminal could not start.");
+      setStartError(error instanceof Error ? error.message : "The Codex terminal could not start.");
       setStarting(false);
     }
   });
@@ -59,15 +61,25 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
             <Hammer size={19} />
           </span>
           <div>
-            <h2 className="m-0 font-[Geist_Variable] text-lg">Start a new forge</h2>
+            <h2 className="m-0 font-[Geist_Variable] text-lg">
+              {mode === "update" ? `Update ${toolName ?? "tool"} with Codex` : "Start a new forge"}
+            </h2>
             <p className="mt-1 mb-0 text-xs leading-5 text-[#929292]">
-              Choose the Codex model and reasoning effort for this tool-building session.
+              Choose the Codex model and reasoning effort for this {mode === "update" ? "update" : "tool-building"}{" "}
+              session.
             </p>
           </div>
         </header>
 
         <CodexReadiness status={status} />
-        {startError && <Alert variant="error" condensed title="Forge could not start" description={startError} />}
+        {startError && (
+          <Alert
+            variant="error"
+            condensed
+            title={mode === "update" ? "Update could not start" : "Forge could not start"}
+            description={startError}
+          />
+        )}
 
         <div className="grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
           <div className="grid gap-1.5">
@@ -118,7 +130,7 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
             loading={status.loading || starting}
             loadingText={starting ? "Starting Codex…" : "Checking Codex…"}
           >
-            Continue to Forge
+            {mode === "update" ? "Start update session" : "Continue to Forge"}
           </LoadingButton>
         </footer>
       </form>

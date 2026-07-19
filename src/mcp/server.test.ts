@@ -18,7 +18,7 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("event.source === parent");
     expect(client.getInstructions()).toContain("Write newline-delimited JSON events");
     expect(client.getInstructions()).toContain("You may execute commands, run the candidate");
-    expect(client.getInstructions()).toContain("Only after that standalone check passes");
+    expect(client.getInstructions()).toContain("Only after the applicable check above passes");
     expect(client.getInstructions()).toContain("both a 420-620px Forge tester and a much wider installed Tool page");
     expect(client.getInstructions()).toContain("Do not put the whole interface inside a centered max-width wrapper");
     expect(client.getInstructions()).toContain("balanced side-by-side or dashboard layout");

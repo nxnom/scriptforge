@@ -2,7 +2,7 @@ import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
-import { deleteInstalledTool, installTool } from "../../tools/installed";
+import { findInstalledTool, installTool, updateInstalledTool } from "../../tools/installed";
 import { findBundledTool } from "../../tools/registry";
 import { configurationUpdateSchema } from "../configuration/routes";
 import type { ToolConfigurationService } from "../configuration/service";
@@ -20,6 +20,10 @@ const preferencesSchema = z.object({
   model: z.enum(forgeModels),
   effort: z.enum(forgeEfforts),
   dangerouslyBypassApprovalsAndSandbox: z.boolean().default(false),
+  toolId: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
 });
 const clientEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("input"), data: z.string().max(64_000) }),
@@ -155,23 +159,26 @@ export function createForgeApiRoutes(
           if (!jobId || jobs.getSnapshot(jobId)?.status !== "succeeded") {
             throw new Error("Run this exact candidate successfully in Preview before saving it.");
           }
-          const installed = await installTool(
+          const files = {
+            manifest: runtime.manifest,
+            manifestSource: runtime.candidate.manifestSource,
+            scriptSource: runtime.candidate.scriptSource,
+            interfaceHtml: runtime.candidate.interfaceHtml,
+          };
+          const targetToolId = service.getTargetToolId(sessionId);
+          const installed = targetToolId
+            ? await updateInstalledTool(targetToolId, files, installedToolsRoot)
+            : await installTool(files, installedToolsRoot);
+          await configuration?.copy(candidateConfigurationScope(sessionId), installed.manifest.id);
+          service.markSaved(sessionId, installed.manifest.id);
+          return c.json(
             {
-              manifest: runtime.manifest,
-              manifestSource: runtime.candidate.manifestSource,
-              scriptSource: runtime.candidate.scriptSource,
-              interfaceHtml: runtime.candidate.interfaceHtml,
+              ok: true as const,
+              action: targetToolId ? ("updated" as const) : ("saved" as const),
+              tool: { id: installed.manifest.id, name: installed.manifest.name },
             },
-            installedToolsRoot,
+            targetToolId ? 200 : 201,
           );
-          try {
-            await configuration?.move(candidateConfigurationScope(sessionId), installed.manifest.id);
-          } catch (error) {
-            await deleteInstalledTool(installed.manifest.id, installedToolsRoot);
-            throw error;
-          }
-          service.stop(sessionId);
-          return c.json({ ok: true as const, tool: { id: installed.manifest.id, name: installed.manifest.name } }, 201);
         } catch (error) {
           return c.json(
             { ok: false as const, error: error instanceof Error ? error.message : "The candidate could not be saved." },
@@ -250,7 +257,21 @@ export function createForgeApiRoutes(
       }),
       async (c) => {
         try {
-          return c.json({ ok: true as const, ...(await service.start(c.req.valid("json"))) }, 201);
+          const request = c.req.valid("json");
+          if (request.toolId && findBundledTool(request.toolId)) throw new Error("Built-in tools cannot be updated.");
+          const target = request.toolId ? await findInstalledTool(request.toolId, installedToolsRoot) : undefined;
+          if (request.toolId && !target) throw new Error("Only installed tools can be updated.");
+          const started = await service.start(
+            request,
+            target ? { id: target.manifest.id, name: target.manifest.name, directory: target.directory } : undefined,
+          );
+          try {
+            if (target) await configuration?.copy(target.manifest.id, candidateConfigurationScope(started.sessionId));
+          } catch (error) {
+            service.stop(started.sessionId);
+            throw error;
+          }
+          return c.json({ ok: true as const, ...started }, 201);
         } catch (error) {
           return c.json(
             {

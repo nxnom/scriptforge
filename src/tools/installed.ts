@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { lstat, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { type ToolManifest, toolManifestSchema } from "./manifest";
@@ -63,6 +63,35 @@ export async function installTool(files: InstallableToolFiles, root = defaultIns
     throw error;
   }
   return { directory: destination, manifest: structuredClone(files.manifest) };
+}
+
+export async function updateInstalledTool(id: string, files: InstallableToolFiles, root = defaultInstalledToolsRoot()) {
+  if (files.manifest.id !== id) throw new Error("An update cannot change the tool identifier.");
+  const installed = await findInstalledTool(id, root);
+  if (!installed) throw new Error("That installed tool is no longer available.");
+
+  const temporary = join(root, `.update-${id}-${randomUUID()}`);
+  const previous = join(root, `.previous-${id}-${randomUUID()}`);
+  await cp(installed.directory, temporary, { recursive: true, errorOnExist: true });
+  try {
+    await Promise.all([
+      writeFile(join(temporary, "tool.json"), files.manifestSource),
+      writeFile(join(temporary, "run.mjs"), files.scriptSource),
+      writeFile(join(temporary, "ui.html"), files.interfaceHtml),
+    ]);
+    await rename(installed.directory, previous);
+    try {
+      await rename(temporary, installed.directory);
+    } catch (error) {
+      await rename(previous, installed.directory);
+      throw error;
+    }
+    await rm(previous, { recursive: true, force: true });
+  } catch (error) {
+    await rm(temporary, { recursive: true, force: true });
+    throw error;
+  }
+  return { directory: installed.directory, manifest: structuredClone(files.manifest) };
 }
 
 async function readInstalledTool(directory: string): Promise<InstalledTool | undefined> {
