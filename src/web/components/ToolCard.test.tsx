@@ -12,6 +12,11 @@ vi.mock("../api", () => ({
 afterEach(cleanup);
 
 describe("ToolCard", () => {
+  it("generates the same icon hue from normalized category text", () => {
+    expect(paletteFor(" Audio ").hue).toBe(paletteFor("audio").hue);
+    expect(paletteFor("Audio").hue).not.toBe(paletteFor("Images").hue);
+  });
+
   it("opens an available tool from the whole card without an Open button", () => {
     renderCard(tool());
     expect(screen.queryByRole("button", { name: "Open" })).not.toBeInTheDocument();
@@ -44,11 +49,12 @@ describe("ToolCard", () => {
     expect(container.querySelector("article > div")?.className).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
   });
 
-  it("uses a category accent, neutral labels, and no redundant ready badge", () => {
+  it("derives a stable primary-category accent and keeps category badges neutral", () => {
     renderCard({ ...tool(), origin: "bundled" });
 
     expect(screen.getByRole("article")).toHaveAttribute("data-palette", paletteFor("Video").name);
     expect(screen.getByText("Video")).toHaveClass("bg-[#2d2d2d]", "text-[#b8b8b8]");
+    expect(screen.getByText("Files")).toHaveClass("bg-[#2d2d2d]", "text-[#b8b8b8]");
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
     expect(screen.getByText("Built-in")).toHaveClass("bg-[#292c3c]", "text-[#aeb7ff]");
   });

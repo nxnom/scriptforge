@@ -16,7 +16,7 @@ import {
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { ToolActions } from "./ToolActions";
-import { paletteFor, type ToolPalette } from "./tool-card-palette";
+import { paletteFor } from "./tool-card-palette";
 
 const icons: Record<string, ComponentType<{ size?: number }>> = {
   image: Image,
@@ -47,17 +47,14 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
   const Icon = icons[tool.icon] ?? Wrench;
   const palette = paletteFor(tool.categories[0] ?? tool.id);
   const available = ["ready", "needs-install", "needs-config"].includes(tool.status);
-  const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? palette.hover : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
+  const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? "hover:border-[#4a4a4a]" : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
 
   return (
     <article
       data-palette={palette.name}
+      style={palette.style}
       className={`${className} ${layout === "grid" ? "min-h-44 rounded-[18px]" : "min-h-24 rounded-xl"}`}
     >
-      <span
-        aria-hidden
-        className={`pointer-events-none absolute top-0 left-5 h-px w-24 bg-gradient-to-r opacity-45 transition-opacity group-hover:opacity-75 ${palette.accent}`}
-      />
       {available && (
         <Link
           aria-label={`Open ${tool.name}`}
@@ -65,28 +62,16 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
           to={`/tools/${tool.id}`}
         />
       )}
-      {layout === "grid" ? (
-        <GridCardContent tool={tool} Icon={Icon} palette={palette} />
-      ) : (
-        <ListCardContent tool={tool} Icon={Icon} palette={palette} />
-      )}
+      {layout === "grid" ? <GridCardContent tool={tool} Icon={Icon} /> : <ListCardContent tool={tool} Icon={Icon} />}
     </article>
   );
 }
 
-function GridCardContent({
-  tool,
-  Icon,
-  palette,
-}: {
-  tool: ToolSummary;
-  Icon: ComponentType<{ size?: number }>;
-  palette: ToolPalette;
-}) {
+function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
   return (
     <div className="pointer-events-none relative flex h-full min-h-44 flex-col gap-3 p-3.5">
       <div className="flex items-center justify-between">
-        <ToolIcon Icon={Icon} palette={palette} />
+        <ToolIcon Icon={Icon} />
         <StatusBadge status={tool.status} />
       </div>
       <div className="flex flex-1 flex-col gap-1.5">
@@ -97,18 +82,10 @@ function GridCardContent({
   );
 }
 
-function ListCardContent({
-  tool,
-  Icon,
-  palette,
-}: {
-  tool: ToolSummary;
-  Icon: ComponentType<{ size?: number }>;
-  palette: ToolPalette;
-}) {
+function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
   return (
     <div className="pointer-events-none relative grid min-h-24 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 max-[620px]:grid-cols-[auto_minmax(0,1fr)]">
-      <ToolIcon Icon={Icon} palette={palette} />
+      <ToolIcon Icon={Icon} />
       <div className="min-w-0">
         <ToolCopy tool={tool} />
       </div>
@@ -126,9 +103,9 @@ function ListCardContent({
   );
 }
 
-function ToolIcon({ Icon, palette }: { Icon: ComponentType<{ size?: number }>; palette: ToolPalette }) {
+function ToolIcon({ Icon }: { Icon: ComponentType<{ size?: number }> }) {
   return (
-    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-inset ${palette.icon}`}>
+    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--tool-icon-bg)] text-[var(--tool-accent-soft)] ring-1 ring-[var(--tool-icon-ring)] ring-inset">
       <Icon size={18} />
     </span>
   );

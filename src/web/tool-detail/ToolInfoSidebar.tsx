@@ -14,10 +14,10 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
     <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[900px]:w-full max-[900px]:overflow-visible max-[900px]:pr-0">
       <section
         data-palette={palette.name}
-        className={`relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4 ${palette.hover}`}
+        style={palette.style}
+        className="relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4"
       >
-        <span aria-hidden className={`absolute top-0 left-5 h-px w-24 bg-gradient-to-r ${palette.accent}`} />
-        <span className={`grid size-11 place-items-center rounded-xl ring-1 ring-inset ${palette.icon}`}>
+        <span className="grid size-11 place-items-center rounded-xl bg-[var(--tool-icon-bg)] text-[var(--tool-accent-soft)] ring-1 ring-[var(--tool-icon-ring)] ring-inset">
           <Icon size={20} />
         </span>
         <h2 className="mt-3.5 mb-1 font-[650] font-[Geist_Variable] text-[17px] leading-tight">{tool.name}</h2>
