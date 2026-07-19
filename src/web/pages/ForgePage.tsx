@@ -1,6 +1,7 @@
 import { Button, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
-import { Bot, Hammer, ShieldCheck, Square, TerminalSquare } from "lucide-react";
+import { ArrowLeft, Bot, Hammer, ShieldCheck, Square, TerminalSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { useRead, useWrite } from "../api";
 import { CandidateReview } from "../forge/CandidateReview";
@@ -10,6 +11,7 @@ import { ForgeTerminal } from "../forge/ForgeTerminal";
 import { type ForgePreferences, loadForgePreferences } from "../forge/preferences";
 
 export function ForgePage() {
+  const navigate = useNavigate();
   const opened = useRef(false);
   const [preferences, setPreferences] = useState<ForgePreferences>(loadForgePreferences);
   const [sessionId, setSessionId] = useState<string>();
@@ -72,11 +74,25 @@ export function ForgePage() {
   };
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+    <section className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-4 overflow-hidden">
       <header className="flex shrink-0 items-center justify-between gap-4">
-        <div>
-          <h1 className="m-0 font-[Geist_Variable] text-2xl">Forge</h1>
-          <p className="mt-1 mb-0 text-xs text-[#929292]">Build a focused local tool with the interactive Codex CLI.</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <Button
+            type="button"
+            variant="icon"
+            size="md"
+            aria-label="Back to library"
+            className="size-10 shrink-0 rounded-xl border border-[#383838] bg-[#242424] p-0"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft size={18} />
+          </Button>
+          <div className="min-w-0">
+            <h1 className="m-0 font-[Geist_Variable] text-2xl">Forge</h1>
+            <p className="mt-1 mb-0 truncate text-xs text-[#929292]">
+              Build a focused local tool with the interactive Codex CLI.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {visibleSessionId && (
