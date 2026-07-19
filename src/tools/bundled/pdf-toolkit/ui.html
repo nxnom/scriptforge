@@ -18,11 +18,11 @@
         --danger: #ff7979;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; background: #171717; }
+      body { margin: 0; height: 100vh; overflow: hidden; background: #171717; }
       button, input, select { font: inherit; }
       button { cursor: pointer; }
       button:disabled { cursor: not-allowed; opacity: .48; }
-      .app { display: grid; gap: 16px; padding: 18px; }
+      .app { display: flex; height: 100vh; flex-direction: column; gap: 16px; overflow: hidden; padding: 18px; }
       .toolbar, .actions, .file-row, .status-row { display: flex; align-items: center; gap: 10px; }
       .toolbar { justify-content: space-between; flex-wrap: wrap; }
       h1 { margin: 0; font-size: clamp(21px, 2.5vw, 28px); letter-spacing: -.03em; }
@@ -32,13 +32,17 @@
       .button.primary { border-color: transparent; background: var(--primary); color: white; }
       .button.ghost { background: transparent; }
       .button.icon { width: 34px; min-height: 34px; padding: 0; font-size: 16px; }
-      .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; min-height: 480px; }
+      .workspace { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; min-height: 0; overflow: hidden; }
       .panel { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); overflow: hidden; }
       .source-panel { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
-      .source-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .source-head { padding: 10px 12px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
       .source-head strong { font-size: 14px; }
       .file-row { min-width: 0; overflow-x: auto; color: var(--muted); font-size: 12px; scrollbar-width: thin; }
       .file-pill { padding: 5px 8px; border-radius: 999px; background: #303030; white-space: nowrap; }
+      .page-jump { display: flex; align-items: center; gap: 6px; }
+      .page-jump label { color: var(--muted); font-size: 11px; white-space: nowrap; }
+      .page-jump input { width: 58px; height: 30px; padding: 0 7px; }
+      .page-jump .button { min-height: 30px; padding: 0 9px; border-radius: 7px; font-size: 11px; }
       .dropzone { display: grid; place-items: center; min-height: 420px; margin: 12px; border: 1px dashed #4d4d4d; border-radius: 12px; color: var(--muted); text-align: center; transition: border-color .15s, background .15s; }
       .dropzone.dragging { border-color: var(--primary); background: rgba(84, 104, 255, .08); }
       .dropzone strong { display: block; margin-bottom: 6px; color: #ededed; }
@@ -54,7 +58,7 @@
       .page-tools { display: flex; gap: 4px; margin-top: 7px; }
       .page-tools button { flex: 1; min-height: 28px; border: 1px solid var(--border); border-radius: 7px; color: #ddd; background: #292929; }
       .page-tools button:hover { border-color: #686868; }
-      .settings { display: flex; flex-direction: column; gap: 14px; padding: 14px; }
+      .settings { display: flex; flex-direction: column; gap: 14px; overflow: auto; padding: 14px; }
       .field { display: grid; gap: 7px; }
       .field label { color: #d8d8d8; font-size: 12px; font-weight: 650; }
       select, input[type="number"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; color: #f5f5f5; background: #1b1b1b; }
@@ -69,15 +73,14 @@
       .message.visible { display: block; }
       .message.error { border: 1px solid #754141; color: #ffb2b2; background: #3b2222; }
       .message.success { border: 1px solid #386145; color: #a7e8b7; background: #203629; }
-      .results { display: none; grid-template-columns: minmax(0, 1fr) 260px; min-height: 430px; }
+      .results { display: none; flex: 1; grid-template-columns: minmax(0, 1fr) 260px; min-height: 0; overflow: hidden; }
       .results.visible { display: grid; }
-      .result-preview { min-width: 0; min-height: 430px; padding: 16px; overflow: auto; background: #151515; }
+      .result-preview { min-width: 0; min-height: 0; padding: 16px; overflow: auto; background: #151515; }
       .result-preview h2 { margin: 0 0 12px; font-size: 15px; }
       .result-pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-      .result-page { display: grid; width: min(100%, 820px); gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #1b1b1b; }
-      .result-page .thumb { height: auto; min-height: 180px; padding: 10px; }
-      .result-page .thumb canvas { width: auto; max-width: 100%; height: auto; max-height: none; }
-      .result-page span { color: var(--muted); font-size: 11px; }
+      .result-page { display: grid; width: min(100%, 820px); min-width: 0; }
+      .result-page .thumb { height: auto; min-height: 180px; border-radius: 0; background: white; box-shadow: 0 8px 28px #0008; }
+      .result-page .thumb canvas { width: auto; max-width: 100%; height: auto; max-height: none; box-shadow: none; }
       .output-list { padding: 12px; border-left: 1px solid var(--border); overflow: auto; }
       .output-list h2 { margin: 2px 0 12px; font-size: 15px; }
       .output { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; margin-bottom: 8px; background: #1b1b1b; }
@@ -85,6 +88,11 @@
       .output a { color: #aeb7ff; font-size: 12px; text-decoration: none; }
       details { border-top: 1px solid var(--border); padding-top: 10px; color: var(--muted); font-size: 12px; }
       pre { max-height: 120px; overflow: auto; white-space: pre-wrap; color: #bbb; }
+      dialog { width: min(920px, calc(100vw - 32px)); max-width: none; height: min(88vh, 980px); padding: 0; border: 1px solid #444; border-radius: 14px; color: #f5f5f5; background: #191919; box-shadow: 0 24px 80px #000c; }
+      dialog::backdrop { background: rgba(0, 0, 0, .8); }
+      .preview-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+      .preview-body { display: grid; height: calc(100% - 55px); place-items: start center; overflow: auto; padding: 18px; background: #111; }
+      .preview-body canvas { max-width: 100%; height: auto; box-shadow: 0 10px 36px #000b; }
       .hidden { display: none; }
       @media (max-width: 760px) {
         .app { padding: 12px; }
@@ -92,7 +100,8 @@
         .settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .settings .run, .settings .warning, .settings details { grid-column: 1 / -1; }
         .results.visible { grid-template-columns: 1fr; }
-        .output-list { border-left: 0; border-top: 1px solid var(--border); }
+        .result-preview { min-height: 300px; }
+        .output-list { max-height: 180px; border-left: 0; border-top: 1px solid var(--border); }
       }
       @media (max-width: 460px) {
         .toolbar, .actions { align-items: stretch; }
@@ -125,6 +134,11 @@
           <div class="source-head">
             <strong id="page-count">Pages</strong>
             <div class="file-row" id="file-list"></div>
+            <div class="page-jump">
+              <label for="jump-page">Go to</label>
+              <input id="jump-page" type="number" min="1" value="1" aria-label="Page number" />
+              <button class="button" id="jump" type="button">Go</button>
+            </div>
           </div>
           <div class="dropzone" id="dropzone">
             <div><strong>Drop PDF files here</strong><span>Add several PDFs to merge them, then drag pages into order.</span></div>
@@ -169,6 +183,11 @@
         </div>
         <div class="output-list"><h2>Results</h2><div id="outputs"></div></div>
       </section>
+
+      <dialog id="page-preview">
+        <div class="preview-head"><strong id="preview-title">Page preview</strong><button class="button icon" id="close-preview" type="button" aria-label="Close preview">×</button></div>
+        <div class="preview-body"><canvas id="preview-canvas"></canvas></div>
+      </dialog>
     </main>
 
     <script type="module">
@@ -187,11 +206,11 @@
       const byId = (id) => document.getElementById(id);
       const elements = {
         choose: byId("choose"), files: byId("files"), reset: byId("reset"), dropzone: byId("dropzone"),
-        pages: byId("pages"), fileList: byId("file-list"), pageCount: byId("page-count"), outputMode: byId("output-mode"),
+        pages: byId("pages"), fileList: byId("file-list"), pageCount: byId("page-count"), jumpPage: byId("jump-page"), jump: byId("jump"), outputMode: byId("output-mode"),
         compression: byId("compression"), targetField: byId("target-field"), target: byId("target"), scanWarning: byId("scan-warning"),
         run: byId("run"), progress: byId("progress"), status: byId("status"), percent: byId("percent"), logs: byId("logs"),
         error: byId("error"), success: byId("success"), workspace: byId("workspace"), results: byId("results"),
-        resultPages: byId("result-pages"), outputs: byId("outputs"),
+        resultPages: byId("result-pages"), outputs: byId("outputs"), pagePreview: byId("page-preview"), previewTitle: byId("preview-title"), previewCanvas: byId("preview-canvas"), closePreview: byId("close-preview"),
       };
 
       window.addEventListener("message", (event) => {
@@ -211,6 +230,10 @@
         elements.files.value = "";
       });
       elements.reset.addEventListener("click", reset);
+      elements.jump.addEventListener("click", jumpToPage);
+      elements.jumpPage.addEventListener("keydown", (event) => { if (event.key === "Enter") jumpToPage(); });
+      elements.closePreview.addEventListener("click", () => elements.pagePreview.close());
+      elements.pagePreview.addEventListener("click", (event) => { if (event.target === elements.pagePreview) elements.pagePreview.close(); });
       elements.outputMode.addEventListener("change", syncOptions);
       elements.compression.addEventListener("change", syncOptions);
       elements.run.addEventListener("click", run);
@@ -266,17 +289,20 @@
         elements.reset.classList.toggle("hidden", pages.length === 0);
         elements.run.disabled = pages.length === 0 || running;
         elements.pageCount.textContent = pages.length ? `${pages.length} page${pages.length === 1 ? "" : "s"}` : "Pages";
+        elements.jumpPage.max = String(Math.max(1, pages.length));
         elements.pages.replaceChildren();
         for (const [index, item] of pages.entries()) {
           const card = document.createElement("article");
           card.className = "page";
           card.draggable = true;
           card.dataset.id = item.id;
+          card.dataset.index = String(index + 1);
           card.innerHTML = `<div class="thumb"><canvas aria-label="Page ${index + 1} preview"></canvas></div>
             <div class="page-meta"><span>Page ${index + 1}</span><span>${escapeHtml(sourceFiles[item.fileIndex].file.name)}</span></div>
             <div class="page-tools">
               <button type="button" data-action="left" title="Rotate left">↶</button>
               <button type="button" data-action="right" title="Rotate right">↷</button>
+              <button type="button" data-action="preview" title="View larger" aria-label="View page ${index + 1} larger">⌕</button>
               <button type="button" data-action="remove" title="Remove page">×</button>
             </div>`;
           const controls = card.querySelector(".page-tools");
@@ -311,6 +337,10 @@
               await renderPages();
               return;
             }
+            if (action === "preview") {
+              await showPagePreview(item, position);
+              return;
+            }
             if (action === "left") item.rotation = (item.rotation + 270) % 360;
             if (action === "right") item.rotation = (item.rotation + 90) % 360;
             await renderThumbnail(item, card.querySelector("canvas"));
@@ -323,6 +353,24 @@
           Math.max(0, elements.pages.scrollWidth - elements.pages.clientWidth),
         );
         await Promise.all(thumbnailRenders);
+      }
+
+      function jumpToPage() {
+        if (!pages.length) return;
+        const pageNumber = Math.max(1, Math.min(pages.length, Number.parseInt(elements.jumpPage.value, 10) || 1));
+        elements.jumpPage.value = String(pageNumber);
+        const card = elements.pages.querySelector(`[data-index="${pageNumber}"]`);
+        if (!card) return;
+        elements.pages.scrollTo({
+          left: card.offsetLeft - Math.max(0, (elements.pages.clientWidth - card.offsetWidth) / 2),
+          behavior: "smooth",
+        });
+      }
+
+      async function showPagePreview(page, index) {
+        elements.previewTitle.textContent = `Page ${index + 1}`;
+        elements.pagePreview.showModal();
+        await renderThumbnail(page, elements.previewCanvas, 1.5);
       }
 
       function renderThumbnail(item, canvas, scale = 0.34) {
@@ -410,7 +458,7 @@
         for (const [index, page] of pages.entries()) {
           const item = document.createElement("div");
           item.className = "result-page";
-          item.innerHTML = `<div class="thumb"><canvas aria-label="Result page ${index + 1} preview"></canvas></div><span>Page ${index + 1}</span>`;
+          item.innerHTML = `<div class="thumb"><canvas aria-label="Result page ${index + 1} preview"></canvas></div>`;
           elements.resultPages.append(item);
           await renderThumbnail(page, item.querySelector("canvas"), 1);
         }
@@ -427,6 +475,7 @@
           elements.workspace.classList.remove("hidden");
           elements.resultPages.replaceChildren();
           elements.reset.textContent = "Start over";
+          setRunState(false, `${pages.length} page${pages.length === 1 ? "" : "s"} ready`, 0);
           clearMessages();
           return;
         }
