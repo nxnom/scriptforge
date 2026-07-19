@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "name": "Image Resizer",
   "description": "Resize photos with a visual before-and-after comparison.",
-  "category": "Images",
+  "categories": ["Images", "Files"],
   "icon": "image",
   "script": "run.mjs",
   "interface": {

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { ToolArchiveService } from "../tools/archive";
+import { listToolCategories } from "../tools/categories";
 import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
 import { listBundledTools } from "../tools/registry";
 import { createToolArchiveRoutes } from "./archive/routes";
@@ -22,7 +23,7 @@ const plannedTools = [
     id: "pdf-merge",
     name: "PDF Merge",
     description: "Combine multiple PDFs into one ordered document.",
-    category: "Files",
+    categories: ["Files"],
     icon: "files" as const,
     status: "planned" as const,
   },
@@ -30,7 +31,7 @@ const plannedTools = [
     id: "csv-cleaner",
     name: "CSV Cleaner",
     description: "Fix headers, remove duplicates, and normalize values.",
-    category: "Data",
+    categories: ["Data"],
     icon: "table" as const,
     status: "planned" as const,
   },
@@ -38,7 +39,7 @@ const plannedTools = [
     id: "invoice-renamer",
     name: "Invoice Renamer",
     description: "Rename invoices from their embedded metadata.",
-    category: "Files",
+    categories: ["Files"],
     icon: "file-text" as const,
     status: "planned" as const,
   },
@@ -46,7 +47,7 @@ const plannedTools = [
     id: "screenshot-sorter",
     name: "Screenshot Sorter",
     description: "Organize screenshots into dated folders.",
-    category: "Images",
+    categories: ["Images"],
     icon: "folder-tree" as const,
     status: "planned" as const,
   },
@@ -54,7 +55,7 @@ const plannedTools = [
     id: "audio-trimmer",
     name: "Audio Trimmer",
     description: "Trim silence from voice recordings.",
-    category: "Audio",
+    categories: ["Audio"],
     icon: "audio-waveform" as const,
     status: "planned" as const,
   },
@@ -62,7 +63,7 @@ const plannedTools = [
     id: "markdown-docx",
     name: "Markdown to Docx",
     description: "Turn Markdown notes into Word documents.",
-    category: "Documents",
+    categories: ["Documents"],
     icon: "file-type" as const,
     status: "planned" as const,
   },
@@ -70,7 +71,7 @@ const plannedTools = [
     id: "duplicate-finder",
     name: "Duplicate Finder",
     description: "Find duplicate files safely before cleanup.",
-    category: "Files",
+    categories: ["Files"],
     icon: "scan-search" as const,
     status: "planned" as const,
   },
@@ -122,12 +123,12 @@ export function createApiRoutes(
               .getStatus(manifest)
               .then((status) => status.ready)
               .catch(() => false));
-          const { id, name, description, category, icon } = manifest;
+          const { id, name, description, categories, icon } = manifest;
           return {
             id,
             name,
             description,
-            category,
+            categories,
             icon,
             status: !executableStatuses.every((item) => item.available)
               ? ("needs-install" as const)
@@ -203,7 +204,11 @@ export function createApp(
     configuration,
   );
   const codexStatus = options.codexStatus ?? new CodexStatusService();
-  const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
+  const forgeSessions =
+    options.forgeSessions ??
+    new ForgeSessionService(codexStatus, options.stagingRoot, undefined, undefined, undefined, () =>
+      listToolCategories(installedToolsRoot),
+    );
   const doctorSessions =
     options.doctorSessions ??
     new DoctorSessionService(codexStatus, requirements, installedToolsRoot, options.toolsRoot);

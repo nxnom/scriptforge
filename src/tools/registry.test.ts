@@ -10,6 +10,7 @@ describe("bundled tool registry", () => {
 
     expect(findBundledTool("image-resizer")).toMatchObject({
       name: "Image Resizer",
+      categories: ["Images", "Files"],
       requiredExecutables: [],
       script: "run.mjs",
       interface: { type: "html", entry: "ui.html" },

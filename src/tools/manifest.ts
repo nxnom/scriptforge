@@ -58,13 +58,22 @@ const configurationFieldSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export const toolManifestSchema = z.object({
+const categoriesSchema = z
+  .array(z.string().trim().min(1).max(48))
+  .min(1)
+  .max(3)
+  .refine(
+    (categories) => new Set(categories.map((category) => category.toLocaleLowerCase())).size === categories.length,
+    "Categories must be unique.",
+  );
+
+const canonicalToolManifestSchema = z.object({
   schemaVersion: z.literal(1),
   id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
   name: z.string().min(1),
   description: z.string().min(1),
-  category: z.string().min(1),
+  categories: categoriesSchema,
   icon: z.string().min(1),
   script: z.string().min(1),
   interface: toolInterfaceSchema,
@@ -94,6 +103,13 @@ export const toolManifestSchema = z.object({
     )
     .default([]),
 });
+
+export const toolManifestSchema = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const manifest = value as Record<string, unknown>;
+  if (manifest.categories !== undefined || typeof manifest.category !== "string") return value;
+  return { ...manifest, categories: [manifest.category] };
+}, canonicalToolManifestSchema);
 
 export type ToolManifest = z.infer<typeof toolManifestSchema>;
 export type ToolConfigurationField = ToolManifest["configuration"][number];

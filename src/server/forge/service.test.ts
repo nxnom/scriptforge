@@ -154,16 +154,19 @@ describe("Forge terminal sessions", () => {
       },
       async () => undefined,
       { serverUrl: "http://127.0.0.1:4545", command: "/node", args: ["mcp.js"] },
+      async () => ["Files", "Images"],
     );
     const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
     const codexArgs = (calls[0]?.[1] ?? []) as string[];
     const config = codexArgs.find((arg) => arg.startsWith("mcp_servers.scriptforge.args="));
+    const instructions = codexArgs.find((arg) => arg.startsWith("developer_instructions="));
     const mcpArgs = JSON.parse(config?.slice(config.indexOf("=") + 1) ?? "[]") as string[];
     const token = mcpArgs[mcpArgs.indexOf("--token") + 1] ?? "";
     const events: unknown[] = [];
     service.subscribe(sessionId, (event) => events.push(event));
 
     expect(codexArgs).toContain("mcp_servers.scriptforge.required=true");
+    expect(instructions).toContain("Existing ScriptForge categories on this machine: Files, Images");
     expect(() => service.publishPanel(sessionId, "wrong", samplePanel())).toThrow("token");
     expect(service.publishPanel(sessionId, token, samplePanel())).toMatchObject({ version: 1, title: "Choose" });
 

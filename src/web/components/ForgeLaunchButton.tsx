@@ -5,7 +5,15 @@ import { useNavigate } from "react-router-dom";
 import { useRead, useWrite } from "../api";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
 
-export function ForgeLaunchButton() {
+export function ForgeLaunchButton({
+  idleLabel = "Forge a tool",
+  activeLabel = "Go to Forge",
+  className = "",
+}: {
+  idleLabel?: string;
+  activeLabel?: string;
+  className?: string;
+} = {}) {
   const navigate = useNavigate();
   const activeSession = useRead((api) => api("forge/sessions/active").GET(), { staleTime: 1_000 });
   const startForge = useWrite((api) => api("forge/sessions").POST());
@@ -28,12 +36,12 @@ export function ForgeLaunchButton() {
 
   return (
     <Button
-      className="shrink-0 gap-2 rounded-[10px]"
+      className={`shrink-0 gap-2 rounded-[10px] ${className}`}
       size="sm"
       onClick={() => (activeSession.data?.sessionId ? navigate("/forge") : openDialog())}
     >
       {activeSession.data?.sessionId ? <ArrowRight size={16} /> : <Plus size={16} />}
-      <span className="max-[480px]:hidden">{activeSession.data?.sessionId ? "Go to Forge" : "Forge a tool"}</span>
+      <span className="max-[480px]:hidden">{activeSession.data?.sessionId ? activeLabel : idleLabel}</span>
     </Button>
   );
 }

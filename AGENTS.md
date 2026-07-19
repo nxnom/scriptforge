@@ -28,6 +28,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - Codex connects to a ScriptForge MCP server, creates a candidate tool in a staging area, collaborates with the user, and reports when it is ready for review.
 - A generated tool has a manifest, an execution script, and a self-contained interface written in plain HTML, CSS, and JavaScript. Generated interfaces do not use React or GeckoUI.
 - `tool.json` declares required executable names and optional version constraints. It never contains installation commands.
+- `tool.json` declares one to three categories. Forge should normally choose one or two, reuse an existing library category when it fits, and create a new short category only when no existing category is accurate. Legacy installed manifests with one `category` remain supported.
 - `tool.json` may declare persistent configuration fields but never configuration values. ScriptForge renders those fields in the trusted React shell, encrypts secret values locally, and injects resolved configuration only into the runner request.
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
@@ -42,6 +43,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - React Router for application navigation
 - Tailwind CSS utilities for React-side layout and styling; do not add project-specific CSS class selectors for React components
 - GeckoUI for the main ScriptForge interface only
+- ScriptForge's primary brand color is `#5468ff`; keep GeckoUI primary tokens and generated-tool visual guidance aligned with it.
 - React Hook Form with Zod validation and GeckoUI RHF components for application forms
 - Spoosh for typed REST calls, deriving the client schema from Hono with `@spoosh/hono`
 - WebSocket for terminal streams and real-time job events

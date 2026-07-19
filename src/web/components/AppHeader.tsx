@@ -1,4 +1,5 @@
-import { Flame, Search } from "lucide-react";
+import { Search, Zap } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ForgeLaunchButton } from "./ForgeLaunchButton";
 
@@ -6,6 +7,19 @@ export function AppHeader() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const onLibrary = location.pathname === "/";
+  const searchInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!onLibrary) return;
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInput.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, [onLibrary]);
 
   const updateSearch = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -15,30 +29,32 @@ export function AppHeader() {
   };
 
   return (
-    <header className="shrink-0 border-[#333] border-b px-10 py-4 max-[900px]:px-6 max-[560px]:px-4">
-      <div className="mx-auto flex min-h-8.5 w-full max-w-320 items-center justify-between gap-5">
+    <header className="shrink-0 border-[#333] border-b bg-[#1a1a1a] px-10 py-3.5 max-[900px]:px-6 max-[560px]:px-4">
+      <div className="mx-auto grid min-h-9 w-full max-w-320 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-7">
         <Link className="flex shrink-0 items-center gap-2.5 text-[#ececec] no-underline" to="/">
-          <span className="grid size-8.5 place-items-center rounded-[11px] bg-[#2e2e2e]">
-            <Flame size={19} />
+          <span className="grid size-8 place-items-center rounded-[10px] bg-[#5468ff] text-white">
+            <Zap size={17} />
           </span>
-          <strong className="font-[Geist_Variable] text-lg font-semibold max-[480px]:hidden">ScriptForge</strong>
+          <strong className="font-[Geist_Variable] text-[16.5px] font-semibold max-[480px]:hidden">ScriptForge</strong>
         </Link>
 
-        <div className="flex min-w-0 items-center gap-3">
-          {onLibrary && (
-            <label className="flex w-60 items-center gap-2 rounded-[10px] border border-[#333] bg-[#242424] px-3 py-2 text-[#7a7a7a] max-[700px]:w-40 max-[560px]:hidden">
+        <div className="flex min-w-0 justify-center">
+          {onLibrary ? (
+            <label className="flex w-full max-w-110 items-center gap-2 rounded-[10px] border border-[#333] bg-[#242424] px-3.5 py-2 text-[#7a7a7a] max-[680px]:hidden">
               <Search size={16} />
               <input
+                ref={searchInput}
                 className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#ececec] outline-none placeholder:text-[#7a7a7a]"
                 aria-label="Search tools"
-                placeholder="Search tools"
+                placeholder="Search tools by name, category, or task…"
                 value={searchParams.get("q") ?? ""}
                 onChange={(event) => updateSearch(event.target.value)}
               />
+              <kbd className="rounded-md bg-[#303030] px-1.5 py-0.5 font-sans text-[10px] text-[#929292]">⌘ K</kbd>
             </label>
-          )}
-          <ForgeLaunchButton />
+          ) : null}
         </div>
+        <ForgeLaunchButton idleLabel="New tool" />
       </div>
     </header>
   );

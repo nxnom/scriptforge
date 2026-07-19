@@ -28,6 +28,7 @@ Status: Complete
 - Prefer port `4545` and fall back when it is unavailable.
 - Add GeckoUI and a basic ScriptForge visual theme.
 - Implement the Library screen from `ui.pen` through the Pencil MCP design source.
+- Use the `UVKcL` rail-and-grid composition with responsive status/category selects, dynamic manifest-derived categories, and the `#5468ff` primary theme.
 - Wire Hono types into Spoosh REST calls.
 
 Acceptance checks:
@@ -42,6 +43,7 @@ Acceptance checks:
 Status: Complete
 
 - Define the minimal internal tool manifest and registry.
+- Support one to three categories per tool, normalize the legacy singular category, and supply existing category names to Forge for reuse.
 - Ship one bundled image-resizer tool using `sharp`.
 - Support drag-and-drop or file selection, resize controls, progress, and before/after output.
 - Handle invalid input and failed processing clearly.

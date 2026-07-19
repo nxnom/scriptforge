@@ -10,6 +10,7 @@ import { DoctorSessionService } from "./server/doctor/service.js";
 import { ForgeSessionService } from "./server/forge/service.js";
 import { selectPort } from "./server/port.js";
 import { RequirementService } from "./server/requirements/service.js";
+import { listToolCategories } from "./tools/categories.js";
 
 const host = "127.0.0.1";
 const port = await selectPort(4545);
@@ -19,11 +20,18 @@ const webRoot = resolve(currentDir, "web");
 const hasBuiltWeb = existsSync(resolve(webRoot, "index.html"));
 const url = `http://${host}:${port}`;
 const mcpEntry = resolve(currentDir, runningFromSource ? "mcp.ts" : "mcp.js");
-const forgeSessions = new ForgeSessionService(new CodexStatusService(), undefined, undefined, undefined, {
-  serverUrl: url,
-  command: runningFromSource ? resolve(currentDir, "../node_modules/.bin/tsx") : process.execPath,
-  args: [mcpEntry],
-});
+const forgeSessions = new ForgeSessionService(
+  new CodexStatusService(),
+  undefined,
+  undefined,
+  undefined,
+  {
+    serverUrl: url,
+    command: runningFromSource ? resolve(currentDir, "../node_modules/.bin/tsx") : process.execPath,
+    args: [mcpEntry],
+  },
+  () => listToolCategories(),
+);
 const requirements = new RequirementService();
 const doctorSessions = new DoctorSessionService(
   new CodexStatusService(),

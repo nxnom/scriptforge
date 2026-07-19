@@ -4,7 +4,7 @@ export const toolManifestGuide = `{
   "version": "1.0.0",
   "name": "Human-readable name",
   "description": "One plain sentence",
-  "category": "Files",
+  "categories": ["Files"],
   "icon": "file",
   "script": "run.mjs",
   "interface": { "type": "html", "entry": "ui.html" },
@@ -12,6 +12,8 @@ export const toolManifestGuide = `{
   "configuration": []
 }
 requiredExecutables items are { "name": "ffmpeg", "version": ">= 7.0.0" }. Omit version when unnecessary. Never add installation commands.
+
+categories contains one to three short user-facing category names. Prefer one or two. Reuse a category from the existing ScriptForge category list whenever it accurately fits; create a new category only when none is suitable. Never add a loosely related category merely to reach the limit.
 
 configuration contains persistent values needed across runs. Fields share { "key": lowerCamelCase, "label": string, "description"?: string, "required": boolean } and use one of:
 { "type": "text" | "textarea", "placeholder"?: string, "defaultValue"?: string }
@@ -33,7 +35,7 @@ Write newline-delimited JSON events to stdout:
 Choose the result shape for the actual tool. Use data for information, live readings, analysis, or other results that do not naturally create a file. Use outputs only when the tool genuinely creates downloadable files; never invent snapshots or files merely to satisfy the contract. Write real file outputs inside request.outputDir. Read persistent configuration only from request.config. Revalidate input and configuration in run.mjs. Never log configuration secrets or include them in results or output files. Emit useful startup, major-stage, completion, and failure logs. Emit result only after its data is ready and every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
 
 export const uiStyleGuide = `Unless the user explicitly requests another visual style, make ui.html look native to ScriptForge:
-- Use a compact dark theme with #151515 page background, #1d1d1d or #242424 surfaces, #343434 borders, near-white primary text, #929292 muted text, and white primary buttons with dark text. Use system-ui fonts.
+- Use a compact dark theme with #151515 page background, #1d1d1d or #242424 surfaces, #343434 borders, near-white primary text, #929292 muted text, and #5468ff primary buttons and focus accents with white text. Use #6375ff for hover and #3949bf for pressed states. Use system-ui fonts.
 - The same interface appears in both a 420-620px Forge tester and a much wider installed Tool page. Build one fluid utility workspace that uses the full available iframe width at both sizes. Do not put the whole interface inside a centered max-width wrapper and do not horizontally or vertically center the entire app in a large empty canvas.
 - Start CSS with border-box sizing and make html, body, and the root workspace width: 100%, min-width: 0, and min-height: 100%. Remove the default body margin. The root may use min-height: 100vh, but do not give controls or content panels fixed viewport heights.
 - Use a short 18-22px title and at most one brief description line. Do not add eyebrow labels, hero copy, oversized headings, decorative introductions, or repeated explanations.

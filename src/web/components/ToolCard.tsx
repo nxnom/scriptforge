@@ -33,7 +33,7 @@ export interface ToolSummary {
   id: string;
   name: string;
   description: string;
-  category: string;
+  categories: string[];
   icon: string;
   status: string;
   origin?: "bundled" | "installed";
@@ -82,7 +82,7 @@ function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentTyp
         <ToolCopy tool={tool} />
       </div>
       <div className="flex items-center gap-3 max-[620px]:col-span-2 max-[620px]:justify-end">
-        <span className="rounded-full bg-[#303030] px-2.5 py-1 text-[10px] text-[#b0b0b0]">{tool.category}</span>
+        <CategoryBadges categories={tool.categories} />
         {tool.origin === "bundled" && <BuiltinBadge />}
         <StatusBadge status={tool.status} />
         {tool.origin === "installed" && (
@@ -115,10 +115,27 @@ function ToolCopy({ tool }: { tool: ToolSummary }) {
 function CardFooter({ tool }: { tool: ToolSummary }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="rounded-full bg-[#303030] px-2.5 py-1 text-[10px] text-[#b0b0b0]">{tool.category}</span>
-      {tool.origin === "bundled" && <BuiltinBadge />}
-      {tool.origin === "installed" && <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} />}
+      <CategoryBadges categories={tool.categories} />
+      <div className="flex items-center gap-2">
+        {tool.origin === "bundled" && <BuiltinBadge />}
+        {tool.origin === "installed" && <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} />}
+      </div>
     </div>
+  );
+}
+
+function CategoryBadges({ categories }: { categories: string[] }) {
+  return (
+    <span className="flex min-w-0 items-center gap-1 overflow-hidden">
+      {categories.map((category) => (
+        <span
+          key={category}
+          className="max-w-24 truncate rounded-full bg-[#303030] px-2.5 py-1 text-[10px] text-[#b0b0b0]"
+        >
+          {category}
+        </span>
+      ))}
+    </span>
   );
 }
 

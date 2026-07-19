@@ -49,7 +49,9 @@ describe("local API", () => {
       const requirements = new RequirementService(async () => ({ found: false, version: null }));
       const response = await createApp(undefined, { installedToolsRoot, requirements }).request("/api/tools");
       const body = await response.json();
-      expect(body.tools).toContainEqual(expect.objectContaining({ id: "cli-tool", status: "needs-install" }));
+      expect(body.tools).toContainEqual(
+        expect.objectContaining({ id: "cli-tool", categories: ["Files"], status: "needs-install" }),
+      );
     } finally {
       await rm(installedToolsRoot, { recursive: true, force: true });
     }

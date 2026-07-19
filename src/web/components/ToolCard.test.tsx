@@ -60,7 +60,7 @@ function tool(): ToolSummary {
     id: "video-tool",
     name: "Video Tool",
     description: "Converts videos.",
-    category: "Video",
+    categories: ["Video", "Files"],
     icon: "video",
     status: "ready",
     origin: "installed",

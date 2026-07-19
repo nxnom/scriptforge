@@ -19,6 +19,7 @@ import type {
 type Listener = (event: ForgeServerEvent) => void;
 type PtyFactory = typeof spawnPty;
 type TrustDirectory = (directory: string) => Promise<void>;
+type CategoryProvider = () => Promise<string[]>;
 
 export type ForgeMcpRuntime = {
   serverUrl: string;
@@ -49,6 +50,7 @@ export class ForgeSessionService {
     private readonly spawn: PtyFactory = spawnPty,
     private readonly trust: TrustDirectory = ensureCodexTrusted,
     private readonly mcpRuntime?: ForgeMcpRuntime,
+    private readonly categories: CategoryProvider = async () => [],
   ) {}
 
   async start(preferences: ForgePreferences) {
@@ -63,13 +65,18 @@ export class ForgeSessionService {
     const directory = join(this.stagingRoot, id);
     await mkdir(directory, { recursive: true });
     await this.trust(directory);
-    const pty = this.spawn(codexCommand(), codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken), {
-      name: "xterm-256color",
-      cols: 100,
-      rows: 30,
-      cwd: directory,
-      env: { ...(process.env as Record<string, string>), TERM: "xterm-256color" },
-    });
+    const existingCategories = await this.categories().catch(() => []);
+    const pty = this.spawn(
+      codexCommand(),
+      codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken, existingCategories),
+      {
+        name: "xterm-256color",
+        cols: 100,
+        rows: 30,
+        cwd: directory,
+        env: { ...(process.env as Record<string, string>), TERM: "xterm-256color" },
+      },
+    );
     const session: ForgeSession = {
       id,
       pty,
@@ -219,6 +226,7 @@ function codexArgs(
   mcpRuntime: ForgeMcpRuntime | undefined,
   sessionId: string,
   token: string,
+  existingCategories: string[],
 ) {
   const args = ["-c", `model_reasoning_effort=${preferences.effort}`, "-m", preferences.model, "--cd", directory];
   if (preferences.dangerouslyBypassApprovalsAndSandbox) {
@@ -237,7 +245,7 @@ function codexArgs(
   return [
     ...args,
     "-c",
-    `developer_instructions=${JSON.stringify(forgeMcpInstructions)}`,
+    `developer_instructions=${JSON.stringify(`${forgeMcpInstructions}\n\nExisting ScriptForge categories on this machine: ${existingCategories.length ? existingCategories.join(", ") : "none yet"}.`)}`,
     "-c",
     `mcp_servers.scriptforge.command=${JSON.stringify(mcpRuntime.command)}`,
     "-c",

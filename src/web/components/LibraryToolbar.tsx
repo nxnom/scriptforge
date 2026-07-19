@@ -1,65 +1,54 @@
 import { Button, Menu, MenuItem, MenuTrigger, Select, SelectOption, SelectTrigger, Tooltip } from "@geckoui/geckoui";
-import { Box, Check, ChevronDown, Download, Grid2X2, List, PackageOpen, Wrench } from "lucide-react";
+import { ChevronDown, Grid2X2, List } from "lucide-react";
 
 export type LibraryFilter = "all" | "ready" | "needs-install" | "builtin" | "imported";
 export type LibrarySort = "name" | "recent";
 export type LibraryView = "grid" | "list";
+export type CategoryCount = { name: string; count: number };
 
-type Props = {
+const filters: { value: LibraryFilter; label: string }[] = [
+  { value: "all", label: "All tools" },
+  { value: "ready", label: "Ready" },
+  { value: "needs-install", label: "Needs install" },
+  { value: "builtin", label: "Built-in" },
+  { value: "imported", label: "Imported" },
+];
+
+export function LibraryToolbar({
+  count,
+  counts,
+  filter,
+  categories,
+  category,
+  sort,
+  view,
+  onFilter,
+  onCategory,
+  onSort,
+  onView,
+}: {
+  count: number;
   counts: Record<LibraryFilter, number>;
   filter: LibraryFilter;
+  categories: CategoryCount[];
+  category: string | null;
   sort: LibrarySort;
   view: LibraryView;
   onFilter: (filter: LibraryFilter) => void;
+  onCategory: (category: string | null) => void;
   onSort: (sort: LibrarySort) => void;
   onView: (view: LibraryView) => void;
-};
-
-const filters = [
-  { value: "all", label: "All tools", icon: Wrench },
-  { value: "ready", label: "Ready", icon: Check },
-  { value: "needs-install", label: "Needs install", icon: Download },
-  { value: "builtin", label: "Built-in", icon: Box },
-  { value: "imported", label: "Imported", icon: PackageOpen },
-] as const;
-
-export function LibraryToolbar({ counts, filter, sort, view, onFilter, onSort, onView }: Props) {
+}) {
   return (
     <div className="flex shrink-0 items-center justify-between gap-3">
-      <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] border border-[#333] bg-[#242424] p-0.5 max-[760px]:hidden">
-        {filters.map(({ value, label, icon: Icon }) => (
-          <button
-            key={value}
-            className={`flex shrink-0 items-center gap-1.5 rounded-[7px] border-0 px-2.5 py-1.5 text-[11px] ${filter === value ? "bg-[#2e2e2e] text-[#ececec]" : "bg-transparent text-[#929292] hover:text-[#ececec]"}`}
-            type="button"
-            aria-pressed={filter === value}
-            onClick={() => onFilter(value)}
-          >
-            <Icon size={12} /> {label}
-            <span className="text-[9px] text-[#707070]">{counts[value]}</span>
-          </button>
-        ))}
+      <div className="flex items-baseline gap-2 max-[900px]:hidden">
+        <h1 className="m-0 font-[Geist_Variable] text-lg font-semibold">All tools</h1>
+        <span className="text-[11px] text-[#707070]">{count}</span>
       </div>
 
-      <div className="hidden max-[760px]:block">
-        <Select value={filter} onChange={(value) => onFilter(value as LibraryFilter)}>
-          <SelectTrigger>
-            {({ toggleMenu }) => (
-              <Button
-                className="min-w-34 justify-between gap-2 border-[#333] text-[#b0b0b0]"
-                size="xs"
-                variant="outlined"
-                onClick={toggleMenu}
-              >
-                {filters.find(({ value }) => value === filter)?.label} · {counts[filter]}
-                <ChevronDown size={11} />
-              </Button>
-            )}
-          </SelectTrigger>
-          {filters.map(({ value, label }) => (
-            <SelectOption key={value} value={value} label={`${label} · ${counts[value]}`} />
-          ))}
-        </Select>
+      <div className="hidden min-w-0 flex-1 gap-2 max-[900px]:flex">
+        <FilterSelect filter={filter} counts={counts} onFilter={onFilter} />
+        <CategorySelect category={category} categories={categories} onCategory={onCategory} />
       </div>
 
       <div className="flex items-center gap-2">
@@ -76,8 +65,8 @@ export function LibraryToolbar({ counts, filter, sort, view, onFilter, onSort, o
               </Button>
             )}
           </MenuTrigger>
-          <MenuItem onClick={() => onSort("name")}>Name, A–Z</MenuItem>
           <MenuItem onClick={() => onSort("recent")}>Recently added</MenuItem>
+          <MenuItem onClick={() => onSort("name")}>Name, A–Z</MenuItem>
         </Menu>
         <div className="flex rounded-lg border border-[#333] bg-[#242424] p-0.5">
           <ViewButton active={view === "grid"} label="Grid view" onClick={() => onView("grid")}>
@@ -89,6 +78,69 @@ export function LibraryToolbar({ counts, filter, sort, view, onFilter, onSort, o
         </div>
       </div>
     </div>
+  );
+}
+
+function FilterSelect({
+  filter,
+  counts,
+  onFilter,
+}: {
+  filter: LibraryFilter;
+  counts: Record<LibraryFilter, number>;
+  onFilter: (filter: LibraryFilter) => void;
+}) {
+  const selected = filters.find((item) => item.value === filter);
+  return (
+    <Select value={filter} onChange={(value) => onFilter(value as LibraryFilter)}>
+      <SelectTrigger>
+        {({ toggleMenu }) => (
+          <Button
+            className="min-w-31 justify-between border-[#333] text-[#b0b0b0]"
+            size="xs"
+            variant="outlined"
+            onClick={toggleMenu}
+          >
+            {selected?.label} · {counts[filter]} <ChevronDown size={11} />
+          </Button>
+        )}
+      </SelectTrigger>
+      {filters.map((item) => (
+        <SelectOption key={item.value} value={item.value} label={`${item.label} · ${counts[item.value]}`} />
+      ))}
+    </Select>
+  );
+}
+
+function CategorySelect({
+  category,
+  categories,
+  onCategory,
+}: {
+  category: string | null;
+  categories: CategoryCount[];
+  onCategory: (category: string | null) => void;
+}) {
+  return (
+    <Select value={category ?? "all"} onChange={(value) => onCategory(value === "all" ? null : value)}>
+      <SelectTrigger>
+        {({ toggleMenu }) => (
+          <Button
+            className="max-w-40 justify-between border-[#333] text-[#b0b0b0]"
+            size="xs"
+            variant="outlined"
+            onClick={toggleMenu}
+          >
+            <span className="truncate">{category ?? "All categories"}</span>{" "}
+            <ChevronDown className="shrink-0" size={11} />
+          </Button>
+        )}
+      </SelectTrigger>
+      <SelectOption value="all" label="All categories" />
+      {categories.map((item) => (
+        <SelectOption key={item.name} value={item.name} label={`${item.name} · ${item.count}`} />
+      ))}
+    </Select>
   );
 }
 
