@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { toolManifestSchema } from "../tools/manifest";
 import { createApp } from "./app";
+import { ToolConfigurationService } from "./configuration/service";
 import { ToolJobService } from "./jobs/service";
 import { RequirementService } from "./requirements/service";
 
@@ -106,5 +107,62 @@ describe("tool runtime host", () => {
       "Install the required ffmpeg executable",
     );
     await expect(service.getToolUi("video-tool")).resolves.toContain("Video Tool");
+  });
+
+  it("requires encrypted configuration, injects it into the runner, and redacts secrets", async () => {
+    const installedRoot = join(jobsRoot, "configured-tools");
+    const toolDirectory = join(installedRoot, "social-tool");
+    const configRoot = join(jobsRoot, "config");
+    const configuration = new ToolConfigurationService(configRoot, join(jobsRoot, "secure", "master.key"));
+    await mkdir(toolDirectory, { recursive: true });
+    const manifest = toolManifestSchema.parse({
+      schemaVersion: 1,
+      id: "social-tool",
+      version: "1.0.0",
+      name: "Social Tool",
+      description: "Uses an access token.",
+      category: "Social",
+      icon: "share",
+      script: "run.mjs",
+      interface: { type: "html", entry: "ui.html" },
+      requiredExecutables: [],
+      configuration: [
+        { key: "username", label: "Username", type: "text", required: true },
+        { key: "accessToken", label: "Access token", type: "secret", required: true },
+      ],
+    });
+    await Promise.all([
+      writeFile(join(toolDirectory, "tool.json"), JSON.stringify(manifest)),
+      writeFile(
+        join(toolDirectory, "run.mjs"),
+        `let source="";process.stdin.on("data",c=>source+=c);process.stdin.on("end",()=>{const {config}=JSON.parse(source);console.log(JSON.stringify({type:"log",level:"info",message:"Using "+config.accessToken}));console.log(JSON.stringify({type:"result",data:{username:config.username,token:config.accessToken}}));});`,
+      ),
+      writeFile(join(toolDirectory, "ui.html"), "<!doctype html>"),
+    ]);
+    const service = new ToolJobService(
+      join(jobsRoot, "configured-jobs"),
+      undefined,
+      installedRoot,
+      undefined,
+      configuration,
+    );
+
+    await expect(service.start({ toolId: manifest.id, input: {}, files: [] })).rejects.toThrow(
+      "Username, Access token",
+    );
+    await configuration.save(manifest, { username: "maya", accessToken: "private-token" });
+    const { jobId } = await service.start({ toolId: manifest.id, input: {}, files: [] });
+
+    await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+    expect(service.getSnapshot(jobId)?.events).toContainEqual({
+      type: "log",
+      level: "info",
+      message: "Using [REDACTED]",
+    });
+    expect(service.getSnapshot(jobId)?.events).toContainEqual({
+      type: "result",
+      outputs: [],
+      data: { username: "maya", token: "[REDACTED]" },
+    });
   });
 });

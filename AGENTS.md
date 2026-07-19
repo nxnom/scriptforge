@@ -28,6 +28,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - Codex connects to a ScriptForge MCP server, creates a candidate tool in a staging area, collaborates with the user, and reports when it is ready for review.
 - A generated tool has a manifest, an execution script, and a self-contained interface written in plain HTML, CSS, and JavaScript. Generated interfaces do not use React or GeckoUI.
 - `tool.json` declares required executable names and optional version constraints. It never contains installation commands.
+- `tool.json` may declare persistent configuration fields but never configuration values. ScriptForge renders those fields in the trusted React shell, encrypts secret values locally, and injects resolved configuration only into the runner request.
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
 - User tools saved from Forge or added through Import can be exported as one `.forge` archive or deleted after confirmation. Bundled starter tools cannot be deleted. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
@@ -64,6 +65,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 - Every generated script must produce useful structured logs for startup, major stages, external commands, completion, and failures. Capture raw CLI output as collapsible detail rather than the primary presentation.
 - Always provide automatic `queued`, `running`, `succeeded`, `failed`, and `cancelled` lifecycle events. Detailed percentage progress is optional when the underlying work can measure it.
 - Store installed tools under `~/.scriptforge/tools`, candidates under `~/.scriptforge/staging`, and temporary job data under `~/.scriptforge/jobs`.
+- Store per-tool values under `~/.scriptforge/config` and a generated encryption key under `~/.scriptforge/secure`. Neither location is part of tool export. Secret values must never be returned to browser code after saving.
 - Do not add SQLite. Discover tools from filesystem manifests and use `~/.scriptforge/settings.json` only for small application preferences.
 - Preserve Forge candidates across restarts. Delete temporary job inputs and outputs older than 24 hours during startup.
 - Use one publishable `scriptforge` package containing the CLI, Hono server, React/Vite application, and built web assets. Use pnpm for development while keeping `npx scriptforge` npm-compatible.
@@ -85,6 +87,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 8. Review and save the exact candidate revision that was tested; detect changes made after review.
 9. Any script change invalidates the previous successful test status.
 10. Redact secrets, environment values, and unsafe filesystem details from logs before sending them to browser code.
+11. A generated iframe never collects or receives persistent secrets. Known saved secret values must be redacted from runner logs, errors, result data, and metadata before delivery.
 
 ## Delivery Workflow
 
@@ -137,6 +140,7 @@ If the repository is public, include an appropriate license and ensure no secret
 13. Build forms with React Hook Form, Zod schemas, `zodResolver`, and GeckoUI RHF components. Do not duplicate form state in ad-hoc `useState` hooks. Move substantial schemas and reusable field groups into their own focused files.
 14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. After kickoff approval, Codex must exercise the standalone runner with realistic temporary input, fix failures, rerun it, and report the successful check before presenting the candidate. The exact candidate revision is then tested through an explicit user-approved run in the sandboxed tester iframe before Save. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.
 15. Style the React ScriptForge shell with Tailwind utility classes directly in components. Keep global CSS limited to imports, design tokens, base element rules, and targeted GeckoUI theme overrides. Self-contained tool `ui.html` files may use ordinary CSS classes and do not depend on Tailwind.
+16. Build manifest-driven configuration forms with the same React Hook Form, Zod, and GeckoUI rules as other application forms. Secret fields never have defaults, are never prefilled after saving, and remain unchanged when an empty replacement is submitted.
 
 ## Evidence Log
 

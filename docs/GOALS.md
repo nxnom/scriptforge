@@ -124,6 +124,26 @@ Acceptance checks:
 - Only execution is blocked until Doctor or the user supplies the dependency.
 - Deletion removes an installed tool atomically, and bundled deletion is rejected by both the UI and server.
 
+## Goal 4.6 — Encrypted Tool Configuration
+
+Status: Complete
+
+- Let tools declare persistent text, secret, textarea, number, boolean, and select configuration fields.
+- Render configuration in trusted GeckoUI forms instead of generated tool HTML.
+- Encrypt secret values locally with authenticated encryption and keep every value outside exported tool directories.
+- Prompt for missing required configuration when a run is requested, then continue the original run after Save.
+- Inject resolved configuration only into the runner request and redact known secrets from browser-visible events.
+- Support the same configuration flow for installed tools and Forge candidate previews.
+
+Acceptance checks:
+
+- Required missing values block execution and open the configuration form.
+- Saved secrets are encrypted at rest and are never returned by configuration APIs.
+- An empty secret submission preserves the saved value; explicit removal is separate.
+- Runner logs, errors, result data, and metadata redact known secret values.
+- `.forge` exports contain no configuration values or encryption material.
+- Deleting a user tool also removes its configuration file.
+
 ## Goal 5 — Hackathon Submission
 
 Status: Pending

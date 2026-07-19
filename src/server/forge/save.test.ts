@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { Hono } from "hono";
 import type { IPty, spawn as spawnPty } from "node-pty";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToolConfigurationService } from "../configuration/service";
 import { ToolJobService } from "../jobs/service";
 import { createForgeApiRoutes } from "./routes";
 import { ForgeSessionService } from "./service";
@@ -22,7 +23,8 @@ describe("Forge candidate save", () => {
     roots.push(root);
     const stagingRoot = join(root, "staging");
     const installedRoot = join(root, "tools");
-    const jobs = new ToolJobService(join(root, "jobs"), undefined, installedRoot);
+    const configuration = new ToolConfigurationService(join(root, "config"), join(root, "secure", "master.key"));
+    const jobs = new ToolJobService(join(root, "jobs"), undefined, installedRoot, undefined, configuration);
     const spawnCalls: Parameters<typeof spawnPty>[] = [];
     const service = new ForgeSessionService(
       { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
@@ -41,7 +43,8 @@ describe("Forge candidate save", () => {
       summary: "Ready to review.",
       testSummary: "Standalone check passed.",
     });
-    const app = new Hono().route("/api/forge", createForgeApiRoutes(service, jobs, installedRoot));
+    const runtime = await service.getCandidateRuntime(sessionId, candidate.revision);
+    const app = new Hono().route("/api/forge", createForgeApiRoutes(service, jobs, installedRoot, configuration));
 
     const early = await app.request(`/api/forge/sessions/${sessionId}/candidate/save`, {
       method: "POST",
@@ -53,6 +56,24 @@ describe("Forge candidate save", () => {
     const form = new FormData();
     form.append("revision", candidate.revision);
     form.append("input", "{}");
+    const blocked = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, {
+      method: "POST",
+      body: form,
+    });
+    expect(blocked.status).toBe(409);
+
+    const configured = await app.request(`/api/forge/sessions/${sessionId}/candidate/configuration`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        revision: candidate.revision,
+        values: { accessToken: "candidate-secret" },
+        clearSecrets: [],
+      }),
+    });
+    expect(configured.status).toBe(200);
+    expect(await configured.text()).not.toContain("candidate-secret");
+
     const run = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, { method: "POST", body: form });
     const { jobId } = (await run.json()) as { jobId: string };
     await expect.poll(() => jobs.getSnapshot(jobId)?.status).toBe("succeeded");
@@ -64,6 +85,9 @@ describe("Forge candidate save", () => {
     });
     expect(saved.status).toBe(201);
     await expect(readFile(join(installedRoot, "tiny-tool", "ui.html"), "utf8")).resolves.toContain("Tiny Tool");
+    await expect(configuration.resolve(runtime.manifest)).resolves.toMatchObject({
+      config: { accessToken: "candidate-secret" },
+    });
 
     const installedRun = await jobs.start({ toolId: "tiny-tool", input: {}, files: [] });
     await expect.poll(() => jobs.getSnapshot(installedRun.jobId)?.status).toBe("succeeded");
@@ -93,6 +117,7 @@ async function writeCandidate(directory: string) {
         script: "run.mjs",
         interface: { type: "html", entry: "ui.html" },
         requiredExecutables: [],
+        configuration: [{ key: "accessToken", label: "Access token", type: "secret", required: true }],
       }),
     ),
     writeFile(

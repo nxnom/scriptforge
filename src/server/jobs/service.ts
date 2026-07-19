@@ -8,6 +8,7 @@ import { resolveBundledToolDirectory } from "../../tools/directory";
 import { defaultInstalledToolsRoot, findInstalledTool } from "../../tools/installed";
 import type { ToolManifest } from "../../tools/manifest";
 import { findBundledTool } from "../../tools/registry";
+import { ToolConfigurationService } from "../configuration/service";
 import { RequirementService } from "../requirements/service";
 import type { ToolJobEvent, ToolJobSnapshot, ToolOutput } from "./types";
 
@@ -43,6 +44,7 @@ interface JobRecord extends ToolJobSnapshot {
   receivedResult: boolean;
   outputs: Map<string, StoredOutput>;
   listeners: Set<(event: ToolJobEvent) => void>;
+  secrets: string[];
 }
 
 export interface StartJobInput {
@@ -54,6 +56,7 @@ export interface StartJobInput {
 export interface StartCandidateJobInput extends StartJobInput {
   directory: string;
   manifest: ToolManifest;
+  configurationScope?: string;
 }
 
 export class ToolJobService {
@@ -64,29 +67,39 @@ export class ToolJobService {
     private readonly toolsRoot?: string,
     private readonly installedToolsRoot = defaultInstalledToolsRoot(),
     private readonly requirements = new RequirementService(),
+    private readonly configuration = new ToolConfigurationService(),
   ) {}
 
   async start({ toolId, input, files }: StartJobInput) {
     const manifest = findBundledTool(toolId);
     if (manifest) {
       await this.requirements.assertAvailable(manifest.requiredExecutables);
+      const resolved = await this.configuration.resolve(manifest);
       return this.startResolved(
         { toolId, input, files },
         resolveBundledToolDirectory(toolId, this.toolsRoot),
         manifest.script,
+        resolved,
       );
     }
     const installed = await findInstalledTool(toolId, this.installedToolsRoot);
     if (!installed) throw new Error("That tool is not installed.");
     await this.requirements.assertAvailable(installed.manifest.requiredExecutables);
-    return this.startResolved({ toolId, input, files }, installed.directory, installed.manifest.script);
+    const resolved = await this.configuration.resolve(installed.manifest);
+    return this.startResolved({ toolId, input, files }, installed.directory, installed.manifest.script, resolved);
   }
 
-  async startCandidate({ toolId, input, files, directory, manifest }: StartCandidateJobInput) {
-    return this.startResolved({ toolId, input, files }, directory, manifest.script);
+  async startCandidate({ toolId, input, files, directory, manifest, configurationScope }: StartCandidateJobInput) {
+    const resolved = await this.configuration.resolve(manifest, configurationScope);
+    return this.startResolved({ toolId, input, files }, directory, manifest.script, resolved);
   }
 
-  private async startResolved({ toolId, input, files }: StartJobInput, toolDirectory: string, script: string) {
+  private async startResolved(
+    { toolId, input, files }: StartJobInput,
+    toolDirectory: string,
+    script: string,
+    resolved: { config: Record<string, unknown>; secrets: string[] },
+  ) {
     if (files.length > 10) throw new Error("Choose no more than ten files.");
     if (files.some((file) => file.size > 25 * 1024 * 1024))
       throw new Error("Each input file must be 25 MB or smaller.");
@@ -117,10 +130,17 @@ export class ToolJobService {
       events: [],
       outputs: new Map(),
       listeners: new Set(),
+      secrets: resolved.secrets,
     };
     this.jobs.set(id, job);
     this.emit(job, { type: "status", status: "queued" });
-    void this.execute(job, { jobId: id, input, files: storedFiles, outputDir: outputDirectory });
+    void this.execute(job, {
+      jobId: id,
+      input,
+      files: storedFiles,
+      outputDir: outputDirectory,
+      config: resolved.config,
+    });
     return { jobId: id };
   }
 
@@ -181,9 +201,9 @@ export class ToolJobService {
       for (const line of lines) if (line.trim()) eventQueue = eventQueue.then(() => this.handleScriptEvent(job, line));
     });
     child.stderr.on("data", (chunk: Buffer) =>
-      this.emit(job, { type: "log", level: "warning", message: chunk.toString("utf8").trim() }),
+      this.emit(job, { type: "log", level: "warning", message: this.redact(job, chunk.toString("utf8").trim()) }),
     );
-    child.on("error", (error) => this.fail(job, error.message));
+    child.on("error", (error) => this.fail(job, this.redact(job, error.message)));
     child.on("close", async (code) => {
       if (stdout.trim()) await this.handleScriptEvent(job, stdout);
       await eventQueue;
@@ -201,7 +221,7 @@ export class ToolJobService {
     try {
       raw = JSON.parse(line);
     } catch {
-      return this.emit(job, { type: "log", level: "warning", message: line });
+      return this.emit(job, { type: "log", level: "warning", message: this.redact(job, line) });
     }
     const parsed = scriptEventSchema.safeParse(raw);
     if (!parsed.success) return this.fail(job, "The tool emitted an invalid event.");
@@ -234,16 +254,35 @@ export class ToolJobService {
   private fail(job: JobRecord, message: string) {
     if (job.status === "failed") return;
     this.emit(job, { type: "status", status: "failed" });
-    this.emit(job, { type: "failed", message });
+    this.emit(job, { type: "failed", message: this.redact(job, message) });
+  }
+
+  private redact(job: JobRecord, value: string) {
+    return job.secrets.reduce(
+      (redacted, secret) => (secret ? redacted.split(secret).join("[REDACTED]") : redacted),
+      value,
+    );
   }
 
   private emit(job: JobRecord, event: ToolJobEvent) {
-    if (event.type === "status") job.status = event.status;
-    job.events.push(event);
-    for (const listener of job.listeners) listener(event);
+    const safeEvent = redactUnknown(event, job.secrets) as ToolJobEvent;
+    if (safeEvent.type === "status") job.status = safeEvent.status;
+    job.events.push(safeEvent);
+    for (const listener of job.listeners) listener(safeEvent);
   }
 }
 
 function safeName(name: string) {
   return basename(name).replace(/[^a-zA-Z0-9._-]+/g, "-") || "file";
+}
+
+function redactUnknown(value: unknown, secrets: string[]): unknown {
+  if (typeof value === "string") {
+    return secrets.reduce((redacted, secret) => (secret ? redacted.split(secret).join("[REDACTED]") : redacted), value);
+  }
+  if (Array.isArray(value)) return value.map((item) => redactUnknown(item, secrets));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redactUnknown(item, secrets)]));
+  }
+  return value;
 }

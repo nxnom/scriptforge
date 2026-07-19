@@ -86,9 +86,10 @@ export function useToolHostBridge({
       setHostError(undefined);
       setJobStatus("queued");
       record(`Run request validated with ${parsed.data.files.length} file(s)`);
-      post({ type: "accepted" });
       try {
-        connect((await startJob(parsed.data)).jobId);
+        const result = await startJob(parsed.data);
+        post({ type: "accepted" });
+        connect(result.jobId);
       } catch (error) {
         fail(errorMessage(error));
       }

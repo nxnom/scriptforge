@@ -7,6 +7,7 @@ import {
   FileType,
   FolderTree,
   Image,
+  KeyRound,
   ScanSearch,
   Sparkles,
   Table2,
@@ -41,7 +42,8 @@ export function ToolCard({ tool }: { tool: ToolSummary }) {
   const Icon = icons[tool.icon] ?? Wrench;
   const ready = tool.status === "ready";
   const needsInstall = tool.status === "needs-install";
-  const available = ready || needsInstall;
+  const needsConfig = tool.status === "needs-config";
+  const available = ready || needsInstall || needsConfig;
 
   return (
     <article
@@ -62,8 +64,16 @@ export function ToolCard({ tool }: { tool: ToolSummary }) {
           <span
             className={`inline-flex items-center gap-1 rounded-full py-1 pr-2.5 pl-2 text-[11px] font-[650] ${ready ? "bg-[#2e2e2e] text-[#c9cdd6]" : "bg-[#3a2e1a] text-[#e0a24e]"}`}
           >
-            {ready ? <Check size={11} /> : needsInstall ? <Download size={11} /> : <Sparkles size={11} />}
-            {ready ? "Ready" : needsInstall ? "Needs install" : "Planned"}
+            {ready ? (
+              <Check size={11} />
+            ) : needsInstall ? (
+              <Download size={11} />
+            ) : needsConfig ? (
+              <KeyRound size={11} />
+            ) : (
+              <Sparkles size={11} />
+            )}
+            {ready ? "Ready" : needsInstall ? "Needs install" : needsConfig ? "Setup required" : "Planned"}
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-1.5">

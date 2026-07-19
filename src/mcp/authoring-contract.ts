@@ -8,12 +8,21 @@ export const toolManifestGuide = `{
   "icon": "file",
   "script": "run.mjs",
   "interface": { "type": "html", "entry": "ui.html" },
-  "requiredExecutables": []
+  "requiredExecutables": [],
+  "configuration": []
 }
-requiredExecutables items are { "name": "ffmpeg", "version": ">= 7.0.0" }. Omit version when unnecessary. Never add installation commands.`;
+requiredExecutables items are { "name": "ffmpeg", "version": ">= 7.0.0" }. Omit version when unnecessary. Never add installation commands.
+
+configuration contains persistent values needed across runs. Fields share { "key": lowerCamelCase, "label": string, "description"?: string, "required": boolean } and use one of:
+{ "type": "text" | "textarea", "placeholder"?: string, "defaultValue"?: string }
+{ "type": "secret", "placeholder"?: string }
+{ "type": "number", "minimum"?: number, "maximum"?: number, "defaultValue"?: number }
+{ "type": "boolean", "defaultValue"?: boolean }
+{ "type": "select", "options": [{ "value": string, "label": string }], "defaultValue"?: string }
+Secret fields never have defaults. Use configuration for credentials, account identifiers, endpoints, and stable preferences reused across runs. Keep files and choices that naturally change per run in ui.html input. Never ask for a secret in ui.html, the kickoff panel, or the Codex terminal; ScriptForge renders and stores configuration itself.`;
 
 export const runnerContractGuide = `run.mjs reads one JSON object from stdin:
-{ "jobId": string, "input": unknown, "files": [{ "path": string, "name": string, "type": string, "size": number }], "outputDir": string }
+{ "jobId": string, "input": unknown, "files": [{ "path": string, "name": string, "type": string, "size": number }], "outputDir": string, "config": object }
 
 Write newline-delimited JSON events to stdout:
 { "type": "log", "level": "info" | "success" | "warning" | "error", "message": string }
@@ -21,7 +30,7 @@ Write newline-delimited JSON events to stdout:
 { "type": "result", "data"?: unknown, "outputs"?: [{ "path": filename relative to outputDir, "name": string, "mimeType": string, "metadata"?: unknown }] }
 { "type": "failed", "message": string }
 
-Choose the result shape for the actual tool. Use data for information, live readings, analysis, or other results that do not naturally create a file. Use outputs only when the tool genuinely creates downloadable files; never invent snapshots or files merely to satisfy the contract. Write real file outputs inside request.outputDir. Revalidate all input in run.mjs. Emit useful startup, major-stage, completion, and failure logs. Emit result only after its data is ready and every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
+Choose the result shape for the actual tool. Use data for information, live readings, analysis, or other results that do not naturally create a file. Use outputs only when the tool genuinely creates downloadable files; never invent snapshots or files merely to satisfy the contract. Write real file outputs inside request.outputDir. Read persistent configuration only from request.config. Revalidate input and configuration in run.mjs. Never log configuration secrets or include them in results or output files. Emit useful startup, major-stage, completion, and failure logs. Emit result only after its data is ready and every declared output exists. Do not write non-event text to stdout; raw command output belongs on stderr.`;
 
 export const uiStyleGuide = `Unless the user explicitly requests another visual style, make ui.html look native to ScriptForge:
 - Use a compact dark theme with #151515 page background, #1d1d1d or #242424 surfaces, #343434 borders, near-white primary text, #929292 muted text, and white primary buttons with dark text. Use system-ui fonts.

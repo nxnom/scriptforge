@@ -55,6 +55,70 @@ describe("local API", () => {
     }
   });
 
+  it("marks missing configuration and never returns saved secret values", async () => {
+    const root = join(tmpdir(), `scriptforge-config-api-${randomUUID()}`);
+    const installedToolsRoot = join(root, "tools");
+    const toolDirectory = join(installedToolsRoot, "social-tool");
+    const { mkdir, writeFile, rm, readFile } = await import("node:fs/promises");
+    await mkdir(toolDirectory, { recursive: true });
+    await Promise.all([
+      writeFile(
+        join(toolDirectory, "tool.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          id: "social-tool",
+          version: "1.0.0",
+          name: "Social Tool",
+          description: "Uses a private token.",
+          category: "Social",
+          icon: "share",
+          script: "run.mjs",
+          interface: { type: "html", entry: "ui.html" },
+          requiredExecutables: [],
+          configuration: [
+            { key: "username", label: "Username", type: "text", required: true },
+            { key: "accessToken", label: "Access token", type: "secret", required: true },
+          ],
+        }),
+      ),
+      writeFile(join(toolDirectory, "run.mjs"), ""),
+      writeFile(join(toolDirectory, "ui.html"), "<!doctype html>"),
+    ]);
+    try {
+      const configRoot = join(root, "config");
+      const app = createApp(undefined, {
+        installedToolsRoot,
+        configRoot,
+        encryptionKeyPath: join(root, "secure", "master.key"),
+      });
+      const before = await app.request("/api/tools");
+      expect((await before.json()).tools).toContainEqual(
+        expect.objectContaining({ id: "social-tool", status: "needs-config" }),
+      );
+
+      const saved = await app.request("/api/tools/social-tool/configuration", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ values: { username: "maya", accessToken: "private-token" } }),
+      });
+      expect(saved.status).toBe(200);
+      const status = await app.request("/api/tools/social-tool/configuration");
+      const body = await status.json();
+      expect(body).toMatchObject({
+        ok: true,
+        ready: true,
+        fields: [
+          { key: "username", value: "maya", configured: true },
+          { key: "accessToken", configured: true },
+        ],
+      });
+      expect(JSON.stringify(body)).not.toContain("private-token");
+      expect(await readFile(join(configRoot, "social-tool.json"), "utf8")).not.toContain("private-token");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("reports Codex readiness without exposing credential details", async () => {
     const codexStatus = {
       check: async () => ({

@@ -12,6 +12,17 @@ Each tool contains:
 
 Generated interfaces do not use React, GeckoUI, npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access.
 
+## Persistent configuration
+
+`tool.json` may declare a `configuration` array for values reused across runs. ScriptForge renders these fields in its trusted React shell; generated `ui.html` never renders or receives saved credentials.
+
+- Use `text`, `textarea`, `number`, `boolean`, or `select` for ordinary persistent values.
+- Use `secret` for API keys, access tokens, and passwords. Secret fields cannot declare defaults.
+- Prefer provider access tokens over account passwords.
+- Use configuration only for stable values such as credentials, account IDs, endpoints, and persistent preferences. Keep files and frequently changing choices in the normal per-run UI input.
+- The runner receives resolved values in `request.config`. It must validate them and must never log them or include secrets in results.
+- Configuration values are stored outside the tool directory and are never part of `.forge` exports.
+
 ## Default visual system
 
 Unless the user explicitly requests a different style, generated tools use ScriptForge's compact dark visual system:
@@ -107,6 +118,7 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Success produces a visible preview or useful metadata and a save action.
 - Preview failures and run failures are visible inside the tool interface.
 - No generated browser code calls `fetch`, opens a WebSocket, or accesses Node.js or the filesystem.
+- Persistent values are declared in the manifest, secrets are not collected by `ui.html`, and the runner does not log or return them.
 - The manifest declares every external executable the script may invoke.
 - The candidate presentation states what standalone check actually ran and what result was verified.
 - The exact reviewed candidate revision is the revision that is tested and saved.

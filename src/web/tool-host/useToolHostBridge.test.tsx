@@ -35,6 +35,30 @@ describe("useToolHostBridge", () => {
     await waitFor(() => expect(startJob).toHaveBeenCalledWith(expect.objectContaining({ files: [] })));
     expect(postMessage).toHaveBeenCalledWith({ source: "scriptforge-host", type: "accepted" }, "*");
   });
+
+  it("waits for host-side configuration before accepting the run", async () => {
+    vi.stubGlobal("WebSocket", FakeWebSocket);
+    let finish: ((result: { jobId: string }) => void) | undefined;
+    const startJob = vi.fn(() => new Promise<{ jobId: string }>((resolve) => (finish = resolve)));
+    const { container } = render(<BridgeHarness startJob={startJob} />);
+    const iframe = container.querySelector("iframe");
+    if (!iframe?.contentWindow) throw new Error("Test iframe is unavailable.");
+    const postMessage = vi.spyOn(iframe.contentWindow, "postMessage");
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        source: iframe.contentWindow,
+        data: { source: "scriptforge-tool", type: "run", input: {}, files: [] },
+      }),
+    );
+    await waitFor(() => expect(startJob).toHaveBeenCalled());
+    expect(postMessage).not.toHaveBeenCalledWith({ source: "scriptforge-host", type: "accepted" }, "*");
+
+    finish?.({ jobId: "job-1" });
+    await waitFor(() =>
+      expect(postMessage).toHaveBeenCalledWith({ source: "scriptforge-host", type: "accepted" }, "*"),
+    );
+  });
 });
 
 function BridgeHarness({ startJob }: { startJob: () => Promise<{ jobId: string }> }) {

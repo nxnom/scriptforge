@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,6 +22,8 @@ describe("tool archive API", () => {
       installedToolsRoot: join(root, "tools"),
       jobsRoot: join(root, "jobs"),
       requirements,
+      configRoot: join(root, "config"),
+      encryptionKeyPath: join(root, "secure", "master.key"),
     });
     const archive = archiveFile();
     const body = new FormData();
@@ -51,10 +53,23 @@ describe("tool archive API", () => {
     expect(exported.status).toBe(200);
     expect(exported.headers.get("content-type")).toBe("application/x-scriptforge-tool");
     expect(exported.headers.get("content-disposition")).toContain("video-tool.forge");
+    expect(await exported.clone().text()).not.toContain("archive-secret");
+
+    const configured = await app.request("/api/tools/video-tool/configuration", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ values: { accessToken: "archive-secret" } }),
+    });
+    expect(configured.status).toBe(200);
+    const exportedAfterConfig = await app.request("/api/tools/video-tool/export");
+    expect(await exportedAfterConfig.text()).not.toContain("archive-secret");
 
     const deleted = await app.request("/api/tools/video-tool", { method: "DELETE" });
     expect(deleted.status).toBe(200);
     await expect(deleted.json()).resolves.toEqual({ ok: true });
+    const configAfterDelete = await app.request("/api/tools/video-tool/configuration");
+    expect(configAfterDelete.status).toBe(404);
+    await expect(readFile(join(root, "config", "video-tool.json"))).rejects.toThrow();
     const afterDelete = await app.request("/api/tools");
     expect((await afterDelete.json()).tools).not.toContainEqual(expect.objectContaining({ id: "video-tool" }));
   });
@@ -83,6 +98,7 @@ function archiveFile() {
     script: "run.mjs",
     interface: { type: "html", entry: "ui.html" },
     requiredExecutables: [{ name: "ffmpeg" }],
+    configuration: [{ key: "accessToken", label: "Access token", type: "secret", required: true }],
   };
   const encoded = (path: string, content: string) => ({
     path,

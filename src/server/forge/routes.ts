@@ -2,8 +2,10 @@ import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
-import { installTool } from "../../tools/installed";
+import { deleteInstalledTool, installTool } from "../../tools/installed";
 import { findBundledTool } from "../../tools/registry";
+import { configurationUpdateSchema } from "../configuration/routes";
+import type { ToolConfigurationService } from "../configuration/service";
 import type { ToolJobService } from "../jobs/service";
 import type { ForgeSessionService } from "./service";
 import {
@@ -29,9 +31,70 @@ const feedbackSchema = z.object({
 });
 const candidateRevisionSchema = z.object({ revision: z.string().regex(/^[a-f0-9]{64}$/) });
 
-export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJobService, installedToolsRoot?: string) {
+export function createForgeApiRoutes(
+  service: ForgeSessionService,
+  jobs: ToolJobService,
+  installedToolsRoot?: string,
+  configuration?: ToolConfigurationService,
+) {
   return new Hono()
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
+    .get(
+      "/sessions/:sessionId/candidate/configuration",
+      validator("query", (value, c) => {
+        const parsed = candidateRevisionSchema.safeParse(value);
+        return parsed.success
+          ? parsed.data
+          : c.json({ ok: false as const, error: "The candidate revision is invalid." }, 400);
+      }),
+      async (c) => {
+        try {
+          const runtime = await service.getCandidateRuntime(c.req.param("sessionId"), c.req.valid("query").revision);
+          if (!configuration) throw new Error("Candidate configuration is unavailable.");
+          return c.json({
+            ok: true as const,
+            ...(await configuration.getStatus(runtime.manifest, candidateConfigurationScope(c.req.param("sessionId")))),
+          });
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: errorMessage(error, "Candidate configuration is unavailable.") },
+            409,
+          );
+        }
+      },
+    )
+    .put(
+      "/sessions/:sessionId/candidate/configuration",
+      validator("json", (value, c) => {
+        const parsed = configurationUpdateSchema
+          .extend({ revision: candidateRevisionSchema.shape.revision })
+          .safeParse(value);
+        return parsed.success
+          ? parsed.data
+          : c.json({ ok: false as const, error: "The candidate configuration is invalid." }, 400);
+      }),
+      async (c) => {
+        try {
+          if (!configuration) throw new Error("Candidate configuration is unavailable.");
+          const update = c.req.valid("json");
+          const runtime = await service.getCandidateRuntime(c.req.param("sessionId"), update.revision);
+          return c.json({
+            ok: true as const,
+            ...(await configuration.save(
+              runtime.manifest,
+              update.values,
+              update.clearSecrets,
+              candidateConfigurationScope(c.req.param("sessionId")),
+            )),
+          });
+        } catch (error) {
+          return c.json(
+            { ok: false as const, error: errorMessage(error, "Candidate configuration could not be saved.") },
+            400,
+          );
+        }
+      },
+    )
     .post(
       "/sessions/:sessionId/candidate/jobs",
       validator("form", (value, c) => {
@@ -57,6 +120,7 @@ export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJob
             files: request.files,
             directory: runtime.directory,
             manifest: runtime.manifest,
+            configurationScope: candidateConfigurationScope(c.req.param("sessionId")),
           });
           service.trackCandidateJob(c.req.param("sessionId"), request.revision, result.jobId);
           return c.json({ ok: true as const, ...result }, 202);
@@ -95,6 +159,12 @@ export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJob
             },
             installedToolsRoot,
           );
+          try {
+            await configuration?.move(candidateConfigurationScope(sessionId), installed.manifest.id);
+          } catch (error) {
+            await deleteInstalledTool(installed.manifest.id, installedToolsRoot);
+            throw error;
+          }
           return c.json({ ok: true as const, tool: { id: installed.manifest.id, name: installed.manifest.name } }, 201);
         } catch (error) {
           return c.json(
@@ -192,6 +262,15 @@ export function createForgeApiRoutes(service: ForgeSessionService, jobs: ToolJob
         ? c.json({ ok: true as const })
         : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
     });
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function candidateConfigurationScope(sessionId: string) {
+  if (!/^[a-f0-9-]+$/.test(sessionId)) throw new Error("Invalid Forge session identifier.");
+  return `candidate-${sessionId}`;
 }
 
 export function createForgeWebSocketRoutes(service: ForgeSessionService) {

@@ -2,9 +2,14 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import type { ToolArchiveService } from "../../tools/archive";
 import { maximumArchiveBytes, toolArchiveMimeType } from "../../tools/archive";
+import type { ToolConfigurationService } from "../configuration/service";
 import type { RequirementService } from "../requirements/service";
 
-export function createToolArchiveRoutes(service: ToolArchiveService, requirements: RequirementService) {
+export function createToolArchiveRoutes(
+  service: ToolArchiveService,
+  requirements: RequirementService,
+  configuration?: ToolConfigurationService,
+) {
   return new Hono()
     .delete("/tools/:toolId", async (c) => {
       try {
@@ -12,6 +17,7 @@ export function createToolArchiveRoutes(service: ToolArchiveService, requirement
         if (result === "bundled") return c.json({ ok: false as const, error: "Bundled tools cannot be deleted." }, 403);
         if (result === "not-found")
           return c.json({ ok: false as const, error: "That installed tool does not exist." }, 404);
+        await configuration?.delete(c.req.param("toolId"));
         return c.json({ ok: true as const });
       } catch (error) {
         return c.json({ ok: false as const, error: errorMessage(error, "The tool could not be deleted.") }, 400);
@@ -45,15 +51,18 @@ export function createToolArchiveRoutes(service: ToolArchiveService, requirement
         try {
           const installed = await service.import(new Uint8Array(await c.req.valid("form").file.arrayBuffer()));
           const executableStatuses = await requirements.check(installed.manifest.requiredExecutables);
+          const configurationStatus = await configuration?.getStatus(installed.manifest);
           return c.json(
             {
               ok: true as const,
               tool: {
                 id: installed.manifest.id,
                 name: installed.manifest.name,
-                status: executableStatuses.every((item) => item.available)
-                  ? ("ready" as const)
-                  : ("needs-install" as const),
+                status: !executableStatuses.every((item) => item.available)
+                  ? ("needs-install" as const)
+                  : configurationStatus?.ready === false
+                    ? ("needs-config" as const)
+                    : ("ready" as const),
                 requirements: executableStatuses,
               },
             },

@@ -84,10 +84,14 @@ The Forge workspace displays one real interactive Codex TUI through xterm.js. Wh
 ├── tools/       # installed tools
 ├── staging/     # Forge candidates
 ├── jobs/        # temporary inputs and outputs
+├── config/      # per-tool persistent configuration; secret entries are encrypted
+├── secure/      # generated local encryption key
 └── settings.json
 ```
 
 There is no database. Tool manifests and directories are the source of truth.
+
+Tools may declare persistent configuration fields in `tool.json`. ScriptForge renders them in a trusted GeckoUI form rather than inside generated HTML. Ordinary values and AES-256-GCM encrypted secret entries share a per-tool configuration file outside the tool directory. A generated 256-bit local key is stored separately, and authenticated encryption binds every secret to its tool and field identifier. Saved secrets are never returned to the browser, included in an archive, or exposed to the generated iframe. The server decrypts them only while constructing a runner request and redacts known values from emitted events and errors.
 
 Forge candidates persist across application restarts. On startup, ScriptForge removes temporary job inputs and outputs older than 24 hours.
 
@@ -118,6 +122,8 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 - No Codex bypass-approval flag.
 - Required executables are visible in the manifest and review UI.
 - Saving verifies that the candidate has not changed since the reviewed/tested revision.
+- Required configuration blocks execution until the trusted host form is complete; the original run continues after a successful save.
+- Tool deletion also removes its local configuration. Export reads only the tool directory and cannot include configuration or encryption-key files.
 
 ## Starter Tool
 

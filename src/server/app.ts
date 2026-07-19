@@ -7,6 +7,8 @@ import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installe
 import { listBundledTools } from "../tools/registry";
 import { createToolArchiveRoutes } from "./archive/routes";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
+import { createToolConfigurationRoutes } from "./configuration/routes";
+import { ToolConfigurationService } from "./configuration/service";
 import { createDoctorApiRoutes, createDoctorWebSocketRoutes } from "./doctor/routes";
 import { DoctorSessionService } from "./doctor/service";
 import { createForgeApiRoutes, createForgeWebSocketRoutes } from "./forge/routes";
@@ -82,6 +84,7 @@ export function createApiRoutes(
   requirements = new RequirementService(),
   doctorSessions?: DoctorSessionService,
   archives = new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id))),
+  configuration = new ToolConfigurationService(),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -101,6 +104,12 @@ export function createApiRoutes(
           ...installed.map((tool) => ({ manifest: tool.manifest, origin: "installed" as const })),
         ].map(async ({ manifest, origin }) => {
           const executableStatuses = await requirements.check(manifest.requiredExecutables);
+          const configurationReady =
+            manifest.configuration.length === 0 ||
+            (await configuration
+              .getStatus(manifest)
+              .then((status) => status.ready)
+              .catch(() => false));
           const { id, name, description, category, icon } = manifest;
           return {
             id,
@@ -108,11 +117,14 @@ export function createApiRoutes(
             description,
             category,
             icon,
-            status: executableStatuses.every((item) => item.available)
-              ? ("ready" as const)
-              : ("needs-install" as const),
+            status: !executableStatuses.every((item) => item.available)
+              ? ("needs-install" as const)
+              : configurationReady
+                ? ("ready" as const)
+                : ("needs-config" as const),
             origin,
             requirements: executableStatuses,
+            configurationReady,
           };
         }),
       );
@@ -121,9 +133,10 @@ export function createApiRoutes(
       });
     })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
-    .route("/", createToolArchiveRoutes(archives, requirements))
+    .route("/", createToolArchiveRoutes(archives, requirements, configuration))
+    .route("/", createToolConfigurationRoutes(configuration, installedToolsRoot))
     .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
-    .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot))
+    .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot, configuration))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
@@ -134,14 +147,16 @@ const defaultArchives = new ToolArchiveService(
   defaultInstalledToolsRoot(),
   new Set(listBundledTools().map((tool) => tool.id)),
 );
+const defaultConfiguration = new ToolConfigurationService();
 export const apiRoutes = createApiRoutes(
-  new ToolJobService(undefined, undefined, undefined, defaultRequirements),
+  new ToolJobService(undefined, undefined, undefined, defaultRequirements, defaultConfiguration),
   new ForgeSessionService(defaultCodexStatus),
   defaultCodexStatus,
   undefined,
   defaultRequirements,
   defaultDoctorSessions,
   defaultArchives,
+  defaultConfiguration,
 );
 
 export type ApiRoutes = typeof apiRoutes;
@@ -158,11 +173,22 @@ export function createApp(
     requirements?: RequirementService;
     doctorSessions?: DoctorSessionService;
     archives?: ToolArchiveService;
+    configuration?: ToolConfigurationService;
+    configRoot?: string;
+    encryptionKeyPath?: string;
   } = {},
 ) {
   const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
   const requirements = options.requirements ?? new RequirementService();
-  const jobService = new ToolJobService(options.jobsRoot, options.toolsRoot, installedToolsRoot, requirements);
+  const configuration =
+    options.configuration ?? new ToolConfigurationService(options.configRoot, options.encryptionKeyPath);
+  const jobService = new ToolJobService(
+    options.jobsRoot,
+    options.toolsRoot,
+    installedToolsRoot,
+    requirements,
+    configuration,
+  );
   const codexStatus = options.codexStatus ?? new CodexStatusService();
   const forgeSessions = options.forgeSessions ?? new ForgeSessionService(codexStatus, options.stagingRoot);
   const doctorSessions =
@@ -181,6 +207,7 @@ export function createApp(
         requirements,
         doctorSessions,
         archives,
+        configuration,
       ),
     )
     .route("/", createJobWebSocketRoutes(jobService))

@@ -1,11 +1,12 @@
-import { Alert, Button } from "@geckoui/geckoui";
+import { Alert, Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { ArrowLeft, Box, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Box, Settings2, ShieldCheck } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRead, useWrite } from "../api";
 import { RequirementNotice } from "../components/RequirementNotice";
 import { ToolActions } from "../components/ToolActions";
+import { openInstalledConfiguration } from "../configuration/ToolConfigurationDialog";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 export function ToolPage() {
@@ -17,11 +18,22 @@ export function ToolPage() {
     enabled: Boolean(toolId),
     staleTime: 5_000,
   });
+  const configuration = useRead((api) => api("tools/:toolId/configuration").GET({ params: { toolId: toolId ?? "" } }), {
+    enabled: Boolean(toolId),
+    staleTime: 0,
+  });
+  const configurationRef = useRef(configuration);
+  configurationRef.current = configuration;
   const startJob = useWrite((api) => api("jobs").POST());
   const tool = tools.data?.tools.find((candidate) => candidate.id === toolId);
   const runTool = useCallback(
     async (message: ToolRunMessage) => {
       if (!toolId) throw new Error("The selected tool is unavailable.");
+      if (configurationRef.current.data?.ok && !configurationRef.current.data.ready) {
+        const saved = await openInstalledConfiguration(toolId);
+        if (!saved) throw new Error("Add the required configuration to run this tool.");
+        await configurationRef.current.trigger();
+      }
       const response = await startJob.trigger({
         body: spooshForm({
           toolId,
@@ -52,6 +64,18 @@ export function ToolPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 max-[680px]:justify-self-end">
+          {configuration.data?.ok && configuration.data.fields.length > 0 && (
+            <Tooltip content="Tool configuration" triggerAsChild>
+              <Button
+                aria-label="Tool configuration"
+                variant="icon"
+                size="sm"
+                onClick={() => navigate(`/tools/${toolId}/settings`)}
+              >
+                <Settings2 size={14} />
+              </Button>
+            </Tooltip>
+          )}
           {tool && "origin" in tool && tool.origin === "installed" && (
             <ToolActions toolId={toolId} toolName={tool.name} />
           )}
@@ -71,7 +95,7 @@ export function ToolPage() {
       <iframe
         ref={iframeRef}
         className="min-h-180 w-full flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a] max-[680px]:min-h-225"
-        src={listening ? `/api/tools/${toolId}/ui` : undefined}
+        src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
         title={`${tool?.name ?? "ScriptForge tool"} interface`}
         sandbox="allow-scripts allow-downloads"
       />

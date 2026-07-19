@@ -1,9 +1,10 @@
-import { LoadingButton, toast } from "@geckoui/geckoui";
+import { Button, LoadingButton, Tooltip, toast } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { Code2, Eye, FileJson, Save } from "lucide-react";
+import { Code2, Eye, FileJson, Save, Settings2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
-import { invalidate, useWrite } from "../api";
+import { invalidate, useRead, useWrite } from "../api";
+import { openCandidateConfiguration } from "../configuration/ToolConfigurationDialog";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 type CandidateTab = "preview" | "script" | "manifest";
@@ -12,10 +13,25 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
   const [tab, setTab] = useState<CandidateTab>("preview");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/jobs").POST());
+  const configuration = useRead(
+    (api) =>
+      api("forge/sessions/:sessionId/candidate/configuration").GET({
+        params: { sessionId },
+        query: { revision: candidate.revision },
+      }),
+    { staleTime: 0 },
+  );
+  const configurationRef = useRef(configuration);
+  configurationRef.current = configuration;
   const saveCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
   const [saved, setSaved] = useState(false);
   const runCandidate = useCallback(
     async (message: ToolRunMessage) => {
+      if (configurationRef.current.data?.ok && !configurationRef.current.data.ready) {
+        const saved = await openCandidateConfiguration(sessionId, candidate.revision);
+        if (!saved) throw new Error("Add the required configuration to test this tool.");
+        await configurationRef.current.trigger();
+      }
       const response = await startCandidate.trigger({
         params: { sessionId },
         body: spooshForm({
@@ -59,6 +75,18 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
               Details
             </TabButton>
           </div>
+          {configuration.data?.ok && configuration.data.fields.length > 0 && (
+            <Tooltip content="Tool configuration" triggerAsChild>
+              <Button
+                aria-label="Tool configuration"
+                variant="icon"
+                size="xs"
+                onClick={() => void openCandidateConfiguration(sessionId, candidate.revision)}
+              >
+                <Settings2 size={12} />
+              </Button>
+            </Tooltip>
+          )}
           <LoadingButton
             variant="outlined"
             size="xs"
@@ -77,7 +105,7 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
               title={`${candidate.name} interface preview`}
               className="absolute inset-0 size-full border-0 bg-white"
               sandbox="allow-scripts allow-downloads"
-              srcDoc={bridge.listening ? previewDocument(candidate.interfaceHtml) : undefined}
+              srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
             />
           ) : (
             <pre className="absolute inset-0 m-0 overflow-auto p-4 font-mono text-[11px] leading-5 text-[#d0d0d0]">
