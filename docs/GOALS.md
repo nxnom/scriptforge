@@ -161,7 +161,7 @@ Status: Pending
 - Keep Library, Tool Detail, and Forge route headers at the same 64px height so navigation does not shift the workspace vertically.
 - Polish the primary demo path.
 - Add only the starter tools needed to strengthen the demo.
-- Ship an offline PDF Toolkit for merge, page reorder, rotation, split, and clearly labeled scan flattening/compression without a system executable.
+- Ship an offline PDF Toolkit for mixed PDFs and images, page reorder, rotation, split, image page layout, and clearly labeled scan flattening/compression without a system executable.
 - Ship a Silicon-backed Code Screenshot Studio with a focused paste-to-PNG interface and the normal Dependency Doctor path when Silicon is missing.
 - Ship a zero-install App Icon Exporter that packages Apple and Android assets into one ZIP and treats Icon Composer's layered `.icon` format honestly.
 - Complete README setup, architecture, evidence, limitations, and license sections.

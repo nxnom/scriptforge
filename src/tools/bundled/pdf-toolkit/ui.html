@@ -61,6 +61,7 @@
       .field { display: grid; gap: 7px; }
       .field label { color: #d8d8d8; font-size: 12px; font-weight: 650; }
       select, input[type="number"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; color: #f5f5f5; background: #1b1b1b; }
+      input[type="color"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 9px; padding: 4px; background: #1b1b1b; }
       .hint, .warning { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
       .warning { padding: 10px; border: 1px solid #765c25; border-radius: 9px; color: #e9c778; background: #362b18; }
       .run { margin-top: auto; }
@@ -116,12 +117,12 @@
       <header class="toolbar">
         <div>
           <h1>PDF Toolkit</h1>
-          <p class="subtitle">Merge, arrange, rotate, split, or shrink PDFs locally.</p>
+          <p class="subtitle">Combine PDFs and images, arrange pages, split, or shrink locally.</p>
         </div>
         <div class="actions">
           <button class="button ghost hidden" id="reset" type="button">Start over</button>
-          <button class="button primary" id="choose" type="button">Add PDFs</button>
-          <input class="hidden" id="files" type="file" accept="application/pdf,.pdf" multiple />
+          <button class="button primary" id="choose" type="button">Add files</button>
+          <input class="hidden" id="files" type="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" multiple />
         </div>
       </header>
 
@@ -133,14 +134,14 @@
           <div class="source-head">
             <strong id="page-count">Pages</strong>
             <div class="file-row" id="file-list"></div>
-            <div class="page-jump">
+            <div class="page-jump hidden" id="page-jump">
               <label for="jump-page">Go to</label>
               <input id="jump-page" type="number" min="1" value="1" aria-label="Page number" />
               <button class="button" id="jump" type="button">Go</button>
             </div>
           </div>
           <div class="dropzone" id="dropzone">
-            <div><strong>Drop PDF files here</strong><span>Add several PDFs to merge them, then drag pages into order.</span></div>
+            <div><strong>Drop PDFs or images here</strong><span>Mix documents and pictures, then drag every page into order.</span></div>
           </div>
           <div class="pages hidden" id="pages"></div>
         </div>
@@ -164,12 +165,32 @@
             <label for="target">Try to fit under (MB)</label>
             <input id="target" type="number" min="0.1" max="100" step="0.1" placeholder="2" />
           </div>
+          <div class="field hidden" id="image-page-field">
+            <label for="image-page-size">Image page size</label>
+            <select id="image-page-size">
+              <option value="a4">A4 · auto orientation</option>
+              <option value="letter">US Letter · auto orientation</option>
+              <option value="image">Match each image</option>
+            </select>
+          </div>
+          <div class="field hidden" id="image-fit-field">
+            <label for="image-fit">Image placement</label>
+            <select id="image-fit"><option value="contain">Fit whole image</option><option value="cover">Fill page · crop edges</option></select>
+          </div>
+          <div class="field hidden" id="image-margin-field">
+            <label for="image-margin">Image margin (pt)</label>
+            <input id="image-margin" type="number" min="0" max="300" step="1" value="24" />
+          </div>
+          <div class="field hidden" id="image-background-field">
+            <label for="image-background">Page background</label>
+            <input id="image-background" type="color" value="#ffffff" />
+          </div>
           <p class="hint">Reordering, rotation, merge, and split keep selectable text and links.</p>
           <p class="warning hidden" id="scan-warning">Scan compression flattens every page into an image. Selectable text, links, forms, and accessibility structure will be lost.</p>
           <div class="run">
             <button class="button primary" id="run" type="button" disabled>Create PDF</button>
             <div class="progress"><span id="progress"></span></div>
-            <div class="status-row"><span id="status">Add a PDF to begin</span><span id="percent">0%</span></div>
+            <div class="status-row"><span id="status">Add a file to begin</span><span id="percent">0%</span></div>
           </div>
           <details><summary>Run logs</summary><pre id="logs"></pre></details>
         </aside>
@@ -205,8 +226,10 @@
       const byId = (id) => document.getElementById(id);
       const elements = {
         choose: byId("choose"), files: byId("files"), reset: byId("reset"), dropzone: byId("dropzone"),
-        pages: byId("pages"), fileList: byId("file-list"), pageCount: byId("page-count"), jumpPage: byId("jump-page"), jump: byId("jump"), outputMode: byId("output-mode"),
+        pages: byId("pages"), fileList: byId("file-list"), pageCount: byId("page-count"), pageJump: byId("page-jump"), jumpPage: byId("jump-page"), jump: byId("jump"), outputMode: byId("output-mode"),
         compression: byId("compression"), targetField: byId("target-field"), target: byId("target"), scanWarning: byId("scan-warning"),
+        imagePageField: byId("image-page-field"), imagePageSize: byId("image-page-size"), imageFitField: byId("image-fit-field"), imageFit: byId("image-fit"),
+        imageMarginField: byId("image-margin-field"), imageMargin: byId("image-margin"), imageBackgroundField: byId("image-background-field"), imageBackground: byId("image-background"),
         run: byId("run"), progress: byId("progress"), status: byId("status"), percent: byId("percent"), logs: byId("logs"),
         error: byId("error"), success: byId("success"), workspace: byId("workspace"), results: byId("results"),
         resultPages: byId("result-pages"), outputs: byId("outputs"), pagePreview: byId("page-preview"), previewTitle: byId("preview-title"), previewCanvas: byId("preview-canvas"), closePreview: byId("close-preview"),
@@ -235,6 +258,9 @@
       elements.pagePreview.addEventListener("click", (event) => { if (event.target === elements.pagePreview) elements.pagePreview.close(); });
       elements.outputMode.addEventListener("change", syncOptions);
       elements.compression.addEventListener("change", syncOptions);
+      for (const control of [elements.imagePageSize, elements.imageFit, elements.imageMargin, elements.imageBackground]) {
+        control.addEventListener("input", () => renderPages());
+      }
       elements.run.addEventListener("click", run);
       for (const type of ["dragenter", "dragover"]) elements.dropzone.addEventListener(type, (event) => {
         event.preventDefault(); elements.dropzone.classList.add("dragging");
@@ -251,20 +277,27 @@
 
       async function addFiles(files) {
         clearMessages();
-        const pdfFiles = files.filter((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
-        if (!pdfFiles.length) return showError("Choose one or more PDF files.");
-        setRunState(true, "Reading PDFs", 0.03);
+        const supportedFiles = files.filter((file) => isPdf(file) || isImage(file));
+        if (!supportedFiles.length) return showError("Choose PDF, PNG, JPEG, or WebP files.");
+        setRunState(true, "Reading files", 0.03);
         try {
-          for (const file of pdfFiles) {
+          for (const file of supportedFiles) {
             const bytes = await file.arrayBuffer();
+            if (isImage(file)) {
+              const bitmap = await createImageBitmap(file);
+              const fileIndex = sourceFiles.length;
+              sourceFiles.push({ file, bytes, kind: "image", bitmap });
+              pages.push({ id: crypto.randomUUID(), kind: "image", fileIndex, pageIndex: 0, rotation: 0, width: bitmap.width, height: bitmap.height, bitmap });
+              continue;
+            }
             const documentTask = getDocument({ data: new Uint8Array(bytes.slice(0)) });
             const pdf = await documentTask.promise;
             const fileIndex = sourceFiles.length;
-            sourceFiles.push({ file, bytes, pdf });
+            sourceFiles.push({ file, bytes, kind: "pdf", pdf });
             for (let pageIndex = 0; pageIndex < pdf.numPages; pageIndex += 1) {
               const page = await pdf.getPage(pageIndex + 1);
               const viewport = page.getViewport({ scale: 1 });
-              pages.push({ id: crypto.randomUUID(), fileIndex, pageIndex, rotation: 0, width: viewport.width, height: viewport.height, page });
+              pages.push({ id: crypto.randomUUID(), kind: "pdf", fileIndex, pageIndex, rotation: 0, width: viewport.width, height: viewport.height, page });
             }
           }
           renderFileList();
@@ -280,10 +313,13 @@
         const thumbnailRenders = [];
         elements.dropzone.classList.toggle("hidden", pages.length > 0);
         elements.pages.classList.toggle("hidden", pages.length === 0);
+        elements.pageJump.classList.toggle("hidden", pages.length === 0);
         elements.reset.classList.toggle("hidden", pages.length === 0);
         elements.run.disabled = pages.length === 0 || running;
         elements.pageCount.textContent = pages.length ? `${pages.length} page${pages.length === 1 ? "" : "s"}` : "Pages";
         elements.jumpPage.max = String(Math.max(1, pages.length));
+        const hasImages = pages.some((page) => page.kind === "image");
+        for (const field of [elements.imagePageField, elements.imageFitField, elements.imageMarginField, elements.imageBackgroundField]) field.classList.toggle("hidden", !hasImages);
         elements.pages.replaceChildren();
         for (const [index, item] of pages.entries()) {
           const card = document.createElement("article");
@@ -369,6 +405,10 @@
 
       function renderThumbnail(item, canvas, scale = 0.34) {
         const queued = (thumbnailQueues.get(canvas) || Promise.resolve()).catch(() => {}).then(async () => {
+          if (item.kind === "image") {
+            renderImageThumbnail(item, canvas, scale);
+            return;
+          }
           const viewport = item.page.getViewport({ scale, rotation: item.page.rotate + item.rotation });
           canvas.width = Math.ceil(viewport.width);
           canvas.height = Math.ceil(viewport.height);
@@ -376,6 +416,43 @@
         });
         thumbnailQueues.set(canvas, queued);
         return queued;
+      }
+
+      function renderImageThumbnail(item, canvas, scale) {
+        const rotated = item.rotation === 90 || item.rotation === 270;
+        const naturalWidth = rotated ? item.height : item.width;
+        const naturalHeight = rotated ? item.width : item.height;
+        const [pageWidth, pageHeight] = imagePageSize(naturalWidth, naturalHeight);
+        const longest = scale >= 1 ? 900 * scale : 520 * scale;
+        const ratio = Math.min(1, longest / Math.max(pageWidth, pageHeight));
+        canvas.width = Math.max(1, Math.round(pageWidth * ratio));
+        canvas.height = Math.max(1, Math.round(pageHeight * ratio));
+        const context = canvas.getContext("2d");
+        context.fillStyle = elements.imageBackground.value;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        const margin = Math.min(Number(elements.imageMargin.value) || 0, pageWidth / 3, pageHeight / 3) * ratio;
+        const availableWidth = Math.max(1, canvas.width - margin * 2);
+        const availableHeight = Math.max(1, canvas.height - margin * 2);
+        const imageScale = elements.imageFit.value === "cover"
+          ? Math.max(availableWidth / naturalWidth, availableHeight / naturalHeight)
+          : Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight);
+        const drawWidth = item.width * imageScale;
+        const drawHeight = item.height * imageScale;
+        context.save();
+        context.beginPath();
+        context.rect(margin, margin, availableWidth, availableHeight);
+        context.clip();
+        context.translate(canvas.width / 2, canvas.height / 2);
+        context.rotate((item.rotation * Math.PI) / 180);
+        context.drawImage(item.bitmap, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        context.restore();
+      }
+
+      function imagePageSize(width, height) {
+        if (elements.imagePageSize.value === "a4") return height >= width ? [595.28, 841.89] : [841.89, 595.28];
+        if (elements.imagePageSize.value === "letter") return height >= width ? [612, 792] : [792, 612];
+        const sizeScale = Math.min(1, 1440 / Math.max(width, height));
+        return [Math.max(1, width * sizeScale), Math.max(1, height * sizeScale)];
       }
 
       function renderFileList() {
@@ -401,20 +478,31 @@
         setRunState(true, "Preparing files", 0.02);
         try {
           const files = sourceFiles.map(({ file, bytes }) => ({
-            name: file.name, size: bytes.byteLength, type: "application/pdf", lastModified: file.lastModified, data: bytes.slice(0),
+            name: file.name, size: bytes.byteLength, type: file.type || "application/octet-stream", lastModified: file.lastModified, data: bytes.slice(0),
           }));
           const pageInput = pages.map((page) => ({
-            fileIndex: page.fileIndex, pageIndex: page.pageIndex, rotation: page.rotation, width: page.width, height: page.height,
+            kind: page.kind, fileIndex: page.fileIndex, pageIndex: page.pageIndex, rotation: page.rotation, width: page.width, height: page.height,
+            pageSize: elements.imagePageSize.value, imageFit: elements.imageFit.value, margin: elements.imageMargin.value, background: elements.imageBackground.value,
           }));
           if (elements.compression.value === "scan") {
             for (const [index, page] of pages.entries()) {
               setRunState(true, `Rendering page ${index + 1} for compression`, 0.03 + (index / pages.length) * 0.2);
-              const viewport = page.page.getViewport({ scale: 1.6, rotation: page.page.rotate + page.rotation });
-              const natural = page.page.getViewport({ scale: 1, rotation: page.page.rotate + page.rotation });
               const canvas = document.createElement("canvas");
-              canvas.width = Math.ceil(viewport.width);
-              canvas.height = Math.ceil(viewport.height);
-              await page.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+              let natural;
+              if (page.kind === "pdf") {
+                const viewport = page.page.getViewport({ scale: 1.6, rotation: page.page.rotate + page.rotation });
+                natural = page.page.getViewport({ scale: 1, rotation: page.page.rotate + page.rotation });
+                canvas.width = Math.ceil(viewport.width);
+                canvas.height = Math.ceil(viewport.height);
+                await page.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+              } else {
+                renderImageThumbnail(page, canvas, 1.6);
+                const rotated = page.rotation === 90 || page.rotation === 270;
+                const naturalWidth = rotated ? page.height : page.width;
+                const naturalHeight = rotated ? page.width : page.height;
+                const [width, height] = imagePageSize(naturalWidth, naturalHeight);
+                natural = { width, height };
+              }
               const blob = await new Promise((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not render a PDF page.")), "image/jpeg", 0.9));
               const data = await blob.arrayBuffer();
               pageInput[index].width = natural.width;
@@ -473,6 +561,7 @@
           clearMessages();
           return;
         }
+        for (const source of sourceFiles) source.bitmap?.close?.();
         sourceFiles.splice(0);
         pages = [];
         elements.fileList.replaceChildren();
@@ -482,7 +571,7 @@
         elements.pages.classList.add("hidden");
         elements.pageCount.textContent = "Pages";
         elements.run.disabled = true;
-        setRunState(false, "Add a PDF to begin", 0);
+        setRunState(false, "Add a file to begin", 0);
         clearMessages();
       }
 
@@ -501,6 +590,8 @@
       function showSuccess(message) { elements.success.textContent = message; elements.success.classList.add("visible"); elements.error.classList.remove("visible"); }
       function formatBytes(value) { return value < 1048576 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1048576).toFixed(1)} MB`; }
       function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]); }
+      function isPdf(file) { return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"); }
+      function isImage(file) { return file.type.startsWith("image/") || /\.(png|jpe?g|webp)$/i.test(file.name); }
 
       syncOptions();
       parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");

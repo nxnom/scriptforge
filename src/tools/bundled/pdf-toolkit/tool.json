@@ -3,7 +3,7 @@
   "id": "pdf-toolkit",
   "version": "1.0.0",
   "name": "PDF Toolkit",
-  "description": "Merge, reorder, rotate, split, and shrink PDFs without uploading them.",
+  "description": "Combine images and PDFs, reorder, rotate, split, and shrink pages without uploading them.",
   "categories": ["PDF", "Documents"],
   "icon": "file-text",
   "script": "run.mjs",

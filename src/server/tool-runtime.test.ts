@@ -130,6 +130,55 @@ describe("tool runtime host", () => {
     expect(merged.getPage(0).getRotation()).toEqual(degrees(90));
   });
 
+  it("combines image and PDF pages through the bundled PDF runner", async () => {
+    const sourcePdf = await PDFDocument.create();
+    sourcePdf.addPage([300, 400]);
+    const sourceImage = await sharp({
+      create: { width: 800, height: 400, channels: 4, background: { r: 84, g: 104, b: 255, alpha: 0.8 } },
+    })
+      .webp()
+      .toBuffer();
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+
+    const { jobId } = await service.start({
+      toolId: "pdf-toolkit",
+      input: {
+        outputMode: "single",
+        compression: "none",
+        pages: [
+          {
+            kind: "image",
+            fileIndex: 1,
+            pageIndex: 0,
+            rotation: 90,
+            width: 800,
+            height: 400,
+            pageSize: "letter",
+            imageFit: "contain",
+            margin: 36,
+            background: "#ffffff",
+          },
+          { kind: "pdf", fileIndex: 0, pageIndex: 0, rotation: 0, width: 300, height: 400 },
+        ],
+      },
+      files: [
+        new File([filePart(await sourcePdf.save())], "source.pdf", { type: "application/pdf" }),
+        new File([filePart(sourceImage)], "photo.webp", { type: "image/webp" }),
+      ],
+    });
+
+    await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    if (result?.type !== "result") throw new Error("Mixed PDF result was not emitted.");
+    const output = result.outputs[0];
+    if (!output) throw new Error("Mixed PDF output was not emitted.");
+    const stored = await service.readOutput(jobId, output.id);
+    const mixed = await PDFDocument.load(stored?.data ?? new Uint8Array());
+    expect(mixed.getPageCount()).toBe(2);
+    expect(mixed.getPage(0).getSize()).toEqual({ width: 612, height: 792 });
+    expect(mixed.getPage(1).getSize()).toEqual({ width: 300, height: 400 });
+  });
+
   it("compresses a rendered scan into a flattened PDF with honest metadata", async () => {
     const source = await PDFDocument.create();
     source.addPage([240, 320]);

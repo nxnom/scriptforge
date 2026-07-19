@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
-import { degrees, PDFDocument } from "pdf-lib";
+import { degrees, PDFDocument, rgb } from "pdf-lib";
 import sharp from "sharp";
 
 const emit = (event) => process.stdout.write(`${JSON.stringify(event)}\n`);
@@ -24,8 +24,8 @@ try {
     throw new Error("Scan compression creates one PDF. Choose the combined output mode.");
   }
 
-  emit({ type: "log", level: "info", message: `Preparing ${pages.length} PDF page${pages.length === 1 ? "" : "s"}` });
-  emit({ type: "progress", value: 0.08, label: "Reading PDF pages" });
+  emit({ type: "log", level: "info", message: `Preparing ${pages.length} page${pages.length === 1 ? "" : "s"}` });
+  emit({ type: "progress", value: 0.08, label: "Reading source pages" });
   const originalBytes = [...new Set(pages.map((page) => page.fileIndex))].reduce(
     (total, index) => total + (files[index]?.size ?? 0),
     0,
@@ -59,7 +59,7 @@ try {
 
 async function createEditablePdfs({ files, pages, outputDir, outputMode }) {
   const documents = new Map();
-  for (const fileIndex of new Set(pages.map((page) => page.fileIndex))) {
+  for (const fileIndex of new Set(pages.filter((page) => page.kind === "pdf").map((page) => page.fileIndex))) {
     const file = files[fileIndex];
     if (!file) throw new Error("One of the selected PDF files is missing.");
     documents.set(fileIndex, await PDFDocument.load(await readBytes(file.path), { updateMetadata: false }));
@@ -70,10 +70,7 @@ async function createEditablePdfs({ files, pages, outputDir, outputMode }) {
     for (const [index, page] of pages.entries()) {
       emit({ type: "progress", value: 0.12 + (index / pages.length) * 0.76, label: `Creating page ${index + 1}` });
       const document = await PDFDocument.create();
-      const source = documents.get(page.fileIndex);
-      const [copied] = await document.copyPages(source, [page.pageIndex]);
-      copied.setRotation(degrees(normalizeRotation(copied.getRotation().angle + page.rotation)));
-      document.addPage(copied);
+      await appendPage(document, page, files, documents);
       const bytes = await document.save({ useObjectStreams: true, addDefaultPage: false });
       const name = `page-${String(index + 1).padStart(3, "0")}.pdf`;
       await writeOutput(outputDir, name, bytes);
@@ -85,15 +82,76 @@ async function createEditablePdfs({ files, pages, outputDir, outputMode }) {
   const document = await PDFDocument.create();
   for (const [index, page] of pages.entries()) {
     emit({ type: "progress", value: 0.12 + (index / pages.length) * 0.7, label: `Copying page ${index + 1}` });
-    const source = documents.get(page.fileIndex);
-    const [copied] = await document.copyPages(source, [page.pageIndex]);
-    copied.setRotation(degrees(normalizeRotation(copied.getRotation().angle + page.rotation)));
-    document.addPage(copied);
+    await appendPage(document, page, files, documents);
   }
   const bytes = await document.save({ useObjectStreams: true, addDefaultPage: false });
   const name = `${safeStem(files[pages[0].fileIndex]?.name)}-edited.pdf`;
   await writeOutput(outputDir, name, bytes);
   return [{ path: name, name, metadata: { bytes: bytes.byteLength, pages: pages.length } }];
+}
+
+async function appendPage(document, page, files, documents) {
+  if (page.kind === "pdf") {
+    const source = documents.get(page.fileIndex);
+    const [copied] = await document.copyPages(source, [page.pageIndex]);
+    copied.setRotation(degrees(normalizeRotation(copied.getRotation().angle + page.rotation)));
+    document.addPage(copied);
+    return;
+  }
+
+  const file = files[page.fileIndex];
+  if (!file) throw new Error("One of the selected images is missing.");
+  const background = parseColor(page.background);
+  const png = await sharp(file.path).rotate(page.rotation).flatten({ background }).png().toBuffer();
+  const metadata = await sharp(png).metadata();
+  const imageWidth = metadata.width ?? page.width;
+  const imageHeight = metadata.height ?? page.height;
+  const [pageWidth, pageHeight] = imagePageSize(page.pageSize, imageWidth, imageHeight);
+  const outputPage = document.addPage([pageWidth, pageHeight]);
+  outputPage.drawRectangle({
+    x: 0,
+    y: 0,
+    width: pageWidth,
+    height: pageHeight,
+    color: rgb(background.r / 255, background.g / 255, background.b / 255),
+  });
+  const margin = Math.min(page.margin, pageWidth / 3, pageHeight / 3);
+  const availableWidth = Math.max(1, pageWidth - margin * 2);
+  const availableHeight = Math.max(1, pageHeight - margin * 2);
+  if (page.imageFit === "cover") {
+    const fitted = await sharp(png)
+      .resize(Math.max(1, Math.round(availableWidth * 2)), Math.max(1, Math.round(availableHeight * 2)), {
+        fit: "cover",
+        position: "centre",
+      })
+      .png()
+      .toBuffer();
+    const embedded = await document.embedPng(fitted);
+    outputPage.drawImage(embedded, {
+      x: margin,
+      y: margin,
+      width: availableWidth,
+      height: availableHeight,
+    });
+    return;
+  }
+  const embedded = await document.embedPng(png);
+  const scale = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
+  const drawWidth = imageWidth * scale;
+  const drawHeight = imageHeight * scale;
+  outputPage.drawImage(embedded, {
+    x: (pageWidth - drawWidth) / 2,
+    y: (pageHeight - drawHeight) / 2,
+    width: drawWidth,
+    height: drawHeight,
+  });
+}
+
+function imagePageSize(size, width, height) {
+  if (size === "a4") return height >= width ? [595.28, 841.89] : [841.89, 595.28];
+  if (size === "letter") return height >= width ? [612, 792] : [792, 612];
+  const scale = Math.min(1, 1440 / Math.max(width, height));
+  return [Math.max(1, width * scale), Math.max(1, height * scale)];
 }
 
 async function createCompressedPdf({ files, pages, outputDir, targetBytes }) {
@@ -147,7 +205,7 @@ async function createCompressedPdf({ files, pages, outputDir, targetBytes }) {
 }
 
 function validatePages(value, fileCount) {
-  if (!Array.isArray(value) || value.length < 1) throw new Error("Keep at least one PDF page.");
+  if (!Array.isArray(value) || value.length < 1) throw new Error("Keep at least one page.");
   return value.map((page, index) => {
     const fileIndex = integer(page?.fileIndex, 0, fileCount - 1, `Page ${index + 1} file`);
     const pageIndex = integer(page?.pageIndex, 0, 99_999, `Page ${index + 1} number`);
@@ -158,8 +216,35 @@ function validatePages(value, fileCount) {
       page?.rasterFileIndex === undefined
         ? -1
         : integer(page.rasterFileIndex, 0, fileCount - 1, `Page ${index + 1} raster`);
-    return { fileIndex, pageIndex, rotation, width, height, rasterFileIndex };
+    const kind = oneOf(page?.kind, ["pdf", "image"], "pdf");
+    const pageSize = oneOf(page?.pageSize, ["image", "a4", "letter"], "a4");
+    const imageFit = oneOf(page?.imageFit, ["contain", "cover"], "contain");
+    const margin = finite(page?.margin ?? 24, 0, 300, `Page ${index + 1} margin`);
+    const background = /^#[0-9a-f]{6}$/i.test(page?.background) ? page.background : "#ffffff";
+    return {
+      kind,
+      fileIndex,
+      pageIndex,
+      rotation,
+      width,
+      height,
+      rasterFileIndex,
+      pageSize,
+      imageFit,
+      margin,
+      background,
+    };
   });
+}
+
+function parseColor(value) {
+  const hex = /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1) : "ffffff";
+  return {
+    r: Number.parseInt(hex.slice(0, 2), 16),
+    g: Number.parseInt(hex.slice(2, 4), 16),
+    b: Number.parseInt(hex.slice(4, 6), 16),
+    alpha: 1,
+  };
 }
 
 function targetBytes(input) {
