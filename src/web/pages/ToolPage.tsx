@@ -1,6 +1,5 @@
-import { Alert, Button, Tooltip } from "@geckoui/geckoui";
+import { Alert } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { Settings2, ShieldCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { invalidate, useRead, useWrite } from "../api";
@@ -63,8 +62,15 @@ export function ToolPage() {
     invalidate("tools");
     setDoctorOpen(false);
   }, [activeDoctor.trigger, requirements.trigger]);
+  const configureTool = useCallback(() => {
+    if (!toolId) return;
+    void openInstalledConfiguration(toolId).then((saved) => {
+      if (saved) void configuration.trigger();
+    });
+  }, [configuration.trigger, toolId]);
 
   if (!toolId) return null;
+  const installedTool = Boolean(tool && "origin" in tool && tool.origin === "installed");
 
   return (
     <section className="flex min-h-0 w-full flex-1 flex-col overflow-hidden max-[760px]:overflow-y-auto">
@@ -73,31 +79,15 @@ export function ToolPage() {
         subtitle="Sandboxed tool interface"
         onBack={() => navigate("/")}
         actions={
-          <>
-            {configuration.data?.ok && configuration.data.fields.length > 0 && (
-              <Tooltip content="Tool configuration" triggerAsChild>
-                <Button
-                  aria-label="Tool configuration"
-                  className="size-9"
-                  variant="icon"
-                  size="sm"
-                  onClick={() =>
-                    void openInstalledConfiguration(toolId).then((saved) => {
-                      if (saved) void configuration.trigger();
-                    })
-                  }
-                >
-                  <Settings2 size={14} />
-                </Button>
-              </Tooltip>
-            )}
-            {tool && "origin" in tool && tool.origin === "installed" && (
-              <ToolActions toolId={toolId} toolName={tool.name} />
-            )}
-            <span className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#333] bg-[#202020] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
-              <ShieldCheck size={13} /> Local execution
-            </span>
-          </>
+          tool && (installedTool || (configuration.data?.ok && configuration.data.fields.length > 0)) ? (
+            <ToolActions
+              toolId={toolId}
+              toolName={tool.name}
+              mode="responsive"
+              manageable={installedTool}
+              onConfigure={configuration.data?.ok && configuration.data.fields.length > 0 ? configureTool : undefined}
+            />
+          ) : undefined
         }
       />
       <div className="flex min-h-0 w-full flex-1 overflow-hidden px-10 pt-7.5 pb-6 max-[900px]:px-6 max-[560px]:px-4 max-[560px]:pt-5 max-[560px]:pb-4">
@@ -105,7 +95,7 @@ export function ToolPage() {
           {toolReady && hostError && (
             <Alert variant="error" title="Tool host error" description={hostError} condensed />
           )}
-          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden max-[760px]:min-h-225">
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden max-[760px]:min-h-[calc(100dvh-7rem)]">
             {doctorVisible && (
               <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
             )}

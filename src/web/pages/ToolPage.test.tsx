@@ -42,7 +42,14 @@ vi.mock("../tool-host/useToolHostBridge", () => ({
 vi.mock("../tool-detail/ToolInfoSidebar", () => ({ ToolInfoSidebar: () => <aside>Tool information</aside> }));
 vi.mock("../tool-detail/ToolReview", () => ({ ToolReview: () => <main>Tool preview</main> }));
 vi.mock("../doctor/ToolDoctorPanel", () => ({ ToolDoctorPanel: () => null }));
-vi.mock("../components/ToolActions", () => ({ ToolActions: () => null }));
+vi.mock("../components/ToolActions", () => ({
+  ToolActions: ({ onConfigure }: { onConfigure?: () => void }) =>
+    onConfigure ? (
+      <button type="button" onClick={onConfigure}>
+        Tool configuration
+      </button>
+    ) : null,
+}));
 
 afterEach(() => {
   cleanup();

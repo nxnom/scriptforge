@@ -1,5 +1,5 @@
-import { Button, Menu, MenuItem, MenuTrigger, Select, SelectOption, SelectTrigger, Tooltip } from "@geckoui/geckoui";
-import { ChevronDown, Grid2X2, List } from "lucide-react";
+import { Button, Menu, MenuItem, MenuTrigger, Tooltip } from "@geckoui/geckoui";
+import { Check, ChevronDown, Grid2X2, List } from "lucide-react";
 
 export type LibraryFilter = "all" | "ready" | "needs-install" | "builtin" | "imported";
 export type LibrarySort = "name" | "recent";
@@ -46,9 +46,15 @@ export function LibraryToolbar({
         <span className="text-[11px] text-[#707070]">{count}</span>
       </div>
 
-      <div className="hidden min-w-0 flex-1 gap-2 max-[900px]:flex">
-        <FilterSelect filter={filter} counts={counts} onFilter={onFilter} />
-        <CategorySelect category={category} categories={categories} onCategory={onCategory} />
+      <div className="hidden min-w-0 flex-1 max-[900px]:flex">
+        <MobileFilterMenu
+          filter={filter}
+          counts={counts}
+          category={category}
+          categories={categories}
+          onFilter={onFilter}
+          onCategory={onCategory}
+        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -81,66 +87,77 @@ export function LibraryToolbar({
   );
 }
 
-function FilterSelect({
+function MobileFilterMenu({
   filter,
   counts,
+  category,
+  categories,
   onFilter,
+  onCategory,
 }: {
   filter: LibraryFilter;
   counts: Record<LibraryFilter, number>;
+  category: string | null;
+  categories: CategoryCount[];
   onFilter: (filter: LibraryFilter) => void;
+  onCategory: (category: string | null) => void;
 }) {
   const selected = filters.find((item) => item.value === filter);
   return (
-    <Select value={filter} onChange={(value) => onFilter(value as LibraryFilter)}>
-      <SelectTrigger>
-        {({ toggleMenu }) => (
+    <Menu className="min-w-0 flex-1" menuClassName="min-w-64" placement="bottom-start">
+      <MenuTrigger>
+        {({ toggleMenu, open }) => (
           <Button
-            className="min-w-31 justify-between border-[#333] text-[#b0b0b0]"
+            aria-expanded={open}
+            aria-label="Filter tools"
+            className="w-full min-w-0 justify-between border-[#333] text-[#b0b0b0]"
             size="xs"
             variant="outlined"
             onClick={toggleMenu}
           >
-            {selected?.label} · {counts[filter]} <ChevronDown size={11} />
-          </Button>
-        )}
-      </SelectTrigger>
-      {filters.map((item) => (
-        <SelectOption key={item.value} value={item.value} label={`${item.label} · ${counts[item.value]}`} />
-      ))}
-    </Select>
-  );
-}
-
-function CategorySelect({
-  category,
-  categories,
-  onCategory,
-}: {
-  category: string | null;
-  categories: CategoryCount[];
-  onCategory: (category: string | null) => void;
-}) {
-  return (
-    <Select value={category ?? "all"} onChange={(value) => onCategory(value === "all" ? null : value)}>
-      <SelectTrigger>
-        {({ toggleMenu }) => (
-          <Button
-            className="max-w-40 justify-between border-[#333] text-[#b0b0b0]"
-            size="xs"
-            variant="outlined"
-            onClick={toggleMenu}
-          >
-            <span className="truncate">{category ?? "All categories"}</span>{" "}
+            <span className="truncate">
+              {selected?.label} · {category ?? "All categories"}
+            </span>
             <ChevronDown className="shrink-0" size={11} />
           </Button>
         )}
-      </SelectTrigger>
-      <SelectOption value="all" label="All categories" />
-      {categories.map((item) => (
-        <SelectOption key={item.name} value={item.name} label={`${item.name} · ${item.count}`} />
+      </MenuTrigger>
+      <MenuGroupLabel>Availability</MenuGroupLabel>
+      {filters.map((item) => (
+        <MenuItem key={item.value} onClick={() => onFilter(item.value)}>
+          <CheckedMenuLabel checked={filter === item.value}>
+            {item.label} · {counts[item.value]}
+          </CheckedMenuLabel>
+        </MenuItem>
       ))}
-    </Select>
+      <div aria-hidden="true" className="my-1 h-px bg-[#393939]" />
+      <MenuGroupLabel>Category</MenuGroupLabel>
+      <MenuItem onClick={() => onCategory(null)}>
+        <CheckedMenuLabel checked={category === null}>All categories</CheckedMenuLabel>
+      </MenuItem>
+      {categories.map((item) => (
+        <MenuItem key={item.name} onClick={() => onCategory(item.name)}>
+          <CheckedMenuLabel checked={category === item.name}>
+            {item.name} · {item.count}
+          </CheckedMenuLabel>
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+}
+
+function MenuGroupLabel({ children }: React.PropsWithChildren) {
+  return (
+    <div className="px-3 pt-2 pb-1 text-[9px] font-semibold text-[#727272] uppercase tracking-[0.1em]">{children}</div>
+  );
+}
+
+function CheckedMenuLabel({ checked, children }: React.PropsWithChildren<{ checked: boolean }>) {
+  return (
+    <span className="flex min-w-0 flex-1 items-center justify-between gap-4">
+      <span className="truncate">{children}</span>
+      <Check aria-hidden="true" className={checked ? "text-white" : "invisible"} size={14} />
+    </span>
   );
 }
 

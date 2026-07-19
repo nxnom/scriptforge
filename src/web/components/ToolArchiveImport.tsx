@@ -7,7 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { invalidate, useWrite } from "../api";
 
-const importSchema = z.object({ files: z.array(z.instanceof(File)).length(1, "Choose one .forge file.") });
+const importSchema = z.object({
+  files: z.array(z.instanceof(File)).max(1, "Import one .forge file at a time."),
+});
 type ImportForm = z.infer<typeof importSchema>;
 
 export function ToolArchiveImport() {
@@ -38,6 +40,10 @@ export function ToolArchiveImport() {
     if (file) await importFile(file);
   });
   const importSelection = async (files: File[]) => {
+    if (files.length === 0) {
+      form.clearErrors("files");
+      return;
+    }
     const parsed = importSchema.safeParse({ files });
     if (!parsed.success) {
       form.setError("files", { type: "validate", message: parsed.error.issues[0]?.message });

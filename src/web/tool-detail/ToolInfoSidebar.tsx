@@ -15,27 +15,29 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
   const palette = paletteFor(tool.categories[0] ?? tool.id);
 
   return (
-    <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[900px]:w-full max-[900px]:overflow-visible max-[900px]:pr-0">
+    <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[900px]:w-full max-[900px]:gap-0 max-[900px]:overflow-visible max-[900px]:pr-0">
       <section
         data-palette={palette.name}
         style={palette.style}
-        className="relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4 hover:border-[var(--tool-hover)]"
+        className="relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4 hover:border-[var(--tool-hover)] max-[900px]:grid max-[900px]:grid-cols-[40px_minmax(0,1fr)] max-[900px]:gap-x-3 max-[900px]:p-3"
       >
         <span
           aria-hidden
           className="absolute top-0 left-5 h-px w-24 bg-gradient-to-r from-[var(--tool-accent)] via-[var(--tool-accent-soft)] to-transparent"
         />
-        <span className="grid size-11 place-items-center rounded-xl bg-[var(--tool-icon-bg)] text-[var(--tool-accent-soft)] ring-1 ring-[var(--tool-icon-ring)] ring-inset">
+        <span className="grid size-11 place-items-center rounded-xl bg-[var(--tool-icon-bg)] text-[var(--tool-accent-soft)] ring-1 ring-[var(--tool-icon-ring)] ring-inset max-[900px]:row-span-3 max-[900px]:size-10">
           <Icon size={20} />
         </span>
-        <h2 className="mt-3.5 mb-1 font-[650] font-[Geist_Variable] text-[17px] leading-tight">{tool.name}</h2>
-        <div className="mb-3 flex flex-wrap gap-1.5">
+        <h2 className="mt-3.5 mb-1 font-[650] font-[Geist_Variable] text-[17px] leading-tight max-[900px]:mt-0 max-[900px]:text-[15px]">
+          {tool.name}
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-1.5 max-[900px]:mb-1.5">
           {tool.categories.map((category) => (
             <CategoryBadge key={category} category={category} />
           ))}
           {tool.origin === "bundled" ? <BuiltinBadge /> : <LocalBadge />}
         </div>
-        <p className="m-0 text-[11px] text-[#a7a7a7] leading-[1.55]">{tool.description}</p>
+        <p className="m-0 text-[11px] text-[#a7a7a7] leading-[1.55] max-[900px]:line-clamp-2">{tool.description}</p>
       </section>
 
       <InfoCard title="Specifications">
@@ -95,7 +97,7 @@ function LocalBadge() {
 
 function InfoCard({ title, children }: React.PropsWithChildren<{ title: string }>) {
   return (
-    <section className="rounded-2xl border border-[#333] bg-[#242424] px-4 py-3.5">
+    <section className="rounded-2xl border border-[#333] bg-[#242424] px-4 py-3.5 max-[900px]:hidden">
       <h3 className="mt-0 mb-2.5 font-[650] text-[11px] text-[#d4d4d4] uppercase tracking-[0.08em]">{title}</h3>
       <div className="grid gap-2.5">{children}</div>
     </section>

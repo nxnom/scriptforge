@@ -18,6 +18,21 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ToolArchiveImport", () => {
+  it("does not show an error when the file picker is cancelled", async () => {
+    render(
+      <MemoryRouter>
+        <ToolArchiveImport />
+      </MemoryRouter>,
+    );
+
+    fireEvent.drop(screen.getByTestId("archive-dropzone"), {
+      dataTransfer: { items: [], files: [] },
+    });
+
+    await waitFor(() => expect(screen.queryByText(/Choose one \.forge file/i)).not.toBeInTheDocument());
+    expect(mocks.trigger).not.toHaveBeenCalled();
+  });
+
   it("imports a selected .forge file immediately through the typed action", async () => {
     mocks.trigger.mockResolvedValue({
       data: { ok: true, tool: { id: "video-tool", name: "Video Tool", status: "needs-install" } },
