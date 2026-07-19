@@ -9,11 +9,11 @@ import { ToolCard, type ToolSummary } from "../components/ToolCard";
 export function LibraryPage() {
   const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState<LibraryFilter>("all");
-  const [sort, setSort] = useState<LibrarySort>("name");
+  const [sort, setSort] = useState<LibrarySort>("recent");
   const [view, setView] = useState<LibraryView>("grid");
   const health = useRead((api) => api("health").GET(), { staleTime: 30_000 });
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
-  const allTools = tools.data?.tools ?? [];
+  const allTools = (tools.data?.tools ?? []).filter((tool) => tool.status !== "planned");
   const visibleTools = useMemo(
     () => selectTools(allTools, searchParams.get("q") ?? "", filter, sort),
     [allTools, filter, searchParams, sort],
@@ -49,8 +49,8 @@ export function LibraryPage() {
           <section
             className={
               view === "grid"
-                ? "grid grid-cols-4 gap-5 max-[1160px]:grid-cols-3 max-[820px]:grid-cols-2 max-[520px]:grid-cols-1"
-                : "grid grid-cols-2 gap-3 max-[820px]:grid-cols-1"
+                ? "grid grid-cols-4 gap-3 max-[1160px]:grid-cols-3 max-[820px]:grid-cols-2 max-[520px]:grid-cols-1"
+                : "grid grid-cols-1 gap-2.5"
             }
             aria-label="Tool library"
           >
@@ -81,10 +81,13 @@ function selectTools(tools: ToolSummary[], query: string, filter: LibraryFilter,
       if (!matchesQuery) return false;
       if (filter === "ready") return tool.status === "ready";
       if (filter === "needs-install") return tool.status === "needs-install" || tool.status === "needs-config";
+      if (filter === "builtin") return tool.origin === "bundled";
       if (filter === "imported") return tool.origin === "installed";
       return true;
     })
-    .sort((left, right) => (sort === "name" ? left.name.localeCompare(right.name) : 0));
+    .sort((left, right) =>
+      sort === "name" ? left.name.localeCompare(right.name) : (right.createdAt ?? 0) - (left.createdAt ?? 0),
+    );
 }
 
 function countTools(tools: ToolSummary[]): Record<LibraryFilter, number> {
@@ -92,6 +95,7 @@ function countTools(tools: ToolSummary[]): Record<LibraryFilter, number> {
     all: tools.length,
     ready: tools.filter((tool) => tool.status === "ready").length,
     "needs-install": tools.filter((tool) => tool.status === "needs-install" || tool.status === "needs-config").length,
+    builtin: tools.filter((tool) => tool.origin === "bundled").length,
     imported: tools.filter((tool) => tool.origin === "installed").length,
   };
 }

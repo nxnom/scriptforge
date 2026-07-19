@@ -36,13 +36,19 @@ describe("ToolCard", () => {
     expect(card.className).not.toContain("translate");
     expect(card.className).not.toContain("transform");
   });
+
+  it("uses a horizontal row composition in list view", () => {
+    const { container } = renderCard(tool(), "list");
+
+    expect(container.querySelector("article > div")?.className).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
+  });
 });
 
-function renderCard(value: ToolSummary) {
+function renderCard(value: ToolSummary, layout: "grid" | "list" = "grid") {
   return render(
     <MemoryRouter>
       <Routes>
-        <Route path="/" element={<ToolCard tool={value} />} />
+        <Route path="/" element={<ToolCard tool={value} layout={layout} />} />
         <Route path="/tools/:toolId" element={<p>Tool detail route</p>} />
       </Routes>
     </MemoryRouter>,

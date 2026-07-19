@@ -1,7 +1,7 @@
-import { Button, Menu, MenuItem, MenuTrigger, Tooltip } from "@geckoui/geckoui";
-import { Check, ChevronDown, Download, Grid2X2, List, PackageOpen, Wrench } from "lucide-react";
+import { Button, Menu, MenuItem, MenuTrigger, Select, SelectOption, SelectTrigger, Tooltip } from "@geckoui/geckoui";
+import { Box, Check, ChevronDown, Download, Grid2X2, List, PackageOpen, Wrench } from "lucide-react";
 
-export type LibraryFilter = "all" | "ready" | "needs-install" | "imported";
+export type LibraryFilter = "all" | "ready" | "needs-install" | "builtin" | "imported";
 export type LibrarySort = "name" | "recent";
 export type LibraryView = "grid" | "list";
 
@@ -19,13 +19,14 @@ const filters = [
   { value: "all", label: "All tools", icon: Wrench },
   { value: "ready", label: "Ready", icon: Check },
   { value: "needs-install", label: "Needs install", icon: Download },
+  { value: "builtin", label: "Built-in", icon: Box },
   { value: "imported", label: "Imported", icon: PackageOpen },
 ] as const;
 
 export function LibraryToolbar({ counts, filter, sort, view, onFilter, onSort, onView }: Props) {
   return (
-    <div className="flex shrink-0 items-center justify-between gap-3 max-[760px]:items-start max-[760px]:flex-col">
-      <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] border border-[#333] bg-[#242424] p-0.5">
+    <div className="flex shrink-0 items-center justify-between gap-3">
+      <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-[10px] border border-[#333] bg-[#242424] p-0.5 max-[760px]:hidden">
         {filters.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -38,6 +39,27 @@ export function LibraryToolbar({ counts, filter, sort, view, onFilter, onSort, o
             <span className="text-[9px] text-[#707070]">{counts[value]}</span>
           </button>
         ))}
+      </div>
+
+      <div className="hidden max-[760px]:block">
+        <Select value={filter} onChange={(value) => onFilter(value as LibraryFilter)}>
+          <SelectTrigger>
+            {({ toggleMenu }) => (
+              <Button
+                className="min-w-34 justify-between gap-2 border-[#333] text-[#b0b0b0]"
+                size="xs"
+                variant="outlined"
+                onClick={toggleMenu}
+              >
+                {filters.find(({ value }) => value === filter)?.label} · {counts[filter]}
+                <ChevronDown size={11} />
+              </Button>
+            )}
+          </SelectTrigger>
+          {filters.map(({ value, label }) => (
+            <SelectOption key={value} value={value} label={`${label} · ${counts[value]}`} />
+          ))}
+        </Select>
       </div>
 
       <div className="flex items-center gap-2">

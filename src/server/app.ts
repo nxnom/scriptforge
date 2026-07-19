@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -96,13 +96,25 @@ export function createApiRoutes(
     )
     .get("/tools", async (c) => {
       const installed = await listInstalledTools(installedToolsRoot);
+      const installedWithTime = await Promise.all(
+        installed.map(async (tool) => ({
+          ...tool,
+          createdAt: await stat(tool.directory)
+            .then((value) => value.birthtimeMs || value.mtimeMs)
+            .catch(() => 0),
+        })),
+      );
       const bundled = listBundledTools();
       const availableIds = new Set([...bundled.map((tool) => tool.id), ...installed.map((tool) => tool.manifest.id)]);
       const readyTools = await Promise.all(
         [
-          ...bundled.map((manifest) => ({ manifest, origin: "bundled" as const })),
-          ...installed.map((tool) => ({ manifest: tool.manifest, origin: "installed" as const })),
-        ].map(async ({ manifest, origin }) => {
+          ...bundled.map((manifest) => ({ manifest, origin: "bundled" as const, createdAt: 0 })),
+          ...installedWithTime.map((tool) => ({
+            manifest: tool.manifest,
+            origin: "installed" as const,
+            createdAt: tool.createdAt,
+          })),
+        ].map(async ({ manifest, origin, createdAt }) => {
           const executableStatuses = await requirements.check(manifest.requiredExecutables);
           const configurationReady =
             manifest.configuration.length === 0 ||
@@ -123,6 +135,7 @@ export function createApiRoutes(
                 ? ("ready" as const)
                 : ("needs-config" as const),
             origin,
+            createdAt,
             requirements: executableStatuses,
             configurationReady,
           };
