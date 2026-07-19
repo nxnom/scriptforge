@@ -1,5 +1,6 @@
 import { toast } from "@geckoui/geckoui";
 import { MessageSquareText } from "lucide-react";
+import { flushSync } from "react-dom";
 import type { ForgePanelDocument } from "../../server/forge/types";
 import { useWrite } from "../api";
 import { PanelBlockRenderer } from "./PanelBlockRenderer";
@@ -18,9 +19,11 @@ export function ForgeSidePanel({
 }) {
   const sendFeedback = useWrite((api) => api("forge/sessions/:sessionId/feedback").POST());
   const submitFeedback = async (text: string) => {
-    const pending = sendFeedback.trigger({ params: { sessionId }, body: { text, dismiss: true } });
-    onResolved();
-    const response = await pending;
+    flushSync(onResolved);
+    const response = await sendFeedback.trigger({
+      params: { sessionId },
+      body: { text, dismiss: true, panelVersion: panel.version },
+    });
     if (!response.data?.ok) {
       onSubmissionError();
       toast.error("Feedback could not be sent to Codex.");

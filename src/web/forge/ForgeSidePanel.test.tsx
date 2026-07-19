@@ -17,13 +17,16 @@ afterEach(cleanup);
 
 describe("ForgeSidePanel", () => {
   it("dismisses immediately while feedback is still being sent", async () => {
+    const order: string[] = [];
     let finishRequest: ((value: { data: { ok: true } }) => void) | undefined;
-    mocks.trigger.mockReturnValue(
-      new Promise((resolve) => {
-        finishRequest = resolve;
-      }),
+    mocks.trigger.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          order.push("request");
+          finishRequest = resolve;
+        }),
     );
-    const onResolved = vi.fn();
+    const onResolved = vi.fn(() => order.push("dismiss"));
     const onSubmissionError = vi.fn();
 
     render(
@@ -39,6 +42,11 @@ describe("ForgeSidePanel", () => {
 
     await waitFor(() => expect(mocks.trigger).toHaveBeenCalledOnce());
     expect(onResolved).toHaveBeenCalledOnce();
+    expect(order).toEqual(["dismiss", "request"]);
+    expect(mocks.trigger).toHaveBeenCalledWith({
+      params: { sessionId: "session-1" },
+      body: { text: expect.any(String), dismiss: true, panelVersion: 1 },
+    });
     expect(onSubmissionError).not.toHaveBeenCalled();
 
     finishRequest?.({ data: { ok: true } });

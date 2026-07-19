@@ -59,6 +59,22 @@ describe("PanelFeedbackForm", () => {
 
     await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("USD, THB")));
   });
+
+  it("submits an approved panel only once when the button is clicked repeatedly", async () => {
+    const onFeedback = vi.fn(() => new Promise<void>(() => undefined));
+    render(
+      <PanelFeedbackForm panel={kickoffPanel()} onFeedback={onFeedback}>
+        <p>A simple proposal</p>
+      </PanelFeedbackForm>,
+    );
+
+    const approve = screen.getByRole("button", { name: "Approve, build & check" });
+    fireEvent.click(approve);
+    fireEvent.click(approve);
+    fireEvent.click(approve);
+
+    await waitFor(() => expect(onFeedback).toHaveBeenCalledOnce());
+  });
 });
 
 function requiredPanel(): ForgePanelDocument {

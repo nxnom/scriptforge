@@ -34,6 +34,7 @@ type ForgeSession = {
   exited: boolean;
   mcpToken: string;
   panelVersion: number;
+  openPanelVersion?: number;
   directory: string;
   candidate?: ForgeCandidateDocument;
   candidateJobs: Map<string, string>;
@@ -118,6 +119,7 @@ export class ForgeSessionService {
     if (token !== session.mcpToken) throw new Error("Invalid Forge MCP token.");
     session.panelVersion += 1;
     const panel = { ...request, version: session.panelVersion, createdAt: Date.now() };
+    session.openPanelVersion = panel.version;
     this.emit(session, { type: "panel", panel });
     return panel;
   }
@@ -159,8 +161,10 @@ export class ForgeSessionService {
     return this.activeSession(sessionId).candidateJobs.get(revision);
   }
 
-  sendFeedback(sessionId: string, text: string, dismiss = true) {
+  sendFeedback(sessionId: string, panelVersion: number, text: string, dismiss = true) {
     const session = this.activeSession(sessionId);
+    if (session.openPanelVersion !== panelVersion) throw new Error("That Forge question was already answered.");
+    session.openPanelVersion = undefined;
     session.pty.write(`\x1b[200~${text}\x1b[201~`);
     if (dismiss) {
       this.emit(session, { type: "panel", panel: null });

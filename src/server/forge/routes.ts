@@ -28,6 +28,7 @@ const clientEventSchema = z.discriminatedUnion("type", [
 const feedbackSchema = z.object({
   text: z.string().trim().min(1).max(64_000),
   dismiss: z.boolean().optional(),
+  panelVersion: z.number().int().positive(),
 });
 const candidateRevisionSchema = z.object({ revision: z.string().regex(/^[a-f0-9]{64}$/) });
 
@@ -224,7 +225,7 @@ export function createForgeApiRoutes(
       (c) => {
         try {
           const feedback = c.req.valid("json");
-          service.sendFeedback(c.req.param("sessionId"), feedback.text, feedback.dismiss);
+          service.sendFeedback(c.req.param("sessionId"), feedback.panelVersion, feedback.text, feedback.dismiss);
           return c.json({ ok: true as const });
         } catch (error) {
           return c.json(

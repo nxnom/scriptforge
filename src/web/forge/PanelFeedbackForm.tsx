@@ -1,6 +1,6 @@
 import { Button, LoadingButton, RHFCheckbox, RHFError, RHFInput, RHFRadio, RHFTextarea } from "@geckoui/geckoui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ForgePanelDocument } from "../../server/forge/types";
@@ -24,6 +24,7 @@ export function PanelFeedbackForm({
 }) {
   const questions = panel.blocks.filter((block) => block.type === "question");
   const approval = panel.blocks.find((block) => block.type === "approval");
+  const submitted = useRef(false);
   const form = useForm<FeedbackValues>({
     resolver: zodResolver(createFeedbackSchema(panel)),
     defaultValues: {
@@ -36,7 +37,11 @@ export function PanelFeedbackForm({
       note: "",
     },
   });
-  const submit = form.handleSubmit(async (data) => onFeedback(composeFeedback(panel, data)));
+  const submit = form.handleSubmit(async (data) => {
+    if (submitted.current) return;
+    submitted.current = true;
+    await onFeedback(composeFeedback(panel, data));
+  });
   const decide = (decision: "approved" | "rejected") => {
     form.setValue("decision", decision, { shouldValidate: true });
     void submit();
