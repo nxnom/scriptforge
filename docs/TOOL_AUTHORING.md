@@ -10,7 +10,7 @@ Each tool contains:
 - An execution script — reads one JSON request from standard input and writes newline-delimited JSON lifecycle events to standard output.
 - `ui.html` — a self-contained plain HTML, CSS, and JavaScript interface.
 
-Generated interfaces do not use React, GeckoUI, npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access.
+Generated interfaces do not use React, GeckoUI, runtime npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access. CDN scripts, remote ES modules, external stylesheets, remote fonts, and runtime downloads are intentionally blocked. Prefer native HTML, SVG, Canvas, and browser APIs. When a small third-party browser library is genuinely valuable, Forge may verify a pinned version and its redistribution license, then inline the required browser distribution and license notice directly in `ui.html`. The complete file must remain below the 500 KB candidate review limit and must be tested in the offline iframe.
 
 ## Persistent configuration
 
@@ -123,6 +123,7 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Success produces a visible preview or useful metadata and a save action.
 - Preview failures and run failures are visible inside the tool interface.
 - No generated browser code calls `fetch`, opens a WebSocket, or accesses Node.js or the filesystem.
+- No generated browser code depends on a CDN, remote module, stylesheet, font, or other runtime network resource. Any permitted third-party browser code is pinned, license-checked, and inlined in `ui.html`.
 - Persistent values are declared in the manifest, secrets are not collected by `ui.html`, and the runner does not log or return them.
 - The manifest declares every external executable the script may invoke.
 - The candidate presentation states what standalone check actually ran and what result was verified.

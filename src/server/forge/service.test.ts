@@ -93,7 +93,8 @@ describe("Forge terminal sessions", () => {
     const mcpConfig = args.find((arg) => arg.startsWith("mcp_servers.scriptforge.args="));
     const mcpArgs = JSON.parse(mcpConfig?.slice(mcpConfig.indexOf("=") + 1) ?? "[]") as string[];
     expect(instructions).toContain("run it without asking for permission again");
-    expect(instructions).toContain("try reasonable installation alternatives");
+    expect(instructions).toContain("try reasonable verified installation alternatives");
+    expect(instructions).toContain("brew info, apt-cache policy, winget show, or npm view");
     expect(instructions).not.toContain("Never install silently");
     expect(mcpArgs).toContain("--allow-dependency-installs");
     expect(mcpArgs[mcpArgs.indexOf("--allow-dependency-installs") + 1]).toBe("true");

@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { describe, expect, it, vi } from "vitest";
+import { doctorInstructions } from "./doctor-server";
 import { createForgeMcpServer } from "./server";
 
 describe("ScriptForge MCP server", () => {
@@ -33,6 +34,10 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("request the user's explicit approval");
     expect(client.getInstructions()).toContain("Never install silently");
     expect(client.getInstructions()).not.toContain("run it without asking for permission again");
+    expect(client.getInstructions()).toContain("brew info, apt-cache policy, winget show, or npm view");
+    expect(client.getInstructions()).toContain("Never assume a package name matches an executable name");
+    expect(client.getInstructions()).toContain("The iframe intentionally blocks CDN scripts");
+    expect(client.getInstructions()).toContain("inline only its required browser distribution into ui.html");
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([
@@ -91,5 +96,12 @@ describe("ScriptForge MCP server", () => {
       }),
     );
     await Promise.all([client.close(), server.close()]);
+  });
+
+  it("requires Doctor to verify packages and download sources before proposing them", () => {
+    expect(doctorInstructions).toContain("brew info, apt-cache policy, winget show, or npm view");
+    expect(doctorInstructions).toContain("Never assume a package name matches an executable name");
+    expect(doctorInstructions).toContain("confirm the exact URL and pinned version exist");
+    expect(doctorInstructions).toContain("Never propose a stale formula");
   });
 });

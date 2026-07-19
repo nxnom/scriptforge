@@ -18,6 +18,8 @@ ScriptForge uses the `.forge` extension for a portable, complete tool directory.
 
 Every regular file under an installed tool directory is included, including nested supporting files. Empty directories and symbolic links are not represented.
 
+Forge-generated MVP tools are saved as exactly `tool.json`, `run.mjs`, and `ui.html`. Therefore a browser library used by a generated interface is portable only when its permitted distribution is inlined into `ui.html`; a separate staging-only vendor file is not installed. CDN references are not portable runtime dependencies and are blocked by the tool iframe policy. With an inlined library, export and import preserve the exact HTML bytes, including the library and its license notice.
+
 ## Import contract
 
 - The upload must use the `.forge` extension and be at most 25 MB.

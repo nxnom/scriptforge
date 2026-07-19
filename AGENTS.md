@@ -65,6 +65,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 - Generated interfaces must fluidly use the full iframe width and adapt between the narrow Forge tester and wide installed Tool page. Do not default the entire app to a centered max-width wrapper; use responsive, tool-appropriate input and result regions.
 - Show the generated execution script in a read-only code viewer. Changes are requested through the Codex conversation.
 - Run generated HTML/JS inside a sandboxed iframe. Its only application access is a controlled host bridge for input selection, execution, lifecycle, progress, structured logs, cancellation, and safe result URLs.
+- Generated HTML must not depend on CDNs or any runtime network resource. Prefer native SVG, Canvas, and browser APIs. A small third-party browser library may be used only after Forge verifies a pinned upstream package and redistribution license, then inlines the required distribution and license notice into `ui.html` within the candidate size limit.
 - Use a JavaScript `run.mjs` orchestration entrypoint for the MVP. It may invoke any executable declared in `tool.json` through the controlled runtime context.
 - Every generated script must produce useful structured logs for startup, major stages, external commands, completion, and failures. Capture raw CLI output as collapsible detail rather than the primary presentation.
 - Always provide automatic `queued`, `running`, `succeeded`, `failed`, and `cancelled` lifecycle events. Detailed percentage progress is optional when the underlying work can measure it.
@@ -86,6 +87,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 3. Generating files in staging does not authorize executing them.
 4. Approving the Forge kickoff explicitly authorizes Codex to run bounded standalone checks of the candidate inside staging. Dependency installation remains a separate explicit action by default. If the user explicitly enabled the warned Forge permission-bypass option before starting the session, dependencies genuinely needed to build and test that candidate are pre-authorized and Codex should attempt suitable installation without asking again. Saving a tool always remains a separate explicit user-controlled action.
 5. Installation commands are generated for the current machine at run time; they are never embedded in a shared or local tool manifest.
+   Before Forge runs or Doctor proposes an installation, it must verify through read-only package metadata that the exact package exists and supplies the required executable on the current platform. Website, GitHub, raw-file, release, and other download URLs must likewise be verified against the intended pinned upstream before use.
 6. A tool may invoke only the executables it declares. Surface undeclared executable attempts as errors.
 7. Generated browser code must not receive direct Node.js, shell, or unrestricted filesystem access.
 8. Review and save the exact candidate revision that was tested; detect changes made after review.
