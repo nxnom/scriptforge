@@ -137,6 +137,8 @@ export function createApiRoutes(
                 ? ("ready" as const)
                 : ("needs-config" as const),
             origin,
+            execution: "local" as const,
+            runtime: runtimeLabel(manifest.script),
             createdAt,
             requirements: executableStatuses,
             configurationReady,
@@ -153,6 +155,13 @@ export function createApiRoutes(
     .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
     .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot, configuration))
     .route("/", createToolRuntimeApiRoutes(jobService));
+}
+
+function runtimeLabel(script: string) {
+  if (script.endsWith(".mjs") || script.endsWith(".js") || script.endsWith(".cjs")) return "Node.js";
+  if (script.endsWith(".py")) return "Python";
+  if (script.endsWith(".sh")) return "Shell";
+  return "Local runner";
 }
 
 const defaultCodexStatus = new CodexStatusService();

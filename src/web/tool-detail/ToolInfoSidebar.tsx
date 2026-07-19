@@ -25,10 +25,15 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
       </section>
 
       <InfoCard title="Specifications">
-        <InfoRow icon={HardDrive} label="Runs" value="On this device" good />
+        <InfoRow
+          icon={HardDrive}
+          label="Runs"
+          value={tool.execution === "local" ? "On this device" : "—"}
+          good={tool.execution === "local"}
+        />
         <InfoRow icon={PackageCheck} label="Version" value={tool.version ?? "—"} />
         <InfoRow icon={Box} label="Source" value={tool.origin === "bundled" ? "Built-in" : "Saved tool"} />
-        <InfoRow icon={Wrench} label="Runtime" value="Node.js" />
+        <InfoRow icon={Wrench} label="Runtime" value={tool.runtime ?? "—"} />
       </InfoCard>
 
       <InfoCard title="Requirements">

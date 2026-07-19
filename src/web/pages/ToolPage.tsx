@@ -1,10 +1,11 @@
 import { Alert, Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { ArrowLeft, Settings2, ShieldCheck } from "lucide-react";
+import { Settings2, ShieldCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { invalidate, useRead, useWrite } from "../api";
 import { ToolActions } from "../components/ToolActions";
+import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { openInstalledConfiguration } from "../configuration/ToolConfigurationDialog";
 import { ToolDoctorPanel } from "../doctor/ToolDoctorPanel";
 import { ToolInfoSidebar } from "../tool-detail/ToolInfoSidebar";
@@ -66,61 +67,62 @@ export function ToolPage() {
   if (!toolId) return null;
 
   return (
-    <section className="mx-auto flex min-h-0 w-full max-w-350 flex-1 flex-col gap-4 overflow-hidden max-[760px]:overflow-y-auto">
-      <header className="flex min-h-13 items-center gap-4 border-[#303030] border-b pb-3 max-[680px]:flex-wrap">
-        <Button className="shrink-0" variant="outlined" size="sm" onClick={() => navigate("/")}>
-          <ArrowLeft size={14} /> Library
-        </Button>
-        <span aria-hidden="true" className="h-7 w-px bg-[#303030]" />
-        <div className="min-w-0 flex-1">
-          <div>
-            <h1 className="m-0 truncate font-[Geist_Variable] text-[17px]">{tool?.name ?? "Tool"}</h1>
-            <p className="mt-0.5 mb-0 text-[10px] text-[#858585]">Sandboxed tool interface</p>
+    <section className="flex min-h-0 w-full flex-1 flex-col overflow-hidden max-[760px]:overflow-y-auto">
+      <WorkspaceHeader
+        title={tool?.name ?? "Tool"}
+        subtitle="Sandboxed tool interface"
+        onBack={() => navigate("/")}
+        actions={
+          <>
+            {configuration.data?.ok && configuration.data.fields.length > 0 && (
+              <Tooltip content="Tool configuration" triggerAsChild>
+                <Button
+                  aria-label="Tool configuration"
+                  className="size-9"
+                  variant="icon"
+                  size="sm"
+                  onClick={() => navigate(`/tools/${toolId}/settings`)}
+                >
+                  <Settings2 size={14} />
+                </Button>
+              </Tooltip>
+            )}
+            {tool && "origin" in tool && tool.origin === "installed" && (
+              <ToolActions toolId={toolId} toolName={tool.name} />
+            )}
+            <span className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#333] bg-[#202020] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
+              <ShieldCheck size={13} /> Local execution
+            </span>
+          </>
+        }
+      />
+      <div className="flex min-h-0 w-full flex-1 overflow-hidden px-10 pt-6 pb-6 max-[900px]:px-6 max-[560px]:px-4 max-[560px]:pt-4 max-[560px]:pb-4">
+        <div className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-4 overflow-hidden">
+          {toolReady && hostError && (
+            <Alert variant="error" title="Tool host error" description={hostError} condensed />
+          )}
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden max-[760px]:min-h-225">
+            {doctorVisible && (
+              <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
+            )}
+            {!doctorVisible && requirements.data?.ok && tool && "origin" in tool && (
+              <div className="flex min-h-0 min-w-0 flex-1 gap-5 overflow-hidden max-[960px]:flex-col max-[760px]:overflow-visible">
+                <ToolInfoSidebar tool={tool} requirements={requirements.data.requirements} />
+                <ToolReview
+                  toolId={toolId}
+                  toolName={tool.name}
+                  toolReady={toolReady}
+                  listening={listening}
+                  configurationLoading={configuration.loading}
+                  iframeRef={iframeRef}
+                  requirements={requirements.data.requirements}
+                  retryRequirements={requirements.trigger}
+                  launchDoctor={() => setDoctorOpen(true)}
+                />
+              </div>
+            )}
           </div>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          {configuration.data?.ok && configuration.data.fields.length > 0 && (
-            <Tooltip content="Tool configuration" triggerAsChild>
-              <Button
-                aria-label="Tool configuration"
-                className="size-9"
-                variant="icon"
-                size="sm"
-                onClick={() => navigate(`/tools/${toolId}/settings`)}
-              >
-                <Settings2 size={14} />
-              </Button>
-            </Tooltip>
-          )}
-          {tool && "origin" in tool && tool.origin === "installed" && (
-            <ToolActions toolId={toolId} toolName={tool.name} />
-          )}
-          <span className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[#333] bg-[#202020] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
-            <ShieldCheck size={13} /> Local execution
-          </span>
-        </div>
-      </header>
-      {toolReady && hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden max-[760px]:min-h-225">
-        {doctorVisible && (
-          <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
-        )}
-        {!doctorVisible && requirements.data?.ok && tool && "origin" in tool && (
-          <div className="flex min-h-0 min-w-0 flex-1 gap-5 overflow-hidden max-[960px]:flex-col max-[760px]:overflow-visible">
-            <ToolInfoSidebar tool={tool} requirements={requirements.data.requirements} />
-            <ToolReview
-              toolId={toolId}
-              toolName={tool.name}
-              toolReady={toolReady}
-              listening={listening}
-              configurationLoading={configuration.loading}
-              iframeRef={iframeRef}
-              requirements={requirements.data.requirements}
-              retryRequirements={requirements.trigger}
-              launchDoctor={() => setDoctorOpen(true)}
-            />
-          </div>
-        )}
       </div>
     </section>
   );

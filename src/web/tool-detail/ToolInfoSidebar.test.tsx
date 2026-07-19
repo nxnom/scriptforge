@@ -17,6 +17,8 @@ describe("ToolInfoSidebar", () => {
           icon: "image",
           status: "ready",
           origin: "bundled",
+          execution: "local",
+          runtime: "Node.js",
         }}
         requirements={[]}
       />,
@@ -41,6 +43,8 @@ describe("ToolInfoSidebar", () => {
           icon: "wrench",
           status: "needs-install",
           origin: "installed",
+          execution: "local",
+          runtime: "Node.js",
         }}
         requirements={[{ name: "ffmpeg", detectedVersion: null, reason: "missing" }]}
       />,

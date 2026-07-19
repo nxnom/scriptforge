@@ -38,6 +38,8 @@ export interface ToolSummary {
   icon: string;
   status: string;
   origin?: "bundled" | "installed";
+  execution?: "local";
+  runtime?: string;
   createdAt?: number;
 }
 
