@@ -93,8 +93,8 @@ export function PanelFeedbackForm({
         <div className="flex shrink-0 flex-col gap-3 border-[#333] border-t bg-[#1d1d1d] p-4">
           {approval && (
             <p className="m-0 text-[10px] leading-4 text-[#888]">
-              Approval lets Codex build and check this tool locally. System installs still ask first, and nothing is
-              saved to your library.
+              Approval lets Codex build and check this tool locally. Machine changes follow the permission mode you
+              chose when starting Forge, and nothing is saved to your library.
             </p>
           )}
           <RHFTextarea name="note" placeholder="Add feedback (required when requesting changes)" rows={2} />

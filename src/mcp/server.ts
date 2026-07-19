@@ -1,15 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ForgeCandidateRequest, ForgePanelRequest } from "../server/forge/types.js";
 import { forgeCandidateRequestSchema, forgePanelRequestSchema } from "../server/forge/types.js";
-import { forgeMcpInstructions } from "./instructions.js";
+import { createForgeMcpInstructions } from "./instructions.js";
 
 type ForgeMcpPublishers = {
   panel: (panel: ForgePanelRequest) => Promise<void>;
   candidate: (candidate: ForgeCandidateRequest) => Promise<void>;
 };
 
-export function createForgeMcpServer(publish: ForgeMcpPublishers) {
-  const server = new McpServer({ name: "scriptforge", version: "0.1.0" }, { instructions: forgeMcpInstructions });
+export function createForgeMcpServer(publish: ForgeMcpPublishers, options: { allowDependencyInstalls?: boolean } = {}) {
+  const server = new McpServer(
+    { name: "scriptforge", version: "0.1.0" },
+    { instructions: createForgeMcpInstructions(options) },
+  );
   server.registerTool(
     "scriptforge_show_panel",
     {

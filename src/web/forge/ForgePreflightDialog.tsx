@@ -101,8 +101,9 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
             labelClassName="text-xs font-medium text-[#e6c58c]"
           />
           <p className="m-0 pl-6 text-[11px] leading-4 text-[#b7a486]">
-            Runs Codex with <code>--dangerously-bypass-approvals-and-sandbox</code>. Codex can act without approval
-            prompts in the staging workspace. Leave this off unless you trust the session.
+            Runs Codex with <code>--dangerously-bypass-approvals-and-sandbox</code>. It may run commands and install
+            dependencies needed to build and test the tool without asking again. Leave this off unless you trust the
+            session.
           </p>
           <RHFError name="dangerouslyBypassApprovalsAndSandbox" />
         </div>

@@ -66,6 +66,39 @@ describe("Forge terminal sessions", () => {
     expect(spawn.mock.calls[0]?.[1]).toContain("--dangerously-bypass-approvals-and-sandbox");
   });
 
+  it("pre-authorizes required candidate dependencies only in bypass instructions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const pty = fakePty();
+    const calls: Parameters<typeof spawnPty>[] = [];
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      root,
+      (...args) => {
+        calls.push(args);
+        return pty.value;
+      },
+      async () => undefined,
+      { serverUrl: "http://127.0.0.1:4545", command: "node", args: ["mcp.js"] },
+    );
+
+    await service.start({
+      model: "gpt-5.6-sol",
+      effort: "medium",
+      dangerouslyBypassApprovalsAndSandbox: true,
+    });
+
+    const args = (calls[0]?.[1] ?? []) as string[];
+    const instructions = args.find((arg) => arg.startsWith("developer_instructions="));
+    const mcpConfig = args.find((arg) => arg.startsWith("mcp_servers.scriptforge.args="));
+    const mcpArgs = JSON.parse(mcpConfig?.slice(mcpConfig.indexOf("=") + 1) ?? "[]") as string[];
+    expect(instructions).toContain("run it without asking for permission again");
+    expect(instructions).toContain("try reasonable installation alternatives");
+    expect(instructions).not.toContain("Never install silently");
+    expect(mcpArgs).toContain("--allow-dependency-installs");
+    expect(mcpArgs[mcpArgs.indexOf("--allow-dependency-installs") + 1]).toBe("true");
+  });
+
   it("does not spawn before Codex is authenticated", async () => {
     const spawn = vi.fn((..._args: Parameters<typeof spawnPty>) => fakePty().value);
     const status = {

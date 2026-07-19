@@ -29,7 +29,7 @@ A local tool initially lives in its own directory and contains:
 └── run.mjs
 ```
 
-`tool.json` describes the tool, entrypoint, inputs and outputs, and `requiredExecutables`. It does not prescribe how dependencies are installed.
+`tool.json` describes the portable tool itself: its version, script and interface entrypoints, categories, configuration schema, and `requiredExecutables`. It does not prescribe how dependencies are installed. The detail page derives Runtime from the validated script entrypoint, derives Source from the directory in which ScriptForge discovered the package (bundled or saved/imported), and reports local execution from the host runtime. Source must not be stored in the archive because the same tool can change origin after export and import.
 
 Generated tools follow the bridge, lifecycle, preview, and logging rules in [TOOL_AUTHORING.md](./TOOL_AUTHORING.md). The Forge system prompt should draw from that contract so new tools use the same tested host integration.
 
@@ -121,9 +121,9 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 
 - Localhost-only server exposure by default.
 - Staged generation before installation.
-- No candidate execution, dependency installation, or library save without approval.
+- No candidate execution or library save without approval. Dependency installation also requires separate approval in the default mode.
 - No direct shell, Node.js, or unrestricted filesystem capability exposed to generated browser JavaScript.
-- Preserve Codex approval and sandbox behavior by default. Forge may pass `--dangerously-bypass-approvals-and-sandbox` only when the user explicitly enables the warned, off-by-default preflight option; remember that preference in browser local storage.
+- Preserve Codex approval and sandbox behavior by default. Forge may pass `--dangerously-bypass-approvals-and-sandbox` only when the user explicitly enables the warned, off-by-default preflight option; remember that preference in browser local storage. That opt-in pre-authorizes Codex to install dependencies genuinely required to build and test the current candidate, try reasonable alternatives, and continue without another prompt. It does not authorize unrelated machine changes, Codex installation/authentication, or saving the tool.
 - Required executables are visible in the manifest and review UI.
 - Saving verifies that the candidate has not changed since the reviewed/tested revision.
 - Required configuration blocks execution until the trusted host form is complete; the original run continues after a successful save.

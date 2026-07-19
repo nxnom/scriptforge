@@ -3,7 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { type IPty, spawn as spawnPty } from "node-pty";
-import { forgeMcpInstructions } from "../../mcp/instructions";
+import { createForgeMcpInstructions } from "../../mcp/instructions";
 import { toolManifestSchema } from "../../tools/manifest";
 import { type CodexStatusChecker, CodexStatusService } from "../codex/status";
 import { ensureCodexTrusted } from "../codex/trust";
@@ -241,11 +241,16 @@ function codexArgs(
     sessionId,
     "--token",
     token,
+    "--allow-dependency-installs",
+    String(preferences.dangerouslyBypassApprovalsAndSandbox === true),
   ];
+  const instructions = createForgeMcpInstructions({
+    allowDependencyInstalls: preferences.dangerouslyBypassApprovalsAndSandbox === true,
+  });
   return [
     ...args,
     "-c",
-    `developer_instructions=${JSON.stringify(`${forgeMcpInstructions}\n\nExisting ScriptForge categories on this machine: ${existingCategories.length ? existingCategories.join(", ") : "none yet"}.`)}`,
+    `developer_instructions=${JSON.stringify(`${instructions}\n\nExisting ScriptForge categories on this machine: ${existingCategories.length ? existingCategories.join(", ") : "none yet"}.`)}`,
     "-c",
     `mcp_servers.scriptforge.command=${JSON.stringify(mcpRuntime.command)}`,
     "-c",

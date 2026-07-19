@@ -26,10 +26,11 @@ export function ForgeLaunchButton({
           dismiss={dismiss}
           onContinue={async (preferences) => {
             const response = await startForge.trigger({ body: preferences });
-            if (!response.data?.ok) throw new Error(forgeError(response.error));
+            const data = response.data;
+            if (!data?.ok) throw new Error(forgeError(response.error));
             invalidate("forge/sessions/active");
             dismiss();
-            window.setTimeout(() => navigate("/forge", { state: { launchedSessionId: response.data.sessionId } }), 300);
+            window.setTimeout(() => navigate("/forge", { state: { launchedSessionId: data.sessionId } }), 300);
           }}
         />
       ),

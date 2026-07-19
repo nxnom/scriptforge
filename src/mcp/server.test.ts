@@ -30,6 +30,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("Use multi_choice checkboxes");
     expect(client.getInstructions()).toContain("Which currencies should be available?");
     expect(client.getInstructions()).toContain("Set defaultValue to the recommended option or options");
+    expect(client.getInstructions()).toContain("request the user's explicit approval");
+    expect(client.getInstructions()).toContain("Never install silently");
+    expect(client.getInstructions()).not.toContain("run it without asking for permission again");
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([

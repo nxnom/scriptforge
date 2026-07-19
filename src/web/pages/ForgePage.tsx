@@ -1,6 +1,6 @@
 import { Button, ConfirmDialog, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
 import { Bot, Hammer, Save, ShieldCheck, Square, TerminalSquare } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { invalidate, useRead, useWrite } from "../api";
@@ -15,7 +15,6 @@ export function ForgePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const launchedSessionId = (location.state as { launchedSessionId?: string } | null)?.launchedSessionId;
-  const opened = useRef(false);
   const [preferences, setPreferences] = useState<ForgePreferences>(loadForgePreferences);
   const [sessionId, setSessionId] = useState<string | undefined>(launchedSessionId);
   const [endedSessionId, setEndedSessionId] = useState<string>();
@@ -37,9 +36,10 @@ export function ForgePage() {
           dismiss={dismiss}
           onContinue={async (next) => {
             const response = await startForge.trigger({ body: next });
-            if (!response.data?.ok) throw new Error(forgeError(response.error));
+            const data = response.data;
+            if (!data?.ok) throw new Error(forgeError(response.error));
             setPreferences(next);
-            setSessionId(response.data.sessionId);
+            setSessionId(data.sessionId);
             setEndedSessionId(undefined);
             setPanel(null);
             setCandidate(null);
@@ -49,12 +49,6 @@ export function ForgePage() {
       ),
     });
   }, [startForge.trigger]);
-
-  useEffect(() => {
-    if (activeSession.loading || visibleSessionId || opened.current) return;
-    opened.current = true;
-    openPreflight();
-  }, [activeSession.loading, openPreflight, visibleSessionId]);
 
   const endSession = useCallback((endedId: string) => {
     setEndedSessionId(endedId);
@@ -78,7 +72,6 @@ export function ForgePage() {
       toast.error(forgeError(response.error));
       return;
     }
-    opened.current = true;
     endSession(visibleSessionId);
     navigate("/", { replace: true });
     return true;

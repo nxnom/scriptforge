@@ -84,7 +84,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 1. Codex may create and modify candidate files only inside a dedicated staging directory before Save.
 2. Do not launch Codex with `--dangerously-bypass-approvals-and-sandbox` unless the user explicitly enables the off-by-default Forge preflight option. Remember that preference only in browser local storage and clearly surface its risk.
 3. Generating files in staging does not authorize executing them.
-4. Approving the Forge kickoff explicitly authorizes Codex to run bounded standalone checks of the candidate inside staging. Installing executables and saving a tool remain separate explicit user-controlled actions.
+4. Approving the Forge kickoff explicitly authorizes Codex to run bounded standalone checks of the candidate inside staging. Dependency installation remains a separate explicit action by default. If the user explicitly enabled the warned Forge permission-bypass option before starting the session, dependencies genuinely needed to build and test that candidate are pre-authorized and Codex should attempt suitable installation without asking again. Saving a tool always remains a separate explicit user-controlled action.
 5. Installation commands are generated for the current machine at run time; they are never embedded in a shared or local tool manifest.
 6. A tool may invoke only the executables it declares. Surface undeclared executable attempts as errors.
 7. Generated browser code must not receive direct Node.js, shell, or unrestricted filesystem access.

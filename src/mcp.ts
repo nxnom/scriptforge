@@ -6,14 +6,18 @@ const serverUrl = requiredArg("--server-url");
 const sessionId = requiredArg("--session-id");
 const token = requiredArg("--token");
 const mode = optionalArg("--mode") ?? "forge";
+const allowDependencyInstalls = optionalArg("--allow-dependency-installs") === "true";
 
 const server =
   mode === "doctor"
     ? createDoctorMcpServer((proposal) => publishDoctor(proposal))
-    : createForgeMcpServer({
-        panel: (panel) => publish("panel", panel),
-        candidate: (candidate) => publish("candidate", candidate),
-      });
+    : createForgeMcpServer(
+        {
+          panel: (panel) => publish("panel", panel),
+          candidate: (candidate) => publish("candidate", candidate),
+        },
+        { allowDependencyInstalls },
+      );
 
 await server.connect(new StdioServerTransport());
 
