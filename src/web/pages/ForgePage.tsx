@@ -1,9 +1,9 @@
-import { Button, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
-import { Bot, Hammer, ShieldCheck, Square, TerminalSquare } from "lucide-react";
+import { Button, ConfirmDialog, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
+import { Bot, Hammer, Save, ShieldCheck, Square, TerminalSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
-import { useRead, useWrite } from "../api";
+import { invalidate, useRead, useWrite } from "../api";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { CandidateReview } from "../forge/CandidateReview";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
@@ -13,15 +13,19 @@ import { type ForgePreferences, loadForgePreferences } from "../forge/preference
 
 export function ForgePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const launchedSessionId = (location.state as { launchedSessionId?: string } | null)?.launchedSessionId;
   const opened = useRef(false);
   const [preferences, setPreferences] = useState<ForgePreferences>(loadForgePreferences);
-  const [sessionId, setSessionId] = useState<string>();
+  const [sessionId, setSessionId] = useState<string | undefined>(launchedSessionId);
   const [endedSessionId, setEndedSessionId] = useState<string>();
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
+  const [candidateTested, setCandidateTested] = useState(false);
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
   const startForge = useWrite((api) => api("forge/sessions").POST());
   const stopForge = useWrite((api) => api("forge/sessions/:sessionId").DELETE());
+  const saveCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
   const restoredSessionId = activeSession.data?.sessionId ?? undefined;
   const visibleSessionId = sessionId ?? (restoredSessionId !== endedSessionId ? restoredSessionId : undefined);
 
@@ -39,6 +43,7 @@ export function ForgePage() {
             setEndedSessionId(undefined);
             setPanel(null);
             setCandidate(null);
+            setCandidateTested(false);
           }}
         />
       ),
@@ -56,12 +61,14 @@ export function ForgePage() {
     setSessionId(undefined);
     setPanel(null);
     setCandidate(null);
+    setCandidateTested(false);
   }, []);
   const showPanel = useCallback((next: ForgePanelDocument | null) => {
     setPanel(next);
   }, []);
   const showCandidate = useCallback((next: ForgeCandidateDocument) => {
     setCandidate(next);
+    setCandidateTested(false);
     setPanel(null);
   }, []);
   const stopSession = async () => {
@@ -74,6 +81,31 @@ export function ForgePage() {
     opened.current = true;
     endSession(visibleSessionId);
     navigate("/", { replace: true });
+    return true;
+  };
+  const confirmStopSession = () => {
+    ConfirmDialog.show({
+      title: "Stop this Forge session?",
+      content: "The interactive Codex session will end. Save a tested candidate first if you want to keep it.",
+      confirmButtonLabel: "Stop session",
+      cancelButtonLabel: "Keep working",
+      dismissOnOutsideClick: false,
+      onConfirm: async ({ preventDefault, dismiss }) => {
+        preventDefault();
+        if (await stopSession()) dismiss();
+      },
+    });
+  };
+  const save = async () => {
+    if (!visibleSessionId || !candidate) return;
+    const response = await saveCandidate.trigger({
+      params: { sessionId: visibleSessionId },
+      body: { revision: candidate.revision },
+    });
+    if (!response.data?.ok) return toast.error(forgeError(response.error));
+    invalidate("tools");
+    toast.success(`${response.data.tool.name} was saved to your library.`);
+    navigate(`/tools/${response.data.tool.id}`, { replace: true });
   };
 
   return (
@@ -85,8 +117,20 @@ export function ForgePage() {
         actions={
           <>
             {visibleSessionId && (
-              <LoadingButton variant="ghost" size="sm" loading={stopForge.loading} onClick={stopSession}>
+              <LoadingButton variant="ghost" size="sm" loading={stopForge.loading} onClick={confirmStopSession}>
                 <Square size={12} /> Stop session
+              </LoadingButton>
+            )}
+            {visibleSessionId && candidate && (
+              <LoadingButton
+                variant="outlined"
+                size="sm"
+                loading={saveCandidate.loading}
+                disabled={!candidateTested}
+                title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
+                onClick={save}
+              >
+                <Save size={13} /> Save tool
               </LoadingButton>
             )}
             {!visibleSessionId && (
@@ -119,9 +163,10 @@ export function ForgePage() {
                   />
                   {candidate && (
                     <CandidateReview
+                      key={candidate.revision}
                       candidate={candidate}
                       sessionId={visibleSessionId}
-                      onSaved={(tool) => navigate(`/tools/${tool.id}`, { replace: true })}
+                      onTestStatusChange={setCandidateTested}
                     />
                   )}
                 </div>

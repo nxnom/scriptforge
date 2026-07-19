@@ -42,4 +42,28 @@ describe("ToolReview", () => {
       screen.getByText((_text, node) => node?.tagName === "CODE" && node.textContent === '{"id":"sample-tool"}'),
     ).toBeVisible();
   });
+
+  it("keeps the preview iframe mounted while source tabs are open", () => {
+    const iframeRef = createRef<HTMLIFrameElement>();
+    render(
+      <ToolReview
+        toolId="sample-tool"
+        toolName="Sample Tool"
+        toolReady
+        listening
+        configurationLoading={false}
+        iframeRef={iframeRef}
+        requirements={[]}
+        retryRequirements={vi.fn()}
+        launchDoctor={vi.fn()}
+      />,
+    );
+
+    const preview = screen.getByTitle("Sample Tool interface");
+    fireEvent.click(screen.getByRole("button", { name: "Script" }));
+    expect(preview).toBeInTheDocument();
+    expect(preview).toHaveClass("hidden");
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByTitle("Sample Tool interface")).toBe(preview);
+  });
 });

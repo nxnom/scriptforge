@@ -1,9 +1,9 @@
-import { Button, LoadingButton, Tooltip, toast } from "@geckoui/geckoui";
+import { Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { Code2, Eye, FileJson, Save, Settings2 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { Code2, Eye, FileJson, Settings2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
-import { invalidate, useRead, useWrite } from "../api";
+import { useRead, useWrite } from "../api";
 import { CodeViewer } from "../components/CodeViewer";
 import { openCandidateConfiguration } from "../configuration/ToolConfigurationDialog";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
@@ -13,11 +13,11 @@ type CandidateTab = "preview" | "script" | "manifest";
 export function CandidateReview({
   candidate,
   sessionId,
-  onSaved,
+  onTestStatusChange,
 }: {
   candidate: ForgeCandidateDocument;
   sessionId: string;
-  onSaved: (tool: { id: string; name: string }) => void;
+  onTestStatusChange: (ready: boolean) => void;
 }) {
   const [tab, setTab] = useState<CandidateTab>("preview");
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -32,8 +32,6 @@ export function CandidateReview({
   );
   const configurationRef = useRef(configuration);
   configurationRef.current = configuration;
-  const saveCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
-  const [saved, setSaved] = useState(false);
   const runCandidate = useCallback(
     async (message: ToolRunMessage) => {
       if (configurationRef.current.data?.ok && !configurationRef.current.data.ready) {
@@ -55,20 +53,7 @@ export function CandidateReview({
     [candidate.revision, sessionId, startCandidate.trigger],
   );
   const bridge = useToolHostBridge({ iframeRef, startJob: runCandidate });
-  const save = async () => {
-    const response = await saveCandidate.trigger({
-      params: { sessionId },
-      body: { revision: candidate.revision },
-    });
-    if (!response.data?.ok) {
-      toast.error(candidateError(response.error));
-      return;
-    }
-    setSaved(true);
-    invalidate("tools");
-    toast.success(`${response.data.tool.name} was saved to your library.`);
-    onSaved(response.data.tool);
-  };
+  useEffect(() => onTestStatusChange(bridge.jobStatus === "succeeded"), [bridge.jobStatus, onTestStatusChange]);
 
   return (
     <aside className="flex min-h-0 w-[min(48%,620px)] min-w-[420px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#1d1d1d] max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0">
@@ -97,27 +82,16 @@ export function CandidateReview({
               </Button>
             </Tooltip>
           )}
-          <LoadingButton
-            variant="outlined"
-            size="xs"
-            loading={saveCandidate.loading}
-            disabled={bridge.jobStatus !== "succeeded" || saved}
-            title={bridge.jobStatus === "succeeded" ? undefined : "Run this candidate successfully in Preview first"}
-            onClick={save}
-          >
-            <Save size={12} /> {saved ? "Saved" : "Save tool"}
-          </LoadingButton>
         </nav>
         <div className="relative min-h-0 flex-1 overflow-hidden bg-[#151515]">
-          {tab === "preview" ? (
-            <iframe
-              ref={iframeRef}
-              title={`${candidate.name} interface preview`}
-              className="absolute inset-0 size-full border-0 bg-white"
-              sandbox="allow-scripts allow-downloads"
-              srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
-            />
-          ) : (
+          <iframe
+            ref={iframeRef}
+            title={`${candidate.name} interface preview`}
+            className={`absolute inset-0 size-full border-0 bg-white ${tab === "preview" ? "block" : "hidden"}`}
+            sandbox="allow-scripts allow-downloads"
+            srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
+          />
+          {tab !== "preview" && (
             <CodeViewer
               source={tab === "script" ? candidate.scriptSource : candidate.manifestSource}
               language={tab === "script" ? "javascript" : "json"}

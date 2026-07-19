@@ -47,35 +47,36 @@ export function ToolReview({
         </TabButton>
       </nav>
       <div className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-2xl border border-[#333] bg-[#151515]">
-        {tab === "preview" ? (
-          toolReady ? (
-            <iframe
-              ref={iframeRef}
-              className="absolute inset-0 size-full border-0 bg-[#1a1a1a]"
-              src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}
-              title={`${toolName} interface`}
-              sandbox="allow-scripts allow-downloads"
-            />
-          ) : (
-            <div className="grid size-full place-items-center px-4 pb-[8vh]">
-              <div className="w-full max-w-2xl">
-                <RequirementNotice requirements={requirements} retry={retryRequirements} launchDoctor={launchDoctor} />
-              </div>
-            </div>
-          )
-        ) : source.loading ? (
-          <div className="grid size-full place-items-center text-[#888]">
-            <span className="inline-flex items-center gap-2 text-xs">
-              <Spinner /> Loading source…
-            </span>
-          </div>
-        ) : (
-          <CodeViewer
-            source={selectedSource ?? "Source is unavailable."}
-            language={tab === "script" ? "javascript" : "json"}
-            filename={tab === "script" ? "run.mjs" : "tool.json"}
+        {toolReady && (
+          <iframe
+            ref={iframeRef}
+            className={`absolute inset-0 size-full border-0 bg-[#1a1a1a] ${tab === "preview" ? "block" : "hidden"}`}
+            src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}
+            title={`${toolName} interface`}
+            sandbox="allow-scripts allow-downloads"
           />
         )}
+        {tab === "preview" && !toolReady && (
+          <div className="grid size-full place-items-center px-4 pb-[8vh]">
+            <div className="w-full max-w-2xl">
+              <RequirementNotice requirements={requirements} retry={retryRequirements} launchDoctor={launchDoctor} />
+            </div>
+          </div>
+        )}
+        {tab !== "preview" &&
+          (source.loading ? (
+            <div className="grid size-full place-items-center text-[#888]">
+              <span className="inline-flex items-center gap-2 text-xs">
+                <Spinner /> Loading source…
+              </span>
+            </div>
+          ) : (
+            <CodeViewer
+              source={selectedSource ?? "Source is unavailable."}
+              language={tab === "script" ? "javascript" : "json"}
+              filename={tab === "script" ? "run.mjs" : "tool.json"}
+            />
+          ))}
       </div>
     </section>
   );

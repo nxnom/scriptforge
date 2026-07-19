@@ -1,23 +1,27 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { CandidateReview } from "./CandidateReview";
 
 describe("CandidateReview", () => {
   it("keeps the active tester compact without duplicate review controls", () => {
-    render(<CandidateReview candidate={candidate()} sessionId="session-1" onSaved={vi.fn()} />);
+    render(<CandidateReview candidate={candidate()} sessionId="session-1" onTestStatusChange={vi.fn()} />);
 
-    expect(screen.getByTitle("Tiny Tool interface preview")).toBeVisible();
+    const preview = screen.getByTitle("Tiny Tool interface preview");
+    expect(preview).toBeVisible();
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
-    const saveButton = screen.getByRole("button", { name: "Save tool" });
-    expect(saveButton).toBeDisabled();
-    expect(saveButton).toHaveAttribute("data-variant", "outlined");
-    expect(saveButton).toHaveAttribute("data-size", "xs");
+    expect(screen.queryByRole("button", { name: "Save tool" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/changes/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Tiny Tool")).not.toBeInTheDocument();
     expect(screen.queryByText(/Standalone check passed/)).not.toBeInTheDocument();
     expect(screen.getByText(/Host bridge log/)).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Script" }));
+    expect(preview).toBeInTheDocument();
+    expect(preview).toHaveClass("hidden");
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByTitle("Tiny Tool interface preview")).toBe(preview);
   });
 });
 

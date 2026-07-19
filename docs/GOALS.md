@@ -73,6 +73,8 @@ Completed and verified:
 - Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
 - Explicit Stop control for the one active in-memory Codex terminal and Start session only when none is active.
+- Confirm explicit Forge stops, return to the Library after stopping, and keep candidate Save beside the session control once Preview testing succeeds.
+- Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 - Successful Save stops the Forge Codex session and redirects to the installed tool detail page.
 

@@ -2,7 +2,7 @@ import { Button, Dialog } from "@geckoui/geckoui";
 import { ArrowRight, Plus } from "lucide-react";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useRead, useWrite } from "../api";
+import { invalidate, useRead, useWrite } from "../api";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
 
 export function ForgeLaunchButton({
@@ -27,7 +27,9 @@ export function ForgeLaunchButton({
           onContinue={async (preferences) => {
             const response = await startForge.trigger({ body: preferences });
             if (!response.data?.ok) throw new Error(forgeError(response.error));
-            navigate("/forge");
+            invalidate("forge/sessions/active");
+            dismiss();
+            window.setTimeout(() => navigate("/forge", { state: { launchedSessionId: response.data.sessionId } }), 300);
           }}
         />
       ),
