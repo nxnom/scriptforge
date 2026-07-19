@@ -44,6 +44,7 @@ describe("tool runtime host", () => {
     const response = await app.request("/api/tools/pdf-toolkit/ui");
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("content-security-policy")).toContain("script-src 'unsafe-inline' blob:");
     expect(response.headers.get("content-security-policy")).toContain("worker-src blob:");
     const html = await response.text();
     expect(html).toContain("function getDocument");
