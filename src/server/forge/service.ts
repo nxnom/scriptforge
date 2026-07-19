@@ -221,6 +221,9 @@ function codexArgs(
   token: string,
 ) {
   const args = ["-c", `model_reasoning_effort=${preferences.effort}`, "-m", preferences.model, "--cd", directory];
+  if (preferences.dangerouslyBypassApprovalsAndSandbox) {
+    args.push("--dangerously-bypass-approvals-and-sandbox");
+  }
   if (!mcpRuntime) return args;
   const mcpArgs = [
     ...mcpRuntime.args,

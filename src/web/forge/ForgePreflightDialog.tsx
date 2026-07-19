@@ -1,4 +1,14 @@
-import { Alert, Button, Label, LoadingButton, RHFError, RHFSelect, SelectOption, Spinner } from "@geckoui/geckoui";
+import {
+  Alert,
+  Button,
+  Label,
+  LoadingButton,
+  RHFCheckbox,
+  RHFError,
+  RHFSelect,
+  SelectOption,
+  Spinner,
+} from "@geckoui/geckoui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Copy, Hammer } from "lucide-react";
 import { useState } from "react";
@@ -78,6 +88,23 @@ export function ForgePreflightDialog({ dismiss, onContinue }: Props) {
             </RHFSelect>
             <RHFError name="effort" />
           </div>
+        </div>
+
+        <div className="grid gap-1.5 rounded-xl border border-[#5a4324] bg-[#2c251b] p-3">
+          <RHFCheckbox
+            name="dangerouslyBypassApprovalsAndSandbox"
+            single
+            value={true}
+            uncheckedValue={false}
+            disabled={!ready}
+            label="Skip Codex permission prompts"
+            labelClassName="text-xs font-medium text-[#e6c58c]"
+          />
+          <p className="m-0 pl-6 text-[11px] leading-4 text-[#b7a486]">
+            Runs Codex with <code>--dangerously-bypass-approvals-and-sandbox</code>. Codex can act without approval
+            prompts in the staging workspace. Leave this off unless you trust the session.
+          </p>
+          <RHFError name="dangerouslyBypassApprovalsAndSandbox" />
         </div>
 
         <footer className="flex justify-end gap-2 border-[#353535] border-t pt-4">

@@ -121,7 +121,7 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 - Staged generation before installation.
 - No candidate execution, dependency installation, or library save without approval.
 - No direct shell, Node.js, or unrestricted filesystem capability exposed to generated browser JavaScript.
-- No Codex bypass-approval flag.
+- Preserve Codex approval and sandbox behavior by default. Forge may pass `--dangerously-bypass-approvals-and-sandbox` only when the user explicitly enables the warned, off-by-default preflight option; remember that preference in browser local storage.
 - Required executables are visible in the manifest and review UI.
 - Saving verifies that the candidate has not changed since the reviewed/tested revision.
 - Required configuration blocks execution until the trusted host form is complete; the original run continues after a successful save.

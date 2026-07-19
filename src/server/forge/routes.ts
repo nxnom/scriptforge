@@ -16,7 +16,11 @@ import {
   forgePanelRequestSchema,
 } from "./types";
 
-const preferencesSchema = z.object({ model: z.enum(forgeModels), effort: z.enum(forgeEfforts) });
+const preferencesSchema = z.object({
+  model: z.enum(forgeModels),
+  effort: z.enum(forgeEfforts),
+  dangerouslyBypassApprovalsAndSandbox: z.boolean().default(false),
+});
 const clientEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("input"), data: z.string().max(64_000) }),
   z.object({

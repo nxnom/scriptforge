@@ -17,16 +17,23 @@ export const effortOptions = forgeEfforts;
 export const forgePreferencesSchema = z.object({
   model: z.enum(forgeModels),
   effort: z.enum(forgeEfforts),
+  dangerouslyBypassApprovalsAndSandbox: z.boolean(),
 });
 
 export type ForgePreferences = z.infer<typeof forgePreferencesSchema>;
 
 const storageKey = "scriptforge.forge-preferences";
-const defaults: ForgePreferences = { model: "gpt-5.6-sol", effort: "medium" };
+const defaults: ForgePreferences = {
+  model: "gpt-5.6-sol",
+  effort: "medium",
+  dangerouslyBypassApprovalsAndSandbox: false,
+};
 
 export function loadForgePreferences(): ForgePreferences {
   try {
-    const parsed = forgePreferencesSchema.safeParse(JSON.parse(localStorage.getItem(storageKey) ?? "null"));
+    const stored = JSON.parse(localStorage.getItem(storageKey) ?? "null");
+    const candidate = stored && typeof stored === "object" ? { ...defaults, ...stored } : defaults;
+    const parsed = forgePreferencesSchema.safeParse(candidate);
     return parsed.success ? parsed.data : defaults;
   } catch {
     return defaults;

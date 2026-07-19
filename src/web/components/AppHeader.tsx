@@ -1,11 +1,9 @@
-import { Button, Tooltip } from "@geckoui/geckoui";
 import { Flame, Search } from "lucide-react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ForgeLaunchButton } from "./ForgeLaunchButton";
 
 export function AppHeader() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const onLibrary = location.pathname === "/";
 
@@ -40,16 +38,6 @@ export function AppHeader() {
             </label>
           )}
           <ForgeLaunchButton />
-          <Tooltip content="Settings" triggerAsChild>
-            <Button
-              aria-label="Settings"
-              className="size-8 rounded-full bg-[#343434] p-0 text-[11px] text-white"
-              variant="icon"
-              onClick={() => navigate("/settings")}
-            >
-              SF
-            </Button>
-          </Tooltip>
         </div>
       </div>
     </header>

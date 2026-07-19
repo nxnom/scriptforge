@@ -24,10 +24,6 @@ export function App() {
             </Suspense>
           }
         />
-        <Route
-          path="settings"
-          element={<PlaceholderPage title="Settings" description="Settings will grow with the local runtime." />}
-        />
         <Route path="*" element={<PlaceholderPage title="Not found" description="That local page does not exist." />} />
       </Route>
     </Routes>

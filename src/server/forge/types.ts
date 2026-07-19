@@ -16,6 +16,7 @@ export const forgeEfforts = ["minimal", "low", "medium", "high", "xhigh"] as con
 export type ForgePreferences = {
   model: (typeof forgeModels)[number];
   effort: (typeof forgeEfforts)[number];
+  dangerouslyBypassApprovalsAndSandbox?: boolean;
 };
 
 const panelChoiceSchema = z.object({

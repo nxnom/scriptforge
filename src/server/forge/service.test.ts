@@ -45,6 +45,27 @@ describe("Forge terminal sessions", () => {
     expect(pty.resize).toHaveBeenCalledWith(120, 40);
   });
 
+  it("passes the approval and sandbox bypass only after explicit opt-in", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const pty = fakePty();
+    const spawn = vi.fn((..._args: Parameters<typeof spawnPty>) => pty.value);
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      root,
+      spawn,
+      async () => undefined,
+    );
+
+    await service.start({
+      model: "gpt-5.6-sol",
+      effort: "medium",
+      dangerouslyBypassApprovalsAndSandbox: true,
+    });
+
+    expect(spawn.mock.calls[0]?.[1]).toContain("--dangerously-bypass-approvals-and-sandbox");
+  });
+
   it("does not spawn before Codex is authenticated", async () => {
     const spawn = vi.fn((..._args: Parameters<typeof spawnPty>) => fakePty().value);
     const status = {

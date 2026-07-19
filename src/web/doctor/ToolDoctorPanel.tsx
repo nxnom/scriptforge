@@ -35,7 +35,8 @@ export function ToolDoctorPanel({
 
   const start = useCallback(async () => {
     setStartError(undefined);
-    const response = await startDoctor.trigger({ body: { toolId, ...loadForgePreferences() } });
+    const { model, effort } = loadForgePreferences();
+    const response = await startDoctor.trigger({ body: { toolId, model, effort } });
     if (!response.data?.ok) return setStartError(apiError(response.error));
     setSessionId(response.data.sessionId);
     setProposal(null);
