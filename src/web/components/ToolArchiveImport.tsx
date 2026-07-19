@@ -17,19 +17,36 @@ export function ToolArchiveImport() {
     resolver: zodResolver(importSchema),
     defaultValues: { files: [] },
   });
+  const importFile = async (file: File) => {
+    try {
+      const response = await importTool.trigger({ body: spooshForm({ file }) });
+      if (!response.data?.ok) throw response.error;
+      invalidate("tools");
+      toast.success(
+        response.data.tool.status === "ready"
+          ? `${response.data.tool.name} imported.`
+          : `${response.data.tool.name} imported and needs a dependency.`,
+      );
+      navigate(`/tools/${response.data.tool.id}`);
+    } catch (error) {
+      form.resetField("files");
+      toast.error(apiError(error));
+    }
+  };
   const submit = form.handleSubmit(async ({ files }) => {
     const file = files[0];
-    if (!file) return;
-    const response = await importTool.trigger({ body: spooshForm({ file }) });
-    if (!response.data?.ok) return toast.error(apiError(response.error));
-    invalidate("tools");
-    toast.success(
-      response.data.tool.status === "ready"
-        ? `${response.data.tool.name} imported.`
-        : `${response.data.tool.name} imported and needs a dependency.`,
-    );
-    navigate(`/tools/${response.data.tool.id}`);
+    if (file) await importFile(file);
   });
+  const importSelection = async (files: File[]) => {
+    const parsed = importSchema.safeParse({ files });
+    if (!parsed.success) {
+      form.setError("files", { type: "validate", message: parsed.error.issues[0]?.message });
+      return;
+    }
+    form.clearErrors("files");
+    const file = parsed.data.files[0];
+    if (file) await importFile(file);
+  };
 
   return (
     <FormProvider {...form}>
@@ -37,6 +54,7 @@ export function ToolArchiveImport() {
         <RHFFilePicker
           name="files"
           accept=".forge,application/x-scriptforge-tool"
+          onChange={importSelection}
           render={({ dropzoneRef, dragging, loading, files, openFilePicker }) => (
             <div
               ref={dropzoneRef}
@@ -57,31 +75,22 @@ export function ToolArchiveImport() {
                   </h2>
                   <p className="mt-1 mb-0 text-[12px] text-[#e0e4ff] max-[620px]:line-clamp-2">
                     {files[0]
-                      ? `${formatBytes(files[0].size)} · Ready to validate and import`
+                      ? `${formatBytes(files[0].size)} · Validating and importing…`
                       : "ScriptForge validates the package and saves it locally. Nothing runs during import."}
                   </p>
                 </div>
               </div>
-              {files.length ? (
-                <LoadingButton
-                  className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
-                  size="sm"
-                  type="submit"
-                  loading={importTool.loading || loading}
-                >
-                  Import tool
-                </LoadingButton>
-              ) : (
-                <LoadingButton
-                  className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
-                  size="sm"
-                  type="button"
-                  loading={loading}
-                  onClick={() => openFilePicker({ multiple: false })}
-                >
-                  Choose file
-                </LoadingButton>
-              )}
+              <LoadingButton
+                className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
+                size="sm"
+                type="button"
+                loading={files.length > 0 || importTool.loading || loading}
+                loadingText="Importing…"
+                disabled={files.length > 0 || importTool.loading}
+                onClick={() => openFilePicker({ multiple: false })}
+              >
+                Choose file
+              </LoadingButton>
             </div>
           )}
         />

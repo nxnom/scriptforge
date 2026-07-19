@@ -18,7 +18,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ToolArchiveImport", () => {
-  it("submits one selected .forge file through the typed import action", async () => {
+  it("imports a selected .forge file immediately through the typed action", async () => {
     mocks.trigger.mockResolvedValue({
       data: { ok: true, tool: { id: "video-tool", name: "Video Tool", status: "needs-install" } },
     });
@@ -35,9 +35,8 @@ describe("ToolArchiveImport", () => {
       dataTransfer: { items: [{ getAsFile: () => file }], files: [file] },
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Import tool" }));
-
     await waitFor(() => expect(mocks.trigger).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("button", { name: "Import tool" })).not.toBeInTheDocument();
     expect(mocks.invalidate).toHaveBeenCalledWith("tools");
   });
 });
