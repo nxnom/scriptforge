@@ -70,7 +70,7 @@ export class DoctorSessionService {
     await this.trust(directory);
     const pty = this.spawn(
       codexCommand(),
-      doctorArgs(preferences, this.mcpRuntime, id, token, doctorPrompt(toolId, missing)),
+      doctorArgs(preferences, this.mcpRuntime, id, token, doctorTaskInstructions(toolId, missing)),
       {
         name: "xterm-256color",
         cols: 100,
@@ -281,7 +281,7 @@ function doctorArgs(
   runtime: DoctorMcpRuntime,
   sessionId: string,
   token: string,
-  prompt: string,
+  taskInstructions: string,
 ) {
   const mcpArgs = [
     ...runtime.args,
@@ -300,7 +300,7 @@ function doctorArgs(
     "-m",
     preferences.model,
     "-c",
-    `developer_instructions=${JSON.stringify(doctorInstructions)}`,
+    `developer_instructions=${JSON.stringify(`${doctorInstructions}\n\n${taskInstructions}`)}`,
     "-c",
     `mcp_servers.scriptforge_doctor.command=${JSON.stringify(runtime.command)}`,
     "-c",
@@ -309,15 +309,15 @@ function doctorArgs(
     "mcp_servers.scriptforge_doctor.required=true",
     "-c",
     'mcp_servers.scriptforge_doctor.enabled_tools=["scriptforge_propose_install"]',
-    prompt,
+    "Diagnose",
   ];
 }
 
-function doctorPrompt(
+function doctorTaskInstructions(
   toolId: string,
-  missing: Array<{ name: string; version?: string; detectedVersion: string | null }>,
+  missing: Array<{ name: string; version?: string; detectedVersion: string | null; reason?: string }>,
 ) {
-  return `Diagnose the missing executable requirements for ScriptForge tool ${JSON.stringify(toolId)}: ${JSON.stringify(missing)}. Inspect this machine, then propose exact installation commands through scriptforge_propose_install. Do not install anything yourself.`;
+  return `Current assignment: Diagnose the missing executable requirements for ScriptForge tool ${JSON.stringify(toolId)}: ${JSON.stringify(missing)}. Inspect this machine, then propose exact installation commands through scriptforge_propose_install. Do not install anything yourself. Treat this assignment as developer-provided context; the user's one-word trigger contains no additional requirements.`;
 }
 
 function paste(pty: IPty, text: string) {

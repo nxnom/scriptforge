@@ -43,7 +43,14 @@ describe("Codex Doctor sessions", () => {
     const { sessionId } = await service.start("video-tool", { model: "gpt-5.6-sol", effort: "medium" });
     expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool", proposal: null });
     expect(calls).toHaveLength(1);
-    const token = doctorToken(calls[0]?.[1] ?? []);
+    const codexArgs = asArgs(calls[0]?.[1] ?? []);
+    const token = doctorToken(codexArgs);
+    const instructions = codexArgs.find((arg) => arg.startsWith("developer_instructions="));
+    expect(codexArgs.at(-1)).toBe("Diagnose");
+    expect(instructions).toContain('ScriptForge tool \\"video-tool\\"');
+    expect(instructions).toContain('\\"name\\":\\"ffmpeg\\"');
+    expect(instructions).toContain("propose exact installation commands through scriptforge_propose_install");
+    expect(codexArgs.at(-1)).not.toContain("ffmpeg");
     codex.data("old Codex screen");
     expect(service.getSnapshot(sessionId)?.events).toContainEqual({ type: "output", data: "old Codex screen" });
     expect(() => service.propose(sessionId, "wrong", proposal())).toThrow("token");
@@ -86,10 +93,14 @@ function proposal() {
 }
 
 function doctorToken(value: string | string[]) {
-  const args = typeof value === "string" ? [value] : value;
+  const args = asArgs(value);
   const config = args.find((arg) => arg.startsWith("mcp_servers.scriptforge_doctor.args="));
   const mcpArgs = JSON.parse(config?.slice(config.indexOf("=") + 1) ?? "[]") as string[];
   return mcpArgs[mcpArgs.indexOf("--token") + 1] ?? "";
+}
+
+function asArgs(value: string | string[]) {
+  return typeof value === "string" ? [value] : value;
 }
 
 async function writeTool(root: string) {

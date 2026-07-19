@@ -62,6 +62,8 @@ A missing executable does not reject an otherwise valid saved or imported tool. 
 
 Doctor cannot install packages directly. It submits an executable-plus-arguments proposal through its dedicated MCP tool. ScriptForge replaces the Codex terminal with that immutable proposal and its Request changes and Install controls, so conversation output and installation approval never compete on screen. Install is the separate approval boundary: ScriptForge detaches and stops Codex, purges its terminal replay history, and starts only the approved commands through an installer `node-pty`. The terminal then contains installer output only. ScriptForge rechecks every declared requirement when the process ends and silently closes a successful Doctor session, leaving the tool interface ready to test.
 
+The tool identifier, missing-executable status report, and proposal workflow are injected into Codex's developer instructions rather than exposed as a synthetic user request. The interactive TUI receives only the one-word user trigger `Diagnose`, keeping internal JSON out of the visible conversation while preserving the complete assignment at the higher-priority instruction layer.
+
 ## Technical Architecture
 
 ```text
