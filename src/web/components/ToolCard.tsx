@@ -47,7 +47,7 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
   const Icon = icons[tool.icon] ?? Wrench;
   const palette = paletteFor(tool.categories[0] ?? tool.id);
   const available = ["ready", "needs-install", "needs-config"].includes(tool.status);
-  const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? "hover:border-[#4a4a4a]" : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
+  const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? "hover:border-[var(--tool-hover)]" : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
 
   return (
     <article
@@ -55,6 +55,10 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
       style={palette.style}
       className={`${className} ${layout === "grid" ? "min-h-44 rounded-[18px]" : "min-h-24 rounded-xl"}`}
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-5 h-px w-24 bg-gradient-to-r from-[var(--tool-accent)] via-[var(--tool-accent-soft)] to-transparent opacity-45 transition-opacity group-hover:opacity-75"
+      />
       {available && (
         <Link
           aria-label={`Open ${tool.name}`}

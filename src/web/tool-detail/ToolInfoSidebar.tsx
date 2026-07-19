@@ -15,8 +15,12 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
       <section
         data-palette={palette.name}
         style={palette.style}
-        className="relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4"
+        className="relative overflow-hidden rounded-2xl border border-[#333] bg-[linear-gradient(145deg,#272727_0%,#222222_68%)] p-4 hover:border-[var(--tool-hover)]"
       >
+        <span
+          aria-hidden
+          className="absolute top-0 left-5 h-px w-24 bg-gradient-to-r from-[var(--tool-accent)] via-[var(--tool-accent-soft)] to-transparent"
+        />
         <span className="grid size-11 place-items-center rounded-xl bg-[var(--tool-icon-bg)] text-[var(--tool-accent-soft)] ring-1 ring-[var(--tool-icon-ring)] ring-inset">
           <Icon size={20} />
         </span>

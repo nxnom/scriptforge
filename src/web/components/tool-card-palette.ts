@@ -13,9 +13,11 @@ export function paletteFor(value: string): ToolPalette {
     name: `hue-${hue}`,
     hue,
     style: {
+      "--tool-accent": `oklch(0.7 0.16 ${hue})`,
       "--tool-accent-soft": `oklch(0.76 0.12 ${hue})`,
       "--tool-icon-bg": `oklch(0.29 0.055 ${hue})`,
       "--tool-icon-ring": `oklch(0.53 0.11 ${hue} / 0.75)`,
+      "--tool-hover": `oklch(0.5 0.09 ${hue} / 0.85)`,
     } as CSSProperties,
   };
 }
