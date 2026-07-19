@@ -47,7 +47,7 @@ export function DoctorProposalPanel({
           </p>
         </div>
       </header>
-      <p className="text-xs leading-5 text-[#c6c6c6]">{proposal.summary}</p>
+      <p className="mt-3 mb-3 text-xs leading-5 text-[#c6c6c6]">{proposal.summary}</p>
       <ol className="m-0 grid min-w-0 gap-3 p-0">
         {proposal.commands.map((item) => (
           <li
