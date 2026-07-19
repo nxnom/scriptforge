@@ -135,6 +135,8 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 
 The first end-to-end tool is an image resizer using the bundled `sharp` package. It supports file selection or drag-and-drop, resize controls, progress, and a before/after result. It requires no external executable.
 
+The bundled App Icon Exporter reuses `sharp` to build one local ZIP containing iPhone, iPad, macOS, watchOS, Android legacy/adaptive, and store artwork. It also prepares 1024 px and 1088 px source images for Apple Icon Composer with explicit instructions. It does not claim that one flattened bitmap can become Apple's editable layered `.icon` document.
+
 ## Portable Tool Archives
 
 An installed tool exports as one `.forge` file containing its complete directory. Import validates the archive envelope, relative paths, manifest, required entry files, size limits, and identifier collisions before atomically reconstructing the tool under `~/.scriptforge/tools`. Import never loads or executes the runner.

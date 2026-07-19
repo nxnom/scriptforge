@@ -16,6 +16,23 @@ function filePart(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
+function readStoredZipEntries(bytes: Uint8Array) {
+  const archive = Buffer.from(bytes);
+  const entries = new Map<string, Buffer>();
+  let offset = 0;
+  while (archive.readUInt32LE(offset) === 0x04034b50) {
+    const compressedSize = archive.readUInt32LE(offset + 18);
+    const nameLength = archive.readUInt16LE(offset + 26);
+    const extraLength = archive.readUInt16LE(offset + 28);
+    const nameStart = offset + 30;
+    const dataStart = nameStart + nameLength + extraLength;
+    const name = archive.subarray(nameStart, nameStart + nameLength).toString("utf8");
+    entries.set(name, archive.subarray(dataStart, dataStart + compressedSize));
+    offset = dataStart + compressedSize;
+  }
+  return entries;
+}
+
 describe("tool runtime host", () => {
   let jobsRoot: string;
 
@@ -147,6 +164,50 @@ describe("tool runtime host", () => {
     const compressed = await PDFDocument.load(stored?.data ?? new Uint8Array());
     expect(compressed.getPageCount()).toBe(1);
     expect(compressed.getPage(0).getSize()).toEqual({ width: 240, height: 320 });
+  });
+
+  it("exports Apple, Android, and Icon Composer artwork in one valid ZIP", async () => {
+    const source = await sharp({
+      create: { width: 1024, height: 1024, channels: 4, background: { r: 84, g: 104, b: 255, alpha: 1 } },
+    })
+      .png()
+      .toBuffer();
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+    const { jobId } = await service.start({
+      toolId: "app-icon-exporter",
+      input: {
+        platforms: ["iphone", "ipad", "macos", "watchos", "android", "icon-composer"],
+        fit: "cover",
+        background: "#ffffff",
+      },
+      files: [new File([filePart(source)], "source.png", { type: "image/png" })],
+    });
+
+    await expect
+      .poll(() => service.getSnapshot(jobId)?.status)
+      .toSatisfy((status) => status === "succeeded" || status === "failed");
+    const failure = service.getSnapshot(jobId)?.events.find((event) => event.type === "failed");
+    if (failure?.type === "failed") throw new Error(failure.message);
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    if (result?.type !== "result") throw new Error("App icon ZIP result was not emitted.");
+    expect(result.outputs[0]).toMatchObject({ name: "app-icon-export.zip", mimeType: "application/zip" });
+    const stored = await service.readOutput(jobId, result.outputs[0]?.id ?? "");
+    if (!stored) throw new Error("App icon ZIP was not stored.");
+    const entries = readStoredZipEntries(stored.data);
+
+    expect(entries.has("Apple/iPhone/AppIcon.appiconset/Contents.json")).toBe(true);
+    expect(entries.has("Apple/iPad/AppIcon.appiconset/83.5x83.5@2-167.png")).toBe(true);
+    expect(entries.has("Apple/macOS/AppIcon.appiconset/512x512@2-1024.png")).toBe(true);
+    expect(entries.has("Apple/watchOS/AppIcon.appiconset/marketing-1024.png")).toBe(true);
+    expect(entries.has("Android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png")).toBe(true);
+    expect(entries.has("Android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml")).toBe(true);
+    expect(entries.has("Apple/Icon Composer Source/artwork-watch-1088.png")).toBe(true);
+    expect(entries.has("Apple/Icon Composer Source/README.txt")).toBe(true);
+    expect([...entries.keys()].some((name) => name.endsWith(".icon"))).toBe(false);
+
+    const iphoneIcon = entries.get("Apple/iPhone/AppIcon.appiconset/60x60@3-180.png");
+    if (!iphoneIcon) throw new Error("180 px iPhone icon is missing.");
+    await expect(sharp(iphoneIcon).metadata()).resolves.toMatchObject({ width: 180, height: 180, format: "png" });
   });
 
   it("renders code through the declared Silicon executable", async () => {

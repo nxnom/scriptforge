@@ -1,4 +1,5 @@
 import {
+  AppWindow,
   AudioWaveform,
   Box,
   Code2,
@@ -29,6 +30,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   "file-type": FileType,
   "scan-search": ScanSearch,
   "code-2": Code2,
+  "app-window": AppWindow,
 };
 
 export interface ToolSummary {

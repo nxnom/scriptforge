@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "app-icon-exporter",
+  "version": "1.0.0",
+  "name": "App Icon Exporter",
+  "description": "Turn one source image into organized Apple and Android app icon packs.",
+  "categories": ["Images", "Developer"],
+  "icon": "app-window",
+  "script": "run.mjs",
+  "interface": {
+    "type": "html",
+    "entry": "ui.html"
+  },
+  "requiredExecutables": [],
+  "configuration": []
+}

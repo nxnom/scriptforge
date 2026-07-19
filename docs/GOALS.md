@@ -163,6 +163,7 @@ Status: Pending
 - Add only the starter tools needed to strengthen the demo.
 - Ship an offline PDF Toolkit for merge, page reorder, rotation, split, and clearly labeled scan flattening/compression without a system executable.
 - Ship a Silicon-backed Code Screenshot Studio with a focused paste-to-PNG interface and the normal Dependency Doctor path when Silicon is missing.
+- Ship a zero-install App Icon Exporter that packages Apple and Android assets into one ZIP and treats Icon Composer's layered `.icon` format honestly.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Record a public demo shorter than three minutes.
 - Capture the primary `/feedback` Codex Session ID.

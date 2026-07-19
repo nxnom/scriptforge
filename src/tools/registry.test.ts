@@ -30,6 +30,14 @@ describe("bundled tool registry", () => {
     });
   });
 
+  it("includes the zero-install app icon exporter", () => {
+    expect(findBundledTool("app-icon-exporter")).toMatchObject({
+      categories: ["Images", "Developer"],
+      requiredExecutables: [],
+      icon: "app-window",
+    });
+  });
+
   it("declares Silicon for the code screenshot studio", () => {
     expect(findBundledTool("code-screenshot-studio")).toMatchObject({
       categories: ["Developer", "Images"],
