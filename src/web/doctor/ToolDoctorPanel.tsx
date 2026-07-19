@@ -9,10 +9,12 @@ import { type DoctorConnectionState, DoctorTerminal } from "./DoctorTerminal";
 
 export function ToolDoctorPanel({
   toolId,
+  standalone = false,
   onComplete,
   onClose,
 }: {
   toolId: string;
+  standalone?: boolean;
   onComplete: () => void | Promise<void>;
   onClose: () => void | Promise<void>;
 }) {
@@ -65,7 +67,13 @@ export function ToolDoctorPanel({
   }, [onClose]);
 
   return (
-    <section className="flex min-h-0 w-[min(48%,640px)] min-w-105 shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717] max-[980px]:h-[48%] max-[980px]:w-full max-[980px]:min-w-0">
+    <section
+      className={`flex min-h-0 shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717] ${
+        standalone
+          ? "w-full min-w-0 flex-1"
+          : "w-[min(48%,640px)] min-w-105 max-[980px]:h-[48%] max-[980px]:w-full max-[980px]:min-w-0"
+      }`}
+    >
       <header className="flex shrink-0 items-center justify-between gap-3 border-[#303030] border-b bg-[#202020] px-3 py-2">
         <span className="inline-flex items-center gap-2 font-medium text-[#ddd] text-xs">
           <Stethoscope size={14} /> Dependency Doctor

@@ -59,11 +59,34 @@ describe("useToolHostBridge", () => {
       expect(postMessage).toHaveBeenCalledWith({ source: "scriptforge-host", type: "accepted" }, "*"),
     );
   });
+
+  it("does not mount the host bridge while a tool is blocked", async () => {
+    const startJob = vi.fn(async () => ({ jobId: "job-1" }));
+    const { container } = render(<BridgeHarness startJob={startJob} enabled={false} />);
+    const iframe = container.querySelector("iframe");
+    if (!iframe?.contentWindow) throw new Error("Test iframe is unavailable.");
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        source: iframe.contentWindow,
+        data: { source: "scriptforge-tool", type: "run", input: {}, files: [] },
+      }),
+    );
+
+    await waitFor(() => expect(iframe).toHaveAttribute("data-listening", "false"));
+    expect(startJob).not.toHaveBeenCalled();
+  });
 });
 
-function BridgeHarness({ startJob }: { startJob: () => Promise<{ jobId: string }> }) {
+function BridgeHarness({
+  startJob,
+  enabled = true,
+}: {
+  startJob: () => Promise<{ jobId: string }>;
+  enabled?: boolean;
+}) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const bridge = useToolHostBridge({ iframeRef, startJob });
+  const bridge = useToolHostBridge({ iframeRef, startJob, enabled });
   return <iframe ref={iframeRef} title="tool" data-listening={bridge.listening} />;
 }
 

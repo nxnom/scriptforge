@@ -25,9 +25,11 @@ type StartJob = (message: ToolRunMessage) => Promise<{ jobId: string }>;
 export function useToolHostBridge({
   iframeRef,
   startJob,
+  enabled = true,
 }: {
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   startJob: StartJob;
+  enabled?: boolean;
 }) {
   const [listening, setListening] = useState(false);
   const [hostError, setHostError] = useState<string>();
@@ -36,6 +38,11 @@ export function useToolHostBridge({
 
   useEffect(() => {
     setJobStatus(undefined);
+    if (!enabled) {
+      setHostError(undefined);
+      setListening(false);
+      return;
+    }
     let socket: WebSocket | undefined;
     let diagnosticId = 0;
     const record = (message: string) =>
@@ -102,7 +109,7 @@ export function useToolHostBridge({
       window.removeEventListener("message", handleMessage);
       socket?.close();
     };
-  }, [iframeRef, startJob]);
+  }, [enabled, iframeRef, startJob]);
 
   return { listening, hostError, diagnostics, jobStatus };
 }

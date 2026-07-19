@@ -49,7 +49,8 @@ export function ToolPage() {
     },
     [startJob.trigger, toolId],
   );
-  const { listening, hostError } = useToolHostBridge({ iframeRef, startJob: runTool });
+  const toolReady = requirements.data?.ok === true && requirements.data.ready;
+  const { listening, hostError } = useToolHostBridge({ iframeRef, startJob: runTool, enabled: toolReady });
   const doctorVisible = doctorOpen || activeDoctor.data?.toolId === toolId;
   const closeDoctor = useCallback(async () => {
     await activeDoctor.trigger();
@@ -97,8 +98,8 @@ export function ToolPage() {
           </span>
         </div>
       </header>
-      {hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
-      {requirements.data?.ok && !requirements.data.ready && !doctorVisible && (
+      {toolReady && hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
+      {requirements.data?.ok && !toolReady && !doctorVisible && (
         <RequirementNotice
           requirements={requirements.data.requirements}
           retry={requirements.trigger}
@@ -106,14 +107,18 @@ export function ToolPage() {
         />
       )}
       <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[760px]:min-h-225">
-        {doctorVisible && <ToolDoctorPanel toolId={toolId} onComplete={completeDoctor} onClose={closeDoctor} />}
-        <iframe
-          ref={iframeRef}
-          className="min-h-0 min-w-0 flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a]"
-          src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
-          title={`${tool?.name ?? "ScriptForge tool"} interface`}
-          sandbox="allow-scripts allow-downloads"
-        />
+        {doctorVisible && (
+          <ToolDoctorPanel toolId={toolId} standalone={!toolReady} onComplete={completeDoctor} onClose={closeDoctor} />
+        )}
+        {toolReady && (
+          <iframe
+            ref={iframeRef}
+            className="min-h-0 min-w-0 flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a]"
+            src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
+            title={`${tool?.name ?? "ScriptForge tool"} interface`}
+            sandbox="allow-scripts allow-downloads"
+          />
+        )}
       </div>
     </section>
   );
