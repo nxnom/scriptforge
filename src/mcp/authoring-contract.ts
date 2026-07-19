@@ -4,7 +4,7 @@ export const toolManifestGuide = `{
   "version": "1.0.0",
   "name": "Human-readable name",
   "description": "One plain sentence",
-  "categories": ["Files"],
+  "categories": ["<primary purpose category>"],
   "icon": "file",
   "script": "run.mjs",
   "interface": { "type": "html", "entry": "ui.html" },
@@ -13,7 +13,7 @@ export const toolManifestGuide = `{
 }
 requiredExecutables items are { "name": "ffmpeg", "version": ">= 7.0.0" }. Omit version when unnecessary. Never add installation commands.
 
-categories contains one to three short user-facing category names. Prefer one or two. Reuse a category from the existing ScriptForge category list whenever it accurately fits; create a new category only when none is suitable. Never add a loosely related category merely to reach the limit.
+The angle-bracketed category above is a placeholder and must be replaced. categories contains one to three short user-facing category names. Prefer one or two. Choose the primary category from the tool's main user outcome and result domain. Reuse a category from the existing ScriptForge category list only when it is genuinely as accurate; create a new category when none is suitable. Accuracy is more important than reuse. Never add a loosely related category merely because it already exists or to reach the limit. A text-to-speech tool is Audio, not Files; Files is for general file management such as renaming, moving, or organizing.
 
 configuration contains persistent values needed across runs. Fields share { "key": lowerCamelCase, "label": string, "description"?: string, "required": boolean } and use one of:
 { "type": "text" | "textarea", "placeholder"?: string, "defaultValue"?: string }

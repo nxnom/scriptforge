@@ -38,6 +38,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("Never assume a package name matches an executable name");
     expect(client.getInstructions()).toContain("The iframe intentionally blocks CDN scripts");
     expect(client.getInstructions()).toContain("inline only its required browser distribution into ui.html");
+    expect(client.getInstructions()).toContain("text-to-speech belongs to Audio");
+    expect(client.getInstructions()).toContain("Accuracy is more important than reuse");
+    expect(client.getInstructions()).not.toContain('"categories": ["Files"]');
     expect(client.getInstructions()).not.toContain("Do not test, run, install, or save them");
     await expect(client.listTools()).resolves.toMatchObject({
       tools: expect.arrayContaining([
