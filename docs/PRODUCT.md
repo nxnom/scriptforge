@@ -131,6 +131,8 @@ After import, the normal requirement check marks the tool Ready or Needs install
 
 Forge-saved and imported tools expose Export and Delete actions. Delete requires confirmation and atomically removes the local tool directory. Bundled starter tools expose neither the Delete action nor a deletable server resource.
 
+In the library, the complete available-tool card opens its detail page; there is no separate Open button. User-tool cards keep management secondary through a compact overflow menu. On the detail page, Export and Delete are direct icon buttons with accessible labels and tooltips.
+
 ## Deferred Scope
 
 - Archive signing, provenance, and compatibility metadata

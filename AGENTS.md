@@ -68,6 +68,7 @@ Keep REST operations and real-time streams distinct: use Spoosh for request/resp
 - Preserve Forge candidates across restarts. Delete temporary job inputs and outputs older than 24 hours during startup.
 - Use one publishable `scriptforge` package containing the CLI, Hono server, React/Vite application, and built web assets. Use pnpm for development while keeping `npx scriptforge` npm-compatible.
 - Before starting Forge, show a GeckoUI dialog with model and reasoning-effort selects. Store those two UI preferences in browser `localStorage`, not `settings.json`.
+- Available library cards navigate as one accessible click target. Forge-saved and imported cards use a compact actions menu; their detail header uses tooltip-labeled icon actions for Export and Delete. Bundled cards and detail pages omit those management actions.
 - Default to `gpt-5.6-sol` with `medium` reasoning effort. Offer `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex`, and `gpt-5.2` as additional model choices, subject to the installed Codex CLI and account.
 - Offer `minimal`, `low`, `medium`, `high`, and `xhigh` effort choices.
 - Check that Codex CLI exists and is authenticated before Forge starts. If not, keep the library usable and show installation/login guidance plus Retry. Never install or authenticate Codex automatically.

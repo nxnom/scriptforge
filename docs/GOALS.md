@@ -114,6 +114,7 @@ Status: Complete
 - Never execute code during import.
 - Keep valid imported tools when executables are missing and hand them to the existing Doctor flow.
 - Let users delete Forge-saved and imported tools after confirmation while protecting bundled tools.
+- Make available cards direct navigation targets, with compact card menus and tooltip-labeled detail actions.
 
 Acceptance checks:
 

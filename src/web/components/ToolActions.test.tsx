@@ -34,7 +34,7 @@ describe("ToolActions", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete tool" }));
     expect(mocks.trigger).not.toHaveBeenCalled();
     const dismiss = vi.fn();
     const preventDefault = vi.fn();
