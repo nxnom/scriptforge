@@ -6,17 +6,15 @@ const runMessageSchema = z.object({
   source: z.literal("scriptforge-tool"),
   type: z.literal("run"),
   input: z.unknown(),
-  files: z
-    .array(
-      z.object({
-        name: z.string().min(1),
-        size: z.number().nonnegative(),
-        type: z.string(),
-        lastModified: z.number(),
-        data: z.instanceof(ArrayBuffer),
-      }),
-    )
-    .max(60),
+  files: z.array(
+    z.object({
+      name: z.string().min(1),
+      size: z.number().nonnegative(),
+      type: z.string(),
+      lastModified: z.number(),
+      data: z.instanceof(ArrayBuffer),
+    }),
+  ),
 });
 
 export type ToolRunMessage = z.infer<typeof runMessageSchema>;

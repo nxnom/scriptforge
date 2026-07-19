@@ -148,7 +148,6 @@ async function createCompressedPdf({ files, pages, outputDir, targetBytes }) {
 
 function validatePages(value, fileCount) {
   if (!Array.isArray(value) || value.length < 1) throw new Error("Keep at least one PDF page.");
-  if (value.length > 50) throw new Error("This toolkit supports up to 50 pages per run.");
   return value.map((page, index) => {
     const fileIndex = integer(page?.fileIndex, 0, fileCount - 1, `Page ${index + 1} file`);
     const pageIndex = integer(page?.pageIndex, 0, 99_999, `Page ${index + 1} number`);

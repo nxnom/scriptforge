@@ -101,7 +101,6 @@ export class ToolJobService {
     script: string,
     resolved: { config: Record<string, unknown>; secrets: string[] },
   ) {
-    if (files.length > 60) throw new Error("Choose no more than 60 files.");
     if (files.some((file) => file.size > 25 * 1024 * 1024))
       throw new Error("Each input file must be 25 MB or smaller.");
     if (files.reduce((total, file) => total + file.size, 0) > 250 * 1024 * 1024)
