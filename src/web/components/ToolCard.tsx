@@ -61,7 +61,7 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
 
 function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
   return (
-    <div className="pointer-events-none relative flex h-full min-h-44 flex-col gap-3 p-4.5">
+    <div className="pointer-events-none relative flex h-full min-h-44 flex-col gap-3 p-3.5">
       <div className="flex items-center justify-between">
         <ToolIcon Icon={Icon} />
         <StatusBadge status={tool.status} />
@@ -76,7 +76,7 @@ function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentTyp
 
 function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
   return (
-    <div className="pointer-events-none relative grid min-h-24 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-4 max-[620px]:grid-cols-[auto_minmax(0,1fr)]">
+    <div className="pointer-events-none relative grid min-h-24 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 max-[620px]:grid-cols-[auto_minmax(0,1fr)]">
       <ToolIcon Icon={Icon} />
       <div className="min-w-0">
         <ToolCopy tool={tool} />
