@@ -81,7 +81,11 @@ export function ToolPage() {
                   className="size-9"
                   variant="icon"
                   size="sm"
-                  onClick={() => navigate(`/tools/${toolId}/settings`)}
+                  onClick={() =>
+                    void openInstalledConfiguration(toolId).then((saved) => {
+                      if (saved) void configuration.trigger();
+                    })
+                  }
                 >
                   <Settings2 size={14} />
                 </Button>
