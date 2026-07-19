@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "code-screenshot-studio",
+  "version": "1.0.0",
+  "name": "Code Screenshot Studio",
+  "description": "Turn pasted code into a polished, shareable PNG with Silicon.",
+  "categories": ["Developer", "Images"],
+  "icon": "code-2",
+  "script": "run.mjs",
+  "interface": { "type": "html", "entry": "ui.html" },
+  "requiredExecutables": [{ "name": "silicon" }],
+  "configuration": []
+}

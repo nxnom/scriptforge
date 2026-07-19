@@ -1,10 +1,10 @@
-import { Box, Check, CircleAlert, HardDrive, Image, PackageCheck, Wrench } from "lucide-react";
+import { Box, Check, CircleAlert, Code2, HardDrive, Image, PackageCheck, Wrench } from "lucide-react";
 import type { ComponentType } from "react";
 import type { Requirement } from "../components/RequirementNotice";
 import type { ToolSummary } from "../components/ToolCard";
 import { paletteFor } from "../components/tool-card-palette";
 
-const icons: Record<string, ComponentType<{ size?: number }>> = { image: Image };
+const icons: Record<string, ComponentType<{ size?: number }>> = { image: Image, "code-2": Code2 };
 
 export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; requirements: Requirement[] }) {
   const Icon = icons[tool.icon] ?? Wrench;

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code Screenshot Studio</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #171717; color: #f4f4f4; --primary: #5468ff; --border: #3a3a3a; --muted: #a3a3a3; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: #171717; }
+      button, textarea, input, select { font: inherit; }
+      .app { display: grid; grid-template-columns: minmax(320px, .78fr) minmax(420px, 1.22fr); gap: 14px; min-height: 100vh; padding: 16px; }
+      .panel { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: #232323; }
+      .editor { display: grid; grid-template-rows: auto minmax(260px, 1fr) auto auto; }
+      .header { padding: 15px 16px; border-bottom: 1px solid var(--border); }
+      h1, h2, p { margin: 0; }
+      h1 { font-size: 20px; letter-spacing: -.02em; }
+      h2 { font-size: 14px; }
+      .header p, .hint, .meta { margin-top: 4px; color: var(--muted); font-size: 12px; }
+      textarea { width: 100%; min-height: 270px; resize: none; border: 0; outline: 0; padding: 16px; color: #e8e8e8; background: #1b1b1b; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 2; }
+      .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; padding: 14px 16px; border-top: 1px solid var(--border); }
+      label { display: grid; gap: 6px; color: #c8c8c8; font-size: 11px; font-weight: 650; }
+      input, select { width: 100%; min-height: 36px; border: 1px solid #464646; border-radius: 8px; padding: 7px 9px; outline: 0; color: #eee; background: #1c1c1c; }
+      input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
+      input[type="color"] { padding: 4px; }
+      .checks { display: flex; align-items: center; gap: 15px; grid-column: 1 / -1; }
+      .checks label { display: flex; align-items: center; gap: 7px; }
+      .checks input { width: 15px; min-height: 15px; accent-color: var(--primary); }
+      .run-area { padding: 0 16px 16px; }
+      button, .download { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 9px; padding: 0 14px; background: var(--primary); color: white; font-weight: 700; text-decoration: none; cursor: pointer; }
+      button { width: 100%; }
+      button:disabled { cursor: not-allowed; opacity: .5; }
+      .track { height: 5px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: #3a3a3a; }
+      .track span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s; }
+      .progress { display: flex; justify-content: space-between; margin-top: 7px; color: var(--muted); font-size: 11px; }
+      .error { display: none; margin-top: 9px; padding: 9px 10px; border: 1px solid #754141; border-radius: 8px; color: #ffb2b2; background: #3b2222; font-size: 12px; }
+      .error.visible { display: block; }
+      .preview { display: grid; grid-template-rows: auto minmax(380px, 1fr) auto auto; }
+      .preview-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .canvas { display: grid; min-height: 400px; place-items: center; overflow: auto; padding: 24px; background-color: #1a1a1a; background-image: linear-gradient(45deg,#202020 25%,transparent 25%),linear-gradient(-45deg,#202020 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#202020 75%),linear-gradient(-45deg,transparent 75%,#202020 75%); background-position: 0 0,0 7px,7px -7px,-7px 0; background-size: 14px 14px; }
+      .canvas img { display: none; max-width: 100%; max-height: 72vh; object-fit: contain; box-shadow: 0 20px 55px #0009; }
+      .canvas img.visible { display: block; }
+      .empty { color: #737373; font-size: 13px; }
+      .result { display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+      .result.visible { display: flex; }
+      .result-copy { min-width: 0; }
+      .result-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .download { min-height: 34px; font-size: 12px; }
+      details { border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+      summary { padding: 10px 16px; cursor: pointer; }
+      pre { max-height: 100px; margin: 0; overflow: auto; padding: 0 16px 12px; white-space: pre-wrap; }
+      @media (max-width: 820px) { .app { grid-template-columns: 1fr; } textarea { min-height: 320px; } .canvas { min-height: 340px; } }
+      @media (max-width: 440px) { .app { padding: 11px; } .controls { grid-template-columns: 1fr; } .checks { align-items: flex-start; flex-direction: column; } .result { align-items: stretch; flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel editor">
+        <header class="header"><h1>Code Screenshot Studio</h1><p>Paste code and turn it into a shareable PNG.</p></header>
+        <textarea id="code" spellcheck="false" aria-label="Code">const greet = (name) => {
+  return `Hello, ${name}!`;
+};
+
+console.log(greet("ScriptForge"));</textarea>
+        <div class="controls">
+          <label>Language<input id="language" value="js" placeholder="js, ts, rs, py…" /></label>
+          <label>Theme<select id="theme"><option>Dracula</option><option>Monokai Extended</option><option>OneHalfDark</option><option>Solarized (dark)</option></select></label>
+          <label>Window title<input id="title" value="example.js" maxlength="100" /></label>
+          <label>Highlight lines<input id="highlight" placeholder="1;3-5" /></label>
+          <label>Backdrop<input id="background" type="color" value="#5468ff" /></label>
+          <label>Outer padding<input id="padding" type="number" min="20" max="180" value="72" /></label>
+          <div class="checks"><label><input id="line-numbers" type="checkbox" checked /> Line numbers</label><label><input id="window-controls" type="checkbox" checked /> Window controls</label></div>
+        </div>
+        <div class="run-area">
+          <button id="run" type="button">Create screenshot</button>
+          <div class="track"><span id="bar"></span></div>
+          <div class="progress"><span id="status">Ready</span><span id="percent">0%</span></div>
+          <div class="error" id="error" role="alert"></div>
+        </div>
+      </section>
+      <section class="panel preview">
+        <header class="preview-head"><h2>Preview</h2><span class="meta">Rendered locally by Silicon</span></header>
+        <div class="canvas"><span class="empty" id="empty">Your code image will appear here</span><img id="image" alt="Generated code screenshot" /></div>
+        <div class="result" id="result"><div class="result-copy"><strong id="name"></strong><span class="meta" id="size"></span></div><a class="download" id="download" href="about:blank">Save PNG</a></div>
+        <details><summary>Run logs</summary><pre id="logs"></pre></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let running = false;
+      $("run").addEventListener("click", () => {
+        if (running) return;
+        const code = $("code").value;
+        if (!code.trim()) return fail("Paste some code first.");
+        running = true; $("run").disabled = true; $("run").textContent = "Rendering…"; $("error").classList.remove("visible"); $("logs").textContent = ""; progress(.03, "Sending code");
+        parent.postMessage({ source: "scriptforge-tool", type: "run", input: {
+          code, language: $("language").value, theme: $("theme").value, title: $("title").value,
+          highlight: $("highlight").value, background: $("background").value, padding: Number($("padding").value),
+          lineNumbers: $("line-numbers").checked, windowControls: $("window-controls").checked,
+        }, files: [] }, "*");
+      });
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") progress(.08, "Starting Silicon");
+        if (message.type === "progress") progress(message.value, message.label || "Rendering");
+        if (message.type === "log") $("logs").textContent += `${message.message}\n`;
+        if (message.type === "failed") { fail(message.message); finish(); }
+        if (message.type === "result") showResult(message.outputs?.[0]);
+        if (message.type === "complete") finish();
+      });
+      function showResult(output) {
+        if (!output) return;
+        $("image").src = output.previewUrl; $("image").classList.add("visible"); $("empty").style.display = "none";
+        $("name").textContent = output.name; $("size").textContent = bytes(output.metadata?.bytes || 0);
+        $("download").href = output.downloadUrl; $("download").download = output.name; $("result").classList.add("visible");
+      }
+      function progress(value, label) { const percent = Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100); $("bar").style.width = `${percent}%`; $("percent").textContent = `${percent}%`; $("status").textContent = label; }
+      function fail(message) { $("error").textContent = message; $("error").classList.add("visible"); }
+      function finish() { running = false; $("run").disabled = false; $("run").textContent = "Create screenshot"; }
+      function bytes(value) { return value < 1048576 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1048576).toFixed(1)} MB`; }
+      window.addEventListener("error", (event) => { fail(event.message || "The interface encountered an error."); finish(); });
+      window.addEventListener("unhandledrejection", (event) => { fail(event.reason?.message || String(event.reason)); finish(); });
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

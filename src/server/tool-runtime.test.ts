@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { degrees, PDFDocument } from "pdf-lib";
@@ -147,6 +147,53 @@ describe("tool runtime host", () => {
     const compressed = await PDFDocument.load(stored?.data ?? new Uint8Array());
     expect(compressed.getPageCount()).toBe(1);
     expect(compressed.getPage(0).getSize()).toEqual({ width: 240, height: 320 });
+  });
+
+  it("renders code through the declared Silicon executable", async () => {
+    const binaryDirectory = join(jobsRoot, "bin");
+    const siliconPath = join(binaryDirectory, "silicon");
+    await mkdir(binaryDirectory, { recursive: true });
+    await writeFile(
+      siliconPath,
+      `#!/usr/bin/env node
+const fs = require("node:fs");
+const args = process.argv.slice(2);
+if (args.includes("--version")) { console.log("silicon 0.5.2"); process.exit(0); }
+const output = args[args.indexOf("--output") + 1];
+fs.writeFileSync(output, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"));
+process.stdin.resume();`,
+    );
+    await chmod(siliconPath, 0o755);
+    const originalPath = process.env.PATH;
+    process.env.PATH = `${binaryDirectory}:${originalPath ?? ""}`;
+    try {
+      const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+      const { jobId } = await service.start({
+        toolId: "code-screenshot-studio",
+        input: {
+          code: "const answer = 42;",
+          language: "js",
+          theme: "Dracula",
+          background: "#5468ff",
+          padding: 72,
+          lineNumbers: true,
+          windowControls: true,
+        },
+        files: [],
+      });
+
+      await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+      const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+      if (result?.type !== "result") throw new Error("Silicon result was not emitted.");
+      expect(result.outputs[0]).toMatchObject({ name: "code-screenshot.png", mimeType: "image/png" });
+      expect(service.getSnapshot(jobId)?.events).toContainEqual({
+        type: "log",
+        level: "success",
+        message: expect.stringContaining("Created screenshot"),
+      });
+    } finally {
+      process.env.PATH = originalPath;
+    }
   });
 
   it("completes a data-only candidate without inventing a file output", async () => {

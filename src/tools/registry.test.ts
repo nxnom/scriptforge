@@ -29,4 +29,12 @@ describe("bundled tool registry", () => {
       interface: { type: "html", entry: "ui.html" },
     });
   });
+
+  it("declares Silicon for the code screenshot studio", () => {
+    expect(findBundledTool("code-screenshot-studio")).toMatchObject({
+      categories: ["Developer", "Images"],
+      requiredExecutables: [{ name: "silicon" }],
+      icon: "code-2",
+    });
+  });
 });

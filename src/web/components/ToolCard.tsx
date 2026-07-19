@@ -1,6 +1,7 @@
 import {
   AudioWaveform,
   Box,
+  Code2,
   Download,
   Files,
   FileText,
@@ -27,6 +28,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   "audio-waveform": AudioWaveform,
   "file-type": FileType,
   "scan-search": ScanSearch,
+  "code-2": Code2,
 };
 
 export interface ToolSummary {
