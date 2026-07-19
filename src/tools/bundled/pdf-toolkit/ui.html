@@ -73,9 +73,10 @@
       .results.visible { display: grid; }
       .result-preview { min-width: 0; min-height: 430px; padding: 16px; overflow: auto; background: #151515; }
       .result-preview h2 { margin: 0 0 12px; font-size: 15px; }
-      .result-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-items: start; gap: 12px; }
-      .result-page { display: grid; gap: 7px; min-width: 0; padding: 9px; border: 1px solid var(--border); border-radius: 10px; background: #1b1b1b; }
-      .result-page .thumb { height: 210px; }
+      .result-pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+      .result-page { display: grid; width: min(100%, 820px); gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #1b1b1b; }
+      .result-page .thumb { height: auto; min-height: 180px; padding: 10px; }
+      .result-page .thumb canvas { width: auto; max-width: 100%; height: auto; max-height: none; }
       .result-page span { color: var(--muted); font-size: 11px; }
       .output-list { padding: 12px; border-left: 1px solid var(--border); overflow: auto; }
       .output-list h2 { margin: 2px 0 12px; font-size: 15px; }
@@ -259,6 +260,7 @@
 
       async function renderPages() {
         const previousScroll = elements.pages.scrollLeft;
+        const thumbnailRenders = [];
         elements.dropzone.classList.toggle("hidden", pages.length > 0);
         elements.pages.classList.toggle("hidden", pages.length === 0);
         elements.reset.classList.toggle("hidden", pages.length === 0);
@@ -314,12 +316,13 @@
             await renderThumbnail(item, card.querySelector("canvas"));
           });
           elements.pages.append(card);
-          await renderThumbnail(item, card.querySelector("canvas"));
+          thumbnailRenders.push(renderThumbnail(item, card.querySelector("canvas")));
         }
         elements.pages.scrollLeft = Math.min(
           previousScroll,
           Math.max(0, elements.pages.scrollWidth - elements.pages.clientWidth),
         );
+        await Promise.all(thumbnailRenders);
       }
 
       function renderThumbnail(item, canvas, scale = 0.34) {
@@ -409,7 +412,7 @@
           item.className = "result-page";
           item.innerHTML = `<div class="thumb"><canvas aria-label="Result page ${index + 1} preview"></canvas></div><span>Page ${index + 1}</span>`;
           elements.resultPages.append(item);
-          await renderThumbnail(page, item.querySelector("canvas"), 0.5);
+          await renderThumbnail(page, item.querySelector("canvas"), 1);
         }
         elements.workspace.classList.add("hidden");
         elements.results.classList.add("visible");
