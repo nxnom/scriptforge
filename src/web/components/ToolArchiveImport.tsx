@@ -1,7 +1,7 @@
 import { LoadingButton, RHFError, RHFFilePicker, toast } from "@geckoui/geckoui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { form as spooshForm } from "@spoosh/core";
-import { FileArchive, Upload } from "lucide-react";
+import { FileArchive, PackageOpen } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -41,37 +41,45 @@ export function ToolArchiveImport() {
             <div
               ref={dropzoneRef}
               data-testid="archive-dropzone"
-              className={`flex min-h-15 items-center justify-between gap-4 rounded-xl border px-4 py-3 transition-colors ${dragging ? "border-[#777] bg-[#363636]" : "border-[#454545] bg-[#303030]"}`}
+              className={`relative flex min-h-24 items-center justify-between gap-5 overflow-hidden rounded-[18px] border px-6 py-5 transition-colors max-[620px]:items-start max-[620px]:px-4 max-[620px]:py-4 max-[520px]:flex-col ${dragging ? "border-[#a6b1ff] bg-[#6375ff]" : "border-[#6375ff] bg-[#5468ff]"}`}
             >
-              <div className="flex min-w-0 items-center gap-3 text-xs text-[#b0b0b0]">
-                {files.length ? (
-                  <FileArchive className="shrink-0" size={17} />
-                ) : (
-                  <Upload className="shrink-0" size={17} />
-                )}
+              <PackageOpen
+                className="pointer-events-none absolute top-[-34px] right-28 rotate-[-14deg] text-white/10"
+                size={150}
+              />
+              <div className="relative flex min-w-0 items-center gap-3 text-white">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/12">
+                  <FileArchive size={19} />
+                </span>
                 <div className="min-w-0">
-                  <p className="m-0 truncate text-[#dedede]">
-                    {files[0]?.name ?? (dragging ? "Drop the .forge file" : "Import a shared .forge tool")}
-                  </p>
-                  <p className="mt-0.5 mb-0 text-[10px] text-[#898989]">
-                    {files[0] ? formatBytes(files[0].size) : "Validated and saved locally without running it"}
+                  <h2 className="m-0 truncate font-[Geist_Variable] text-xl font-semibold max-[620px]:text-lg">
+                    {files[0]?.name ?? (dragging ? "Drop your .forge file here" : "Add a tool from a .forge file")}
+                  </h2>
+                  <p className="mt-1 mb-0 text-[12px] text-[#e0e4ff] max-[620px]:line-clamp-2">
+                    {files[0]
+                      ? `${formatBytes(files[0].size)} · Ready to validate and import`
+                      : "ScriptForge validates the package and saves it locally. Nothing runs during import."}
                   </p>
                 </div>
               </div>
               {files.length ? (
-                <LoadingButton size="sm" type="submit" loading={importTool.loading || loading}>
+                <LoadingButton
+                  className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
+                  size="sm"
+                  type="submit"
+                  loading={importTool.loading || loading}
+                >
                   Import tool
                 </LoadingButton>
               ) : (
                 <LoadingButton
-                  className="border-[#555] text-[#ececec]"
+                  className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
                   size="sm"
                   type="button"
-                  variant="outlined"
                   loading={loading}
                   onClick={() => openFilePicker({ multiple: false })}
                 >
-                  Browse files
+                  Choose file
                 </LoadingButton>
               )}
             </div>

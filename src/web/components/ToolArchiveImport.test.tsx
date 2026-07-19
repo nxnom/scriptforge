@@ -27,6 +27,9 @@ describe("ToolArchiveImport", () => {
         <ToolArchiveImport />
       </MemoryRouter>,
     );
+    expect(screen.getByText("Add a tool from a .forge file")).toBeVisible();
+    expect(screen.getByText(/Nothing runs during import/)).toBeVisible();
+    expect(screen.queryByText("Import a shared .forge tool")).not.toBeInTheDocument();
     const file = new File(["archive"], "video-tool.forge", { type: "application/x-scriptforge-tool" });
     fireEvent.drop(screen.getByTestId("archive-dropzone"), {
       dataTransfer: { items: [{ getAsFile: () => file }], files: [file] },

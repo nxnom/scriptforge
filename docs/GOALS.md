@@ -28,7 +28,7 @@ Status: Complete
 - Prefer port `4545` and fall back when it is unavailable.
 - Add GeckoUI and a basic ScriptForge visual theme.
 - Implement the Library screen from `ui.pen` through the Pencil MCP design source.
-- Use the `UVKcL` rail-and-grid composition with responsive status/category selects, dynamic manifest-derived categories, and the `#5468ff` primary theme.
+- Use the `UVKcL` rail-and-grid composition with responsive status/category selects, a blue safe-import panel, dynamic manifest-derived categories, and the `#5468ff` primary theme.
 - Wire Hono types into Spoosh REST calls.
 
 Acceptance checks:

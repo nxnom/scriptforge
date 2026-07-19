@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useRead } from "../api";
 import { LibraryRail } from "../components/LibraryRail";
-import { LibrarySpotlight } from "../components/LibrarySpotlight";
 import {
   type CategoryCount,
   type LibraryFilter,
@@ -55,7 +54,7 @@ export function LibraryPage() {
           onSort={setSort}
           onView={setView}
         />
-        <LibrarySpotlight />
+        <ToolArchiveImport />
 
         <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-1">
           {health.error ? (
@@ -86,10 +85,6 @@ export function LibraryPage() {
               No tools match this view.
             </div>
           )}
-        </div>
-
-        <div className="shrink-0">
-          <ToolArchiveImport />
         </div>
       </div>
     </div>
