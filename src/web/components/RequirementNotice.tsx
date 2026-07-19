@@ -1,7 +1,7 @@
 import { Alert, Button } from "@geckoui/geckoui";
 import { Bot, RefreshCw } from "lucide-react";
 
-type Requirement = {
+export type Requirement = {
   name: string;
   version?: string;
   detectedVersion: string | null;

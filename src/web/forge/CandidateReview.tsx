@@ -4,6 +4,7 @@ import { Code2, Eye, FileJson, Save, Settings2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { invalidate, useRead, useWrite } from "../api";
+import { CodeViewer } from "../components/CodeViewer";
 import { openCandidateConfiguration } from "../configuration/ToolConfigurationDialog";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
@@ -108,9 +109,11 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
               srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
             />
           ) : (
-            <pre className="absolute inset-0 m-0 overflow-auto p-4 font-mono text-[11px] leading-5 text-[#d0d0d0]">
-              <code>{tab === "script" ? candidate.scriptSource : candidate.manifestSource}</code>
-            </pre>
+            <CodeViewer
+              source={tab === "script" ? candidate.scriptSource : candidate.manifestSource}
+              language={tab === "script" ? "javascript" : "json"}
+              filename={tab === "script" ? "run.mjs" : "tool.json"}
+            />
           )}
         </div>
         {candidate.risks?.length ? (

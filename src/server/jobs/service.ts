@@ -173,6 +173,25 @@ export class ToolJobService {
     return readFile(join(installed.directory, installed.manifest.interface.entry), "utf8");
   }
 
+  async getToolSource(toolId: string) {
+    const bundled = findBundledTool(toolId);
+    if (bundled) {
+      const directory = resolveBundledToolDirectory(toolId, this.toolsRoot);
+      const [scriptSource, manifestSource] = await Promise.all([
+        readFile(join(directory, bundled.script), "utf8"),
+        readFile(join(directory, "tool.json"), "utf8"),
+      ]);
+      return { scriptSource, manifestSource };
+    }
+    const installed = await findInstalledTool(toolId, this.installedToolsRoot);
+    if (!installed) return;
+    const [scriptSource, manifestSource] = await Promise.all([
+      readFile(join(installed.directory, installed.manifest.script), "utf8"),
+      readFile(join(installed.directory, "tool.json"), "utf8"),
+    ]);
+    return { scriptSource, manifestSource };
+  }
+
   async getRequirements(toolId: string) {
     const bundled = findBundledTool(toolId);
     const manifest = bundled ?? (await findInstalledTool(toolId, this.installedToolsRoot))?.manifest;

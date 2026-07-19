@@ -4,10 +4,10 @@ import { ArrowLeft, Box, Settings2, ShieldCheck } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { invalidate, useRead, useWrite } from "../api";
-import { RequirementNotice } from "../components/RequirementNotice";
 import { ToolActions } from "../components/ToolActions";
 import { openInstalledConfiguration } from "../configuration/ToolConfigurationDialog";
 import { ToolDoctorPanel } from "../doctor/ToolDoctorPanel";
+import { ToolReview } from "../tool-detail/ToolReview";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 export function ToolPage() {
@@ -100,27 +100,20 @@ export function ToolPage() {
       </header>
       {toolReady && hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
       <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[760px]:min-h-225">
-        {requirements.data?.ok && !toolReady && !doctorVisible && (
-          <div className="grid min-h-0 flex-1 place-items-center px-4 pb-[8vh]">
-            <div className="w-full max-w-2xl">
-              <RequirementNotice
-                requirements={requirements.data.requirements}
-                retry={requirements.trigger}
-                launchDoctor={() => setDoctorOpen(true)}
-              />
-            </div>
-          </div>
-        )}
         {doctorVisible && (
-          <ToolDoctorPanel toolId={toolId} standalone={!toolReady} onComplete={completeDoctor} onClose={closeDoctor} />
+          <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
         )}
-        {toolReady && (
-          <iframe
-            ref={iframeRef}
-            className="min-h-0 min-w-0 flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a]"
-            src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
-            title={`${tool?.name ?? "ScriptForge tool"} interface`}
-            sandbox="allow-scripts allow-downloads"
+        {!doctorVisible && requirements.data?.ok && (
+          <ToolReview
+            toolId={toolId}
+            toolName={tool?.name ?? "ScriptForge tool"}
+            toolReady={toolReady}
+            listening={listening}
+            configurationLoading={configuration.loading}
+            iframeRef={iframeRef}
+            requirements={requirements.data.requirements}
+            retryRequirements={requirements.trigger}
+            launchDoctor={() => setDoctorOpen(true)}
           />
         )}
       </div>

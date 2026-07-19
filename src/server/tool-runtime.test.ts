@@ -33,6 +33,18 @@ describe("tool runtime host", () => {
     await expect(response.text()).resolves.toContain('source: "scriptforge-tool"');
   });
 
+  it("serves read-only script and manifest source without exposing the interface source", async () => {
+    const app = createApp(undefined, { jobsRoot, toolsRoot: resolve("src/tools/bundled") });
+    const response = await app.request("/api/tools/image-resizer/source");
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      scriptSource: expect.stringContaining("sharp"),
+      manifestSource: expect.stringContaining('"id": "image-resizer"'),
+    });
+  });
+
   it("accepts an empty file list so each tool can validate its own input needs", async () => {
     const form = new FormData();
     form.append("toolId", "image-resizer");

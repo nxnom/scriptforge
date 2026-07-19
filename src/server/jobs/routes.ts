@@ -22,6 +22,12 @@ export function createToolRuntimeApiRoutes(service: ToolJobService) {
       c.header("Cache-Control", "no-store");
       return c.html(html);
     })
+    .get("/tools/:toolId/source", async (c) => {
+      const source = await service.getToolSource(c.req.param("toolId"));
+      if (!source) return c.json({ ok: false as const, error: "That tool source is not available." }, 404);
+      c.header("Cache-Control", "no-store");
+      return c.json({ ok: true as const, ...source });
+    })
     .post(
       "/jobs",
       validator("form", (value, c) => {

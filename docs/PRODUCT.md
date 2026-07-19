@@ -56,7 +56,7 @@ Before a tool runs, ScriptForge checks every declared executable. When one is mi
 
 The MVP is macOS-first. Unsupported platforms must receive a useful explanation rather than failing silently or running a guessed command.
 
-A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor. It opens inside the tool detail page beside the sandboxed tool interface, so the user can test the tool immediately after installation.
+A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor. It temporarily owns the tool-detail workspace so proposal and installer output remain focused; after successful verification it closes and reveals the ready tool preview.
 
 Doctor cannot install packages directly. It submits an executable-plus-arguments proposal through its dedicated MCP tool. ScriptForge replaces the Codex terminal with that immutable proposal and its Request changes and Install controls, so conversation output and installation approval never compete on screen. Install is the separate approval boundary: ScriptForge detaches and stops Codex, purges its terminal replay history, and starts only the approved commands through an installer `node-pty`. The terminal then contains installer output only. ScriptForge rechecks every declared requirement when the process ends and silently closes a successful Doctor session, leaving the tool interface ready to test.
 
@@ -76,6 +76,8 @@ Generated HTML/JS tool UI
 The main application uses GeckoUI with Tailwind utility classes directly in React components. Generated tool interfaces intentionally use neither React nor GeckoUI: they are lightweight, self-contained HTML/CSS/JS authored for the tool.
 
 The Forge workspace displays one real interactive Codex TUI through xterm.js. While that session is active the header offers Stop session; Start session is shown only when no session is active, so the interface never implies unsupported multi-session behavior. Its GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, then installs an atomic copy under `~/.scriptforge/tools`.
+
+Installed tool detail pages use the same compact Preview, Script, and Details tabs. Preview renders the sandboxed `ui.html`; Script shows read-only `run.mjs`; Details shows read-only `tool.json`. Source views include line numbers and lightweight syntax highlighting. The HTML source is not exposed. Script and manifest inspection remain available even when missing dependencies block Preview and execution.
 
 ## Local Data
 
