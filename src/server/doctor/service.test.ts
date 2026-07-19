@@ -44,6 +44,8 @@ describe("Codex Doctor sessions", () => {
     expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool", proposal: null });
     expect(calls).toHaveLength(1);
     const token = doctorToken(calls[0]?.[1] ?? []);
+    codex.data("old Codex screen");
+    expect(service.getSnapshot(sessionId)?.events).toContainEqual({ type: "output", data: "old Codex screen" });
     expect(() => service.propose(sessionId, "wrong", proposal())).toThrow("token");
     const proposed = service.propose(sessionId, token, proposal());
     expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool", proposal: proposed });
@@ -55,6 +57,8 @@ describe("Codex Doctor sessions", () => {
     service.approve(sessionId);
     expect(events).toContainEqual({ type: "proposal", proposal: null });
     expect(service.getSnapshot(sessionId)?.events.some((event) => event.type === "proposal")).toBe(false);
+    expect(service.getSnapshot(sessionId)?.events.some((event) => event.type === "output")).toBe(false);
+    expect(codex.value.kill).toHaveBeenCalledOnce();
     await expect.poll(() => calls.length).toBe(2);
     expect(calls[1]?.[0]).toBe("brew");
     expect(calls[1]?.[1]).toEqual(["install", "ffmpeg"]);
@@ -68,7 +72,8 @@ describe("Codex Doctor sessions", () => {
         ready: true,
         message: "Every required executable is now available.",
       });
-    service.stop(sessionId);
+    expect(events).toContainEqual({ type: "exit", exitCode: 0 });
+    expect(codex.value.write).not.toHaveBeenCalledWith(expect.stringContaining("finished the approved commands"));
     expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null, proposal: null });
   });
 });
@@ -113,15 +118,23 @@ async function writeTool(root: string) {
 
 function controllablePty() {
   let exitListener: ((event: { exitCode: number; signal?: number }) => void) | undefined;
+  let dataListener: ((data: string) => void) | undefined;
   const value = {
     write: vi.fn(),
     resize: vi.fn(),
     kill: vi.fn(),
-    onData: vi.fn(() => ({ dispose: vi.fn() })),
+    onData: vi.fn((listener) => {
+      dataListener = listener;
+      return { dispose: vi.fn() };
+    }),
     onExit: vi.fn((listener) => {
       exitListener = listener;
       return { dispose: vi.fn() };
     }),
   } as unknown as IPty;
-  return { value, exit: (exitCode: number) => exitListener?.({ exitCode }) };
+  return {
+    value,
+    data: (data: string) => dataListener?.(data),
+    exit: (exitCode: number) => exitListener?.({ exitCode }),
+  };
 }

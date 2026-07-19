@@ -30,6 +30,7 @@ type DoctorSession = {
   listeners: Set<Listener>;
   exited: boolean;
   installing: boolean;
+  codexDetached: boolean;
   token: string;
   proposal?: DoctorProposal;
   requirements: Array<{ name: string; version?: string }>;
@@ -87,12 +88,16 @@ export class DoctorSessionService {
       listeners: new Set(),
       exited: false,
       installing: false,
+      codexDetached: false,
       token,
       requirements: manifest.requiredExecutables,
     };
     this.session = session;
-    pty.onData((data) => this.emit(session, { type: "output", data }));
+    pty.onData((data) => {
+      if (!session.codexDetached) this.emit(session, { type: "output", data });
+    });
     pty.onExit(({ exitCode, signal }) => {
+      if (session.codexDetached) return;
       session.exited = true;
       this.emit(session, { type: "exit", exitCode, signal });
     });
@@ -121,12 +126,14 @@ export class DoctorSessionService {
 
   write(sessionId: string, data: string) {
     const session = this.active(sessionId);
-    (session.installer ?? session.pty).write(data);
+    const terminal = session.installer ?? (session.codexDetached ? undefined : session.pty);
+    terminal?.write(data);
   }
 
   resize(sessionId: string, cols: number, rows: number) {
     const session = this.active(sessionId);
-    (session.installer ?? session.pty).resize(cols, rows);
+    const terminal = session.installer ?? (session.codexDetached ? undefined : session.pty);
+    terminal?.resize(cols, rows);
   }
 
   propose(sessionId: string, token: string, proposal: Omit<DoctorProposal, "createdAt">) {
@@ -145,9 +152,11 @@ export class DoctorSessionService {
     if (session.installing) throw new Error("Installation is already running.");
     const commands = session.proposal.commands;
     session.proposal = undefined;
-    this.removeProposalHistory(session);
+    this.removeCodexHistory(session);
     this.broadcast(session, { type: "proposal", proposal: null });
     session.installing = true;
+    session.codexDetached = true;
+    session.pty.kill();
     this.emit(session, { type: "install-start" });
     void this.executeProposal(session, commands);
   }
@@ -168,7 +177,7 @@ export class DoctorSessionService {
     const session = this.find(sessionId);
     if (!session || session.exited) return false;
     session.installer?.kill();
-    session.pty.kill();
+    if (!session.codexDetached) session.pty.kill();
     session.exited = true;
     return true;
   }
@@ -193,7 +202,10 @@ export class DoctorSessionService {
         ? `${failedCommand} exited unsuccessfully; ${blocked.map((item) => item.name).join(", ")} still needs attention.`
         : `${blocked.map((item) => item.name).join(", ")} still does not satisfy the requirement.`;
     this.emit(session, { type: "verification", ready, message });
-    paste(session.pty, `ScriptForge finished the approved commands and verified the requirements. ${message}`);
+    if (ready) {
+      session.exited = true;
+      this.emit(session, { type: "exit", exitCode: 0 });
+    }
   }
 
   private executeCommand(session: DoctorSession, command: string, args: string[]) {
@@ -253,6 +265,10 @@ export class DoctorSessionService {
 
   private removeProposalHistory(session: DoctorSession) {
     session.history = session.history.filter((event) => event.type !== "proposal");
+  }
+
+  private removeCodexHistory(session: DoctorSession) {
+    session.history = session.history.filter((event) => event.type !== "output" && event.type !== "proposal");
   }
 }
 

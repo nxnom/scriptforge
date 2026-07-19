@@ -35,7 +35,7 @@ export function DoctorProposalPanel({
   });
 
   return (
-    <aside className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-y-auto rounded-2xl border border-[#3a3a3a] bg-[#202020] p-4">
+    <aside className="mx-auto flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto rounded-2xl border border-[#3a3a3a] bg-[#202020] p-4">
       <header className="flex items-start gap-3 border-[#343434] border-b pb-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#2d2d2d]">
           <ShieldCheck size={17} />
@@ -48,13 +48,13 @@ export function DoctorProposalPanel({
         </div>
       </header>
       <p className="text-xs leading-5 text-[#c6c6c6]">{proposal.summary}</p>
-      <ol className="m-0 grid gap-3 p-0">
+      <ol className="m-0 grid min-w-0 gap-3 p-0">
         {proposal.commands.map((item) => (
           <li
-            className="list-none rounded-xl border border-[#353535] bg-[#181818] p-3"
+            className="min-w-0 list-none rounded-xl border border-[#353535] bg-[#181818] p-3"
             key={`${displayCommand(item.command, item.args)}-${item.explanation}`}
           >
-            <code className="block overflow-x-auto whitespace-nowrap text-[11px] text-[#eee]">
+            <code className="block w-full max-w-full overflow-x-auto whitespace-nowrap text-[11px] text-[#eee]">
               {displayCommand(item.command, item.args)}
             </code>
             <p className="mt-2 mb-0 text-[10px] leading-4 text-[#929292]">{item.explanation}</p>

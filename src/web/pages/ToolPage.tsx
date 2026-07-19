@@ -1,17 +1,19 @@
 import { Alert, Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
 import { ArrowLeft, Box, Settings2, ShieldCheck } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useRead, useWrite } from "../api";
+import { invalidate, useRead, useWrite } from "../api";
 import { RequirementNotice } from "../components/RequirementNotice";
 import { ToolActions } from "../components/ToolActions";
 import { openInstalledConfiguration } from "../configuration/ToolConfigurationDialog";
+import { ToolDoctorPanel } from "../doctor/ToolDoctorPanel";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 export function ToolPage() {
   const { toolId } = useParams();
   const navigate = useNavigate();
+  const [doctorOpen, setDoctorOpen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
   const requirements = useRead((api) => api("tools/:toolId/requirements").GET({ params: { toolId: toolId ?? "" } }), {
@@ -22,6 +24,7 @@ export function ToolPage() {
     enabled: Boolean(toolId),
     staleTime: 0,
   });
+  const activeDoctor = useRead((api) => api("doctor/sessions/active").GET(), { staleTime: 0 });
   const configurationRef = useRef(configuration);
   configurationRef.current = configuration;
   const startJob = useWrite((api) => api("jobs").POST());
@@ -47,6 +50,16 @@ export function ToolPage() {
     [startJob.trigger, toolId],
   );
   const { listening, hostError } = useToolHostBridge({ iframeRef, startJob: runTool });
+  const doctorVisible = doctorOpen || activeDoctor.data?.toolId === toolId;
+  const closeDoctor = useCallback(async () => {
+    await activeDoctor.trigger();
+    setDoctorOpen(false);
+  }, [activeDoctor.trigger]);
+  const completeDoctor = useCallback(async () => {
+    await Promise.all([requirements.trigger(), activeDoctor.trigger()]);
+    invalidate("tools");
+    setDoctorOpen(false);
+  }, [activeDoctor.trigger, requirements.trigger]);
 
   if (!toolId) return null;
 
@@ -85,20 +98,23 @@ export function ToolPage() {
         </div>
       </header>
       {hostError && <Alert variant="error" title="Tool host error" description={hostError} condensed />}
-      {requirements.data?.ok && !requirements.data.ready && (
+      {requirements.data?.ok && !requirements.data.ready && !doctorVisible && (
         <RequirementNotice
           requirements={requirements.data.requirements}
           retry={requirements.trigger}
-          launchDoctor={() => navigate(`/doctor/${toolId}`, { state: { autoStart: true } })}
+          launchDoctor={() => setDoctorOpen(true)}
         />
       )}
-      <iframe
-        ref={iframeRef}
-        className="min-h-180 w-full flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a] max-[680px]:min-h-225"
-        src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
-        title={`${tool?.name ?? "ScriptForge tool"} interface`}
-        sandbox="allow-scripts allow-downloads"
-      />
+      <div className="flex min-h-180 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[680px]:min-h-225">
+        {doctorVisible && <ToolDoctorPanel toolId={toolId} onComplete={completeDoctor} onClose={closeDoctor} />}
+        <iframe
+          ref={iframeRef}
+          className="min-h-0 min-w-0 flex-1 rounded-2xl border border-[#333] bg-[#1a1a1a]"
+          src={listening && !configuration.loading ? `/api/tools/${toolId}/ui` : undefined}
+          title={`${tool?.name ?? "ScriptForge tool"} interface`}
+          sandbox="allow-scripts allow-downloads"
+        />
+      </div>
     </section>
   );
 }

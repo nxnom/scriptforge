@@ -91,11 +91,13 @@ Completed and verified:
 - Keep tools installed and reviewable when requirements are missing while marking them Needs install.
 - Block only job execution until every declared executable requirement is satisfied.
 - Show manual install/retry guidance without launching Codex automatically.
-- Start a separate Codex Doctor only after the user explicitly requests help.
+- Start a separate Codex Doctor agent only after the user explicitly requests help, embedded beside the tool interface.
 - Let Doctor inspect the current OS and package managers without modifying the machine itself.
 - Present structured command-and-argument proposals with plain-language explanations.
 - Run only the exact proposal after the user clicks Install, with live terminal output.
+- Stop and detach Codex after approval so the installation terminal contains only installer output.
 - Recheck requirements after installation and preserve the active in-memory Doctor session across refreshes.
+- Close successful Doctor sessions automatically so the tool is immediately ready to test.
 
 Acceptance checks:
 
