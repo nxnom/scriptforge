@@ -1,10 +1,11 @@
 import { Alert, Button } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { ArrowLeft, Box, Download, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Box, ShieldCheck } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useRead, useWrite } from "../api";
 import { RequirementNotice } from "../components/RequirementNotice";
+import { ToolActions } from "../components/ToolActions";
 import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../tool-host/useToolHostBridge";
 
 export function ToolPage() {
@@ -52,9 +53,7 @@ export function ToolPage() {
         </div>
         <div className="flex items-center gap-2 max-[680px]:justify-self-end">
           {tool && "origin" in tool && tool.origin === "installed" && (
-            <Button size="sm" variant="outlined" onClick={() => window.location.assign(`/api/tools/${toolId}/export`)}>
-              <Download size={13} /> Export
-            </Button>
+            <ToolActions toolId={toolId} toolName={tool.name} />
           )}
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#333] px-2.5 py-1.5 text-[10px] text-[#b0b0b0]">
             <ShieldCheck size={13} /> Local execution

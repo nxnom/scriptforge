@@ -129,6 +129,8 @@ An installed tool exports as one `.forge` file containing its complete directory
 
 After import, the normal requirement check marks the tool Ready or Needs install. A missing executable is not an import error: the interface remains reviewable, execution stays blocked, and the user may install it independently or explicitly launch Doctor.
 
+Forge-saved and imported tools expose Export and Delete actions. Delete requires confirmation and atomically removes the local tool directory. Bundled starter tools expose neither the Delete action nor a deletable server resource.
+
 ## Deferred Scope
 
 - Archive signing, provenance, and compatibility metadata

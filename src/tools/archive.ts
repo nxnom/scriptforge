@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { z } from "zod";
-import { defaultInstalledToolsRoot, findInstalledTool } from "./installed";
+import { defaultInstalledToolsRoot, deleteInstalledTool, findInstalledTool } from "./installed";
 import { type ToolManifest, toolManifestSchema } from "./manifest";
 
 export const toolArchiveMimeType = "application/x-scriptforge-tool";
@@ -44,6 +44,11 @@ export class ToolArchiveService {
       filename: `${tool.manifest.id}.forge`,
       data,
     };
+  }
+
+  async delete(toolId: string) {
+    if (this.reservedIds.has(toolId)) return "bundled" as const;
+    return (await deleteInstalledTool(toolId, this.toolsRoot)) ? ("deleted" as const) : ("not-found" as const);
   }
 
   async import(data: Uint8Array) {

@@ -30,7 +30,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - `tool.json` declares required executable names and optional version constraints. It never contains installation commands.
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
-- Installed tools can be exported as one `.forge` archive and imported back into the local library. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
+- User tools saved from Forge or added through Import can be exported as one `.forge` archive or deleted after confirmation. Bundled starter tools cannot be deleted. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
 
 ## Technical Direction
 

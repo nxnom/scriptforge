@@ -19,15 +19,29 @@ export function defaultInstalledToolsRoot() {
 export async function listInstalledTools(root = defaultInstalledToolsRoot()): Promise<InstalledTool[]> {
   const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
   const tools = await Promise.all(
-    entries.filter((entry) => entry.isDirectory()).map((entry) => readInstalledTool(join(root, entry.name))),
+    entries
+      .filter((entry) => entry.isDirectory() && isToolId(entry.name))
+      .map(async (entry) => {
+        const tool = await readInstalledTool(join(root, entry.name));
+        return tool?.manifest.id === entry.name ? tool : undefined;
+      }),
   );
   return tools.filter((tool): tool is InstalledTool => tool !== undefined);
 }
 
 export async function findInstalledTool(id: string, root = defaultInstalledToolsRoot()) {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) return;
+  if (!isToolId(id)) return;
   const tool = await readInstalledTool(join(root, id));
   return tool?.manifest.id === id ? tool : undefined;
+}
+
+export async function deleteInstalledTool(id: string, root = defaultInstalledToolsRoot()) {
+  const tool = await findInstalledTool(id, root);
+  if (!tool) return false;
+  const removed = join(root, `.delete-${id}-${randomUUID()}`);
+  await rename(tool.directory, removed);
+  await rm(removed, { recursive: true, force: true }).catch(() => undefined);
+  return true;
 }
 
 export async function installTool(files: InstallableToolFiles, root = defaultInstalledToolsRoot()) {
@@ -65,4 +79,8 @@ async function readInstalledTool(directory: string): Promise<InstalledTool | und
   } catch {
     return;
   }
+}
+
+function isToolId(id: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id);
 }

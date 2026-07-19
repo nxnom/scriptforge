@@ -26,6 +26,8 @@ describe(".forge archives", () => {
     expect((await findInstalledTool("video-tool", destination))?.manifest.requiredExecutables).toEqual([
       { name: "ffmpeg", version: ">= 7.0.0" },
     ]);
+    expect(await new ToolArchiveService(destination).delete("video-tool")).toBe("deleted");
+    expect(await findInstalledTool("video-tool", destination)).toBeUndefined();
   });
 
   it("rejects traversal paths and leaves no installed tool behind", async () => {
@@ -63,6 +65,8 @@ describe(".forge archives", () => {
         archive?.data ?? new Uint8Array(),
       ),
     ).rejects.toThrow("bundled tool");
+    expect(await new ToolArchiveService(source, new Set(["video-tool"])).delete("video-tool")).toBe("bundled");
+    expect(await findInstalledTool("video-tool", source)).toBeDefined();
   });
 });
 

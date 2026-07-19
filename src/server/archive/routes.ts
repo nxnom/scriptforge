@@ -6,6 +6,17 @@ import type { RequirementService } from "../requirements/service";
 
 export function createToolArchiveRoutes(service: ToolArchiveService, requirements: RequirementService) {
   return new Hono()
+    .delete("/tools/:toolId", async (c) => {
+      try {
+        const result = await service.delete(c.req.param("toolId"));
+        if (result === "bundled") return c.json({ ok: false as const, error: "Bundled tools cannot be deleted." }, 403);
+        if (result === "not-found")
+          return c.json({ ok: false as const, error: "That installed tool does not exist." }, 404);
+        return c.json({ ok: true as const });
+      } catch (error) {
+        return c.json({ ok: false as const, error: errorMessage(error, "The tool could not be deleted.") }, 400);
+      }
+    })
     .get("/tools/:toolId/export", async (c) => {
       try {
         const archive = await service.export(c.req.param("toolId"));

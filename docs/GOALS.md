@@ -113,6 +113,7 @@ Status: Complete
 - Import the archive through a validated, traversal-safe, atomic extraction path.
 - Never execute code during import.
 - Keep valid imported tools when executables are missing and hand them to the existing Doctor flow.
+- Let users delete Forge-saved and imported tools after confirmation while protecting bundled tools.
 
 Acceptance checks:
 
@@ -120,6 +121,7 @@ Acceptance checks:
 - Invalid paths, duplicate paths, malformed manifests, oversized archives, and bundled-ID collisions are rejected.
 - An imported tool with a missing executable appears as Needs install.
 - Only execution is blocked until Doctor or the user supplies the dependency.
+- Deletion removes an installed tool atomically, and bundled deletion is rejected by both the UI and server.
 
 ## Goal 5 — Hackathon Submission
 

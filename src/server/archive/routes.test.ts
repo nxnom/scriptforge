@@ -51,6 +51,23 @@ describe("tool archive API", () => {
     expect(exported.status).toBe(200);
     expect(exported.headers.get("content-type")).toBe("application/x-scriptforge-tool");
     expect(exported.headers.get("content-disposition")).toContain("video-tool.forge");
+
+    const deleted = await app.request("/api/tools/video-tool", { method: "DELETE" });
+    expect(deleted.status).toBe(200);
+    await expect(deleted.json()).resolves.toEqual({ ok: true });
+    const afterDelete = await app.request("/api/tools");
+    expect((await afterDelete.json()).tools).not.toContainEqual(expect.objectContaining({ id: "video-tool" }));
+  });
+
+  it("refuses to delete a bundled tool", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-archive-api-"));
+    roots.push(root);
+    const response = await createApp(undefined, { installedToolsRoot: join(root, "tools") }).request(
+      "/api/tools/image-resizer",
+      { method: "DELETE" },
+    );
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Bundled tools cannot be deleted." });
   });
 });
 

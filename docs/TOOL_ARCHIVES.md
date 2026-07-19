@@ -30,3 +30,7 @@ Every regular file under an installed tool directory is included, including nest
 - Declared executable requirements are checked only after installation. Missing executables produce Needs install and block runs, not import.
 
 The archive currently provides portability, not authenticity. Signing and provenance metadata remain future work.
+
+## Local deletion
+
+Tools saved from Forge or reconstructed through Import may be deleted after an explicit confirmation. ScriptForge first renames the tool directory out of the visible library namespace, then removes it recursively. Bundled starter tools are not stored in that namespace and the API rejects attempts to delete their identifiers.
