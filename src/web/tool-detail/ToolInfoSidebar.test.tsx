@@ -24,8 +24,12 @@ describe("ToolInfoSidebar", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Image Resizer" })).toBeVisible();
+    const heading = screen.getByRole("heading", { name: "Image Resizer" });
+    expect(heading).toBeVisible();
+    expect(heading.closest("section")).toHaveAttribute("data-palette");
     expect(screen.getAllByText("Built-in")).toHaveLength(2);
+    expect(screen.getAllByText("Built-in")[0]).toHaveClass("bg-[#252a48]", "text-[#aeb7ff]");
+    expect(screen.getByText("Images")).toHaveClass("ring-inset");
     expect(screen.getByText("1.0.0")).toBeVisible();
     expect(screen.getByText("Node.js")).toBeVisible();
     expect(screen.getByText("None required")).toBeVisible();

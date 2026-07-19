@@ -17,6 +17,7 @@ import {
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { ToolActions } from "./ToolActions";
+import { paletteFor, type ToolPalette } from "./tool-card-palette";
 
 const icons: Record<string, ComponentType<{ size?: number }>> = {
   image: Image,
@@ -45,11 +46,19 @@ export interface ToolSummary {
 
 export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?: "grid" | "list" }) {
   const Icon = icons[tool.icon] ?? Wrench;
+  const palette = paletteFor(tool.id);
   const available = ["ready", "needs-install", "needs-config"].includes(tool.status);
-  const className = `relative h-full border border-[#333] bg-[#242424] transition-colors duration-150 ${available ? "hover:border-[#4a4a4a]" : ""} ${tool.status === "ready" ? "shadow-[0_4px_16px_-4px_#00000038]" : ""}`;
+  const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? palette.hover : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
 
   return (
-    <article className={`${className} ${layout === "grid" ? "min-h-44 rounded-[18px]" : "min-h-24 rounded-xl"}`}>
+    <article
+      data-palette={palette.name}
+      className={`${className} ${layout === "grid" ? "min-h-44 rounded-[18px]" : "min-h-24 rounded-xl"}`}
+    >
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute top-0 left-5 h-px w-24 bg-gradient-to-r opacity-80 transition-opacity group-hover:opacity-100 ${palette.accent}`}
+      />
       {available && (
         <Link
           aria-label={`Open ${tool.name}`}
@@ -57,16 +66,28 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
           to={`/tools/${tool.id}`}
         />
       )}
-      {layout === "grid" ? <GridCardContent tool={tool} Icon={Icon} /> : <ListCardContent tool={tool} Icon={Icon} />}
+      {layout === "grid" ? (
+        <GridCardContent tool={tool} Icon={Icon} palette={palette} />
+      ) : (
+        <ListCardContent tool={tool} Icon={Icon} palette={palette} />
+      )}
     </article>
   );
 }
 
-function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
+function GridCardContent({
+  tool,
+  Icon,
+  palette,
+}: {
+  tool: ToolSummary;
+  Icon: ComponentType<{ size?: number }>;
+  palette: ToolPalette;
+}) {
   return (
     <div className="pointer-events-none relative flex h-full min-h-44 flex-col gap-3 p-3.5">
       <div className="flex items-center justify-between">
-        <ToolIcon Icon={Icon} />
+        <ToolIcon Icon={Icon} palette={palette} />
         <StatusBadge status={tool.status} />
       </div>
       <div className="flex flex-1 flex-col gap-1.5">
@@ -77,10 +98,18 @@ function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentTyp
   );
 }
 
-function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
+function ListCardContent({
+  tool,
+  Icon,
+  palette,
+}: {
+  tool: ToolSummary;
+  Icon: ComponentType<{ size?: number }>;
+  palette: ToolPalette;
+}) {
   return (
     <div className="pointer-events-none relative grid min-h-24 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 max-[620px]:grid-cols-[auto_minmax(0,1fr)]">
-      <ToolIcon Icon={Icon} />
+      <ToolIcon Icon={Icon} palette={palette} />
       <div className="min-w-0">
         <ToolCopy tool={tool} />
       </div>
@@ -98,9 +127,9 @@ function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentTyp
   );
 }
 
-function ToolIcon({ Icon }: { Icon: ComponentType<{ size?: number }> }) {
+function ToolIcon({ Icon, palette }: { Icon: ComponentType<{ size?: number }>; palette: ToolPalette }) {
   return (
-    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#2e2e2e] text-white">
+    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ring-1 ring-inset ${palette.icon}`}>
       <Icon size={18} />
     </span>
   );
@@ -130,21 +159,24 @@ function CardFooter({ tool }: { tool: ToolSummary }) {
 function CategoryBadges({ categories }: { categories: string[] }) {
   return (
     <span className="flex min-w-0 items-center gap-1 overflow-hidden">
-      {categories.map((category) => (
-        <span
-          key={category}
-          className="max-w-24 truncate rounded-full bg-[#303030] px-2.5 py-1 text-[10px] text-[#b0b0b0]"
-        >
-          {category}
-        </span>
-      ))}
+      {categories.map((category) => {
+        const palette = paletteFor(category);
+        return (
+          <span
+            key={category}
+            className={`max-w-24 truncate rounded-full px-2.5 py-1 text-[10px] ring-1 ring-inset ${palette.icon}`}
+          >
+            {category}
+          </span>
+        );
+      })}
     </span>
   );
 }
 
 function BuiltinBadge() {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#3b3b3b] px-2 py-1 text-[10px] text-[#929292]">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#4655a1] bg-[#252a48] px-2 py-1 text-[10px] text-[#aeb7ff] shadow-[0_0_14px_-7px_#5468ff]">
       <Box size={10} /> Built-in
     </span>
   );
@@ -156,9 +188,16 @@ function StatusBadge({ status }: { status: string }) {
   const needsConfig = status === "needs-config";
   const Icon = ready ? Check : needsInstall ? Download : needsConfig ? KeyRound : Sparkles;
   const label = ready ? "Ready" : needsInstall ? "Needs install" : needsConfig ? "Setup required" : "Unavailable";
+  const tone = ready
+    ? "bg-[#20382b] text-[#99d8ae] ring-[#315a42]"
+    : needsInstall
+      ? "bg-[#44331e] text-[#e8b76d] ring-[#6a4e2b]"
+      : needsConfig
+        ? "bg-[#35284a] text-[#c8a8f2] ring-[#584275]"
+        : "bg-[#3d2528] text-[#e69a9f] ring-[#66383d]";
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full py-1 pr-2.5 pl-2 text-[10px] font-[650] ${ready ? "bg-[#2e2e2e] text-[#c9cdd6]" : "bg-[#3a2e1a] text-[#e0a24e]"}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full py-1 pr-2.5 pl-2 text-[10px] font-[650] ring-1 ring-inset ${tone}`}
     >
       <Icon size={10} /> {label}
     </span>

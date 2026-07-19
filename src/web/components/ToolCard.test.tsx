@@ -42,6 +42,15 @@ describe("ToolCard", () => {
 
     expect(container.querySelector("article > div")?.className).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
   });
+
+  it("uses stable accent, category, status, and built-in colors", () => {
+    renderCard({ ...tool(), origin: "bundled" });
+
+    expect(screen.getByRole("article")).toHaveAttribute("data-palette");
+    expect(screen.getByText("Video")).toHaveClass("ring-1");
+    expect(screen.getByText("Ready")).toHaveClass("bg-[#20382b]");
+    expect(screen.getByText("Built-in")).toHaveClass("bg-[#252a48]", "text-[#aeb7ff]");
+  });
 });
 
 function renderCard(value: ToolSummary, layout: "grid" | "list" = "grid") {
