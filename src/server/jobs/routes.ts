@@ -1,6 +1,7 @@
 import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
+import { toolDocumentPolicy } from "../../shared/tool-iframe-policy";
 import type { ToolJobService } from "./service";
 import type { ToolJobEvent } from "./types";
 
@@ -15,10 +16,7 @@ export function createToolRuntimeApiRoutes(service: ToolJobService) {
     .get("/tools/:toolId/ui", async (c) => {
       const html = await service.getToolUi(c.req.param("toolId"));
       if (!html) return c.json({ ok: false as const, error: "That tool interface is not available." }, 404);
-      c.header(
-        "Content-Security-Policy",
-        "default-src 'none'; img-src 'self' blob: data:; media-src 'self' blob: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline' blob:; worker-src blob:; connect-src 'none'",
-      );
+      c.header("Content-Security-Policy", toolDocumentPolicy);
       c.header("Cache-Control", "no-store");
       return c.html(html);
     })

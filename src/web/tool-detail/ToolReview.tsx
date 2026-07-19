@@ -1,6 +1,7 @@
 import { Spinner } from "@geckoui/geckoui";
 import { Code2, Eye, FileJson } from "lucide-react";
 import { useState } from "react";
+import { toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
 import { useRead } from "../api";
 import { CodeViewer } from "../components/CodeViewer";
 import { type Requirement, RequirementNotice } from "../components/RequirementNotice";
@@ -53,8 +54,8 @@ export function ToolReview({
             className={`absolute inset-0 size-full border-0 bg-[#1a1a1a] ${tab === "preview" ? "block" : "hidden"}`}
             src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}
             title={`${toolName} interface`}
-            allow="clipboard-write"
-            sandbox="allow-scripts allow-downloads"
+            allow={toolIframeAllow}
+            sandbox={toolIframeSandbox}
           />
         )}
         {tab === "preview" && !toolReady && (

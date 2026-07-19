@@ -267,7 +267,18 @@
               <button type="button" data-action="right" title="Rotate right">↷</button>
               <button type="button" data-action="remove" title="Remove page">×</button>
             </div>`;
-          card.addEventListener("dragstart", () => { draggedPageId = item.id; card.classList.add("dragging"); });
+          const controls = card.querySelector(".page-tools");
+          controls.addEventListener("pointerdown", (event) => event.stopPropagation());
+          controls.addEventListener("dragstart", (event) => event.preventDefault());
+          for (const button of controls.querySelectorAll("button")) button.draggable = false;
+          card.addEventListener("dragstart", (event) => {
+            if (event.target.closest?.("button")) {
+              event.preventDefault();
+              return;
+            }
+            draggedPageId = item.id;
+            card.classList.add("dragging");
+          });
           card.addEventListener("dragend", () => { draggedPageId = null; card.classList.remove("dragging"); });
           card.addEventListener("dragover", (event) => event.preventDefault());
           card.addEventListener("drop", async (event) => {
@@ -281,6 +292,7 @@
           card.addEventListener("click", async (event) => {
             const action = event.target.closest("button")?.dataset.action;
             if (!action) return;
+            event.preventDefault();
             const position = pages.findIndex((page) => page.id === item.id);
             if (action === "remove") pages.splice(position, 1);
             if (action === "left") item.rotation = (item.rotation + 270) % 360;

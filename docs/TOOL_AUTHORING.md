@@ -79,14 +79,14 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 - Do not send `File` objects directly across the sandbox boundary. When a tool uses files, read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use files.
 - Disable the action while a run is active and restore it after either `complete` or `failed`.
 - Surface bridge and runtime failures inside the interface, not only in DevTools.
-- The iframe grants `clipboard-write`. Copy buttons may call `navigator.clipboard.writeText` from a direct user click and should retain a selectable-text fallback for browsers or operating systems that still refuse clipboard access.
+- The iframe grants browser-side scripts, downloads, forms, modal dialogs, and clipboard read/write. Copy buttons may call `navigator.clipboard.writeText` from a direct user click and should retain a selectable-text fallback for browsers or operating systems that still refuse clipboard access.
 
 ## Output previews
 
 - The host returns same-origin `previewUrl` and `downloadUrl` values for approved job outputs.
 - Assign `previewUrl` to an appropriate `<img>`, `<video>`, or `<audio>` element. Assign `downloadUrl` to an explicit save link.
 - Keep output URLs relative. ScriptForge can run directly on its local server or through a development proxy, so a tool must not hard-code a host or port.
-- The iframe content policy allows same-origin images and media plus `blob:` and `data:` previews. It intentionally keeps `connect-src 'none'`; tool JavaScript must never fetch ScriptForge APIs directly.
+- The iframe content policy allows same-origin images, media, and nested result frames plus `blob:` and `data:` previews. This includes browser-native inline PDF previews. It intentionally keeps `connect-src 'none'`; tool JavaScript must never fetch ScriptForge APIs directly.
 - Add media `load` and `error` handlers so a failed preview becomes a visible message and log entry.
 
 ## Lifecycle events and logs

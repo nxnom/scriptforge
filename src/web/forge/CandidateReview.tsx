@@ -3,6 +3,7 @@ import { form as spooshForm } from "@spoosh/core";
 import { Code2, Eye, FileJson, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
+import { toolDocumentPolicy, toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
 import { useRead, useWrite } from "../api";
 import { CodeViewer } from "../components/CodeViewer";
 import { openCandidateConfiguration } from "../configuration/ToolConfigurationDialog";
@@ -88,8 +89,8 @@ export function CandidateReview({
             ref={iframeRef}
             title={`${candidate.name} interface preview`}
             className={`absolute inset-0 size-full border-0 bg-white ${tab === "preview" ? "block" : "hidden"}`}
-            allow="clipboard-write"
-            sandbox="allow-scripts allow-downloads"
+            allow={toolIframeAllow}
+            sandbox={toolIframeSandbox}
             srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
           />
           {tab !== "preview" && (
@@ -146,7 +147,7 @@ function TabButton({
 }
 
 function previewDocument(html: string) {
-  const policy = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; media-src 'self' data: blob:; font-src data:; form-action 'none'; base-uri 'none'">`;
+  const policy = `<meta http-equiv="Content-Security-Policy" content="${toolDocumentPolicy}">`;
   return /<head(\s[^>]*)?>/i.test(html)
     ? html.replace(/<head(\s[^>]*)?>/i, (head) => `${head}${policy}`)
     : `${policy}${html}`;
