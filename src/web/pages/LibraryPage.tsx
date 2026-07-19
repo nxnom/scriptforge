@@ -21,14 +21,7 @@ export function LibraryPage() {
   const counts = countTools(allTools);
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-5 overflow-hidden">
-      <header className="shrink-0">
-        <h1 className="m-0 font-[Geist_Variable] text-[27px] font-semibold leading-tight">Library</h1>
-        <p className="mt-1.5 mb-0 text-sm text-[#b0b0b0]">
-          {allTools.length} tools forged and ready to work on your files.
-        </p>
-      </header>
-
+    <div className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-4 overflow-hidden">
       <LibraryToolbar
         counts={counts}
         filter={filter}
