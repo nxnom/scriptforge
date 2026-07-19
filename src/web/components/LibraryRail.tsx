@@ -27,7 +27,7 @@ export function LibraryRail({
   onCategory: (category: string | null) => void;
 }) {
   return (
-    <aside className="flex min-h-0 w-55 shrink-0 flex-col gap-5 max-[900px]:hidden" aria-label="Library filters">
+    <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-5 max-[900px]:hidden" aria-label="Library filters">
       <RailSection title="Library">
         {filters.map(({ value, label, icon: Icon }) => (
           <RailButton

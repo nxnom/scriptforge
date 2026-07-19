@@ -9,7 +9,7 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
   const Icon = icons[tool.icon] ?? Wrench;
 
   return (
-    <aside className="flex min-h-0 w-70 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[960px]:w-full max-[960px]:overflow-visible max-[960px]:pr-0">
+    <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[900px]:w-full max-[900px]:overflow-visible max-[900px]:pr-0">
       <section className="rounded-2xl border border-[#333] bg-[#242424] p-4">
         <span className="grid size-11 place-items-center rounded-xl bg-[#5468ff] text-white shadow-[0_8px_24px_-12px_#5468ff]">
           <Icon size={20} />

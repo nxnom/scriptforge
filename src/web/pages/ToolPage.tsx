@@ -96,7 +96,7 @@ export function ToolPage() {
           </>
         }
       />
-      <div className="flex min-h-0 w-full flex-1 overflow-hidden px-10 pt-6 pb-6 max-[900px]:px-6 max-[560px]:px-4 max-[560px]:pt-4 max-[560px]:pb-4">
+      <div className="flex min-h-0 w-full flex-1 overflow-hidden px-10 pt-7.5 pb-6 max-[900px]:px-6 max-[560px]:px-4 max-[560px]:pt-5 max-[560px]:pb-4">
         <div className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-4 overflow-hidden">
           {toolReady && hostError && (
             <Alert variant="error" title="Tool host error" description={hostError} condensed />
@@ -106,7 +106,7 @@ export function ToolPage() {
               <ToolDoctorPanel toolId={toolId} standalone onComplete={completeDoctor} onClose={closeDoctor} />
             )}
             {!doctorVisible && requirements.data?.ok && tool && "origin" in tool && (
-              <div className="flex min-h-0 min-w-0 flex-1 gap-5 overflow-hidden max-[960px]:flex-col max-[760px]:overflow-visible">
+              <div className="flex min-h-0 min-w-0 flex-1 gap-6 overflow-hidden max-[900px]:flex-col max-[760px]:overflow-visible">
                 <ToolInfoSidebar tool={tool} requirements={requirements.data.requirements} />
                 <ToolReview
                   toolId={toolId}
