@@ -1,4 +1,4 @@
-import { Button, LoadingButton } from "@geckoui/geckoui";
+import { Button, LoadingButton, Tooltip } from "@geckoui/geckoui";
 import { Pencil, Square } from "lucide-react";
 
 export function ToolUpdateActions({
@@ -27,9 +27,18 @@ export function ToolUpdateActions({
   return (
     <>
       {installed && !sessionActive && (
-        <Button size="sm" variant="outlined" disabled={anotherSessionActive} onClick={start}>
-          <Pencil size={13} /> Update
-        </Button>
+        <Tooltip content="Update tool" triggerAsChild>
+          <Button
+            aria-label="Update tool"
+            className="size-9"
+            size="sm"
+            variant="icon"
+            disabled={anotherSessionActive}
+            onClick={start}
+          >
+            <Pencil size={14} />
+          </Button>
+        </Tooltip>
       )}
       {sessionActive && (
         <LoadingButton size="sm" variant="ghost" loading={stopping} onClick={stop}>

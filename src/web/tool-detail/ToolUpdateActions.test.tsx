@@ -7,10 +7,10 @@ const handlers = { start: vi.fn(), stop: vi.fn(), save: vi.fn() };
 describe("ToolUpdateActions", () => {
   it("offers Update only for installed tools", () => {
     const { rerender } = render(<ToolUpdateActions {...handlers} {...state} installed />);
-    expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Update tool" })).toBeVisible();
 
     rerender(<ToolUpdateActions {...handlers} {...state} installed={false} />);
-    expect(screen.queryByRole("button", { name: "Update" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Update tool" })).not.toBeInTheDocument();
   });
 });
 
