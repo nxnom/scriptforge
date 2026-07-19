@@ -86,7 +86,7 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 - The host returns same-origin `previewUrl` and `downloadUrl` values for approved job outputs.
 - Assign `previewUrl` to an appropriate `<img>`, `<video>`, or `<audio>` element. Assign `downloadUrl` to an explicit save link.
 - Keep output URLs relative. ScriptForge can run directly on its local server or through a development proxy, so a tool must not hard-code a host or port.
-- The iframe content policy allows same-origin images, media, and nested result frames plus `blob:` and `data:` previews. This includes browser-native inline PDF previews. It intentionally keeps `connect-src 'none'`; tool JavaScript must never fetch ScriptForge APIs directly.
+- The iframe content policy allows same-origin images, media, and nested result frames plus `blob:` and `data:` previews. Do not depend on a browser-native PDF viewer inside another iframe because some browsers block it inside any sandbox; use an inlined PDF renderer when a visual PDF preview is essential. It intentionally keeps `connect-src 'none'`; tool JavaScript must never fetch ScriptForge APIs directly.
 - Add media `load` and `error` handlers so a failed preview becomes a visible message and log entry.
 
 ## Lifecycle events and logs

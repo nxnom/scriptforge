@@ -71,7 +71,12 @@
       .message.success { border: 1px solid #386145; color: #a7e8b7; background: #203629; }
       .results { display: none; grid-template-columns: minmax(0, 1fr) 260px; min-height: 430px; }
       .results.visible { display: grid; }
-      .preview { min-height: 430px; border: 0; width: 100%; height: 100%; background: #111; }
+      .result-preview { min-width: 0; min-height: 430px; padding: 16px; overflow: auto; background: #151515; }
+      .result-preview h2 { margin: 0 0 12px; font-size: 15px; }
+      .result-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-items: start; gap: 12px; }
+      .result-page { display: grid; gap: 7px; min-width: 0; padding: 9px; border: 1px solid var(--border); border-radius: 10px; background: #1b1b1b; }
+      .result-page .thumb { height: 210px; }
+      .result-page span { color: var(--muted); font-size: 11px; }
       .output-list { padding: 12px; border-left: 1px solid var(--border); overflow: auto; }
       .output-list h2 { margin: 2px 0 12px; font-size: 15px; }
       .output { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; margin-bottom: 8px; background: #1b1b1b; }
@@ -157,7 +162,10 @@
       </section>
 
       <section class="panel results" id="results">
-        <iframe class="preview" id="preview" title="PDF result preview"></iframe>
+        <div class="result-preview">
+          <h2>Result page order</h2>
+          <div class="result-pages" id="result-pages"></div>
+        </div>
         <div class="output-list"><h2>Results</h2><div id="outputs"></div></div>
       </section>
     </main>
@@ -174,6 +182,7 @@
       let pages = [];
       let running = false;
       let draggedPageId = null;
+      const thumbnailQueues = new WeakMap();
       const byId = (id) => document.getElementById(id);
       const elements = {
         choose: byId("choose"), files: byId("files"), reset: byId("reset"), dropzone: byId("dropzone"),
@@ -181,7 +190,7 @@
         compression: byId("compression"), targetField: byId("target-field"), target: byId("target"), scanWarning: byId("scan-warning"),
         run: byId("run"), progress: byId("progress"), status: byId("status"), percent: byId("percent"), logs: byId("logs"),
         error: byId("error"), success: byId("success"), workspace: byId("workspace"), results: byId("results"),
-        preview: byId("preview"), outputs: byId("outputs"),
+        resultPages: byId("result-pages"), outputs: byId("outputs"),
       };
 
       window.addEventListener("message", (event) => {
@@ -249,6 +258,7 @@
       }
 
       async function renderPages() {
+        const previousScroll = elements.pages.scrollLeft;
         elements.dropzone.classList.toggle("hidden", pages.length > 0);
         elements.pages.classList.toggle("hidden", pages.length === 0);
         elements.reset.classList.toggle("hidden", pages.length === 0);
@@ -294,21 +304,33 @@
             if (!action) return;
             event.preventDefault();
             const position = pages.findIndex((page) => page.id === item.id);
-            if (action === "remove") pages.splice(position, 1);
+            if (action === "remove") {
+              pages.splice(position, 1);
+              await renderPages();
+              return;
+            }
             if (action === "left") item.rotation = (item.rotation + 270) % 360;
             if (action === "right") item.rotation = (item.rotation + 90) % 360;
-            await renderPages();
+            await renderThumbnail(item, card.querySelector("canvas"));
           });
           elements.pages.append(card);
           await renderThumbnail(item, card.querySelector("canvas"));
         }
+        elements.pages.scrollLeft = Math.min(
+          previousScroll,
+          Math.max(0, elements.pages.scrollWidth - elements.pages.clientWidth),
+        );
       }
 
-      async function renderThumbnail(item, canvas) {
-        const viewport = item.page.getViewport({ scale: 0.34, rotation: item.page.rotate + item.rotation });
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        await item.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      function renderThumbnail(item, canvas, scale = 0.34) {
+        const queued = (thumbnailQueues.get(canvas) || Promise.resolve()).catch(() => {}).then(async () => {
+          const viewport = item.page.getViewport({ scale, rotation: item.page.rotate + item.rotation });
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          await item.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        });
+        thumbnailQueues.set(canvas, queued);
+        return queued;
       }
 
       function renderFileList() {
@@ -367,7 +389,7 @@
         }
       }
 
-      function showResults(outputs) {
+      async function showResults(outputs) {
         running = false;
         elements.run.disabled = false;
         elements.progress.style.width = "100%";
@@ -381,7 +403,14 @@
           item.innerHTML = `<strong>${escapeHtml(output.name)}</strong><span class="hint">${size}${output.metadata?.flattened ? " · flattened" : ""}</span><a href="${encodeURI(output.downloadUrl)}" download="${escapeHtml(output.name)}">Download PDF</a>`;
           elements.outputs.append(item);
         }
-        if (outputs[0]?.previewUrl) elements.preview.src = outputs[0].previewUrl;
+        elements.resultPages.replaceChildren();
+        for (const [index, page] of pages.entries()) {
+          const item = document.createElement("div");
+          item.className = "result-page";
+          item.innerHTML = `<div class="thumb"><canvas aria-label="Result page ${index + 1} preview"></canvas></div><span>Page ${index + 1}</span>`;
+          elements.resultPages.append(item);
+          await renderThumbnail(page, item.querySelector("canvas"), 0.5);
+        }
         elements.workspace.classList.add("hidden");
         elements.results.classList.add("visible");
         elements.reset.textContent = "Edit again";
@@ -393,7 +422,7 @@
         if (elements.results.classList.contains("visible")) {
           elements.results.classList.remove("visible");
           elements.workspace.classList.remove("hidden");
-          elements.preview.removeAttribute("src");
+          elements.resultPages.replaceChildren();
           elements.reset.textContent = "Start over";
           clearMessages();
           return;
