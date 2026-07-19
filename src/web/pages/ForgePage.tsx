@@ -77,15 +77,8 @@ export function ForgePage() {
     <section className="mx-auto flex min-h-0 w-full max-w-320 flex-1 flex-col gap-4 overflow-hidden">
       <header className="flex shrink-0 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
-          <Button
-            type="button"
-            variant="icon"
-            size="md"
-            aria-label="Back to library"
-            className="size-10 shrink-0 rounded-xl border border-[#383838] bg-[#242424] p-0"
-            onClick={() => navigate("/")}
-          >
-            <ArrowLeft size={18} />
+          <Button type="button" variant="ghost" size="sm" className="shrink-0" onClick={() => navigate("/")}>
+            <ArrowLeft size={14} /> Library
           </Button>
           <div className="min-w-0">
             <h1 className="m-0 font-[Geist_Variable] text-2xl">Forge</h1>
