@@ -64,7 +64,7 @@ export function ToolPage() {
   if (!toolId) return null;
 
   return (
-    <section className="flex min-h-[calc(100vh-52px)] flex-col gap-3.5 max-[680px]:min-h-[calc(100vh-82px)]">
+    <section className="flex h-[calc(100dvh-52px)] min-h-0 flex-col gap-3.5 overflow-hidden max-[760px]:h-auto max-[760px]:min-h-[calc(100dvh-82px)] max-[760px]:overflow-visible">
       <header className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-3.5 max-[680px]:grid-cols-[auto_1fr]">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
           <ArrowLeft size={14} /> Library
@@ -105,7 +105,7 @@ export function ToolPage() {
           launchDoctor={() => setDoctorOpen(true)}
         />
       )}
-      <div className="flex min-h-180 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[680px]:min-h-225">
+      <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[980px]:flex-col max-[760px]:min-h-225">
         {doctorVisible && <ToolDoctorPanel toolId={toolId} onComplete={completeDoctor} onClose={closeDoctor} />}
         <iframe
           ref={iframeRef}

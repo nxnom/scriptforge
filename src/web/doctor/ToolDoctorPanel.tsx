@@ -1,11 +1,11 @@
 import { Alert, LoadingButton, Spinner, toast } from "@geckoui/geckoui";
-import { Square, Stethoscope } from "lucide-react";
+import { Circle, Square, Stethoscope } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DoctorProposal } from "../../server/doctor/types";
 import { useRead, useWrite } from "../api";
 import { loadForgePreferences } from "../forge/preferences";
 import { DoctorProposalPanel } from "./DoctorProposalPanel";
-import { DoctorTerminal } from "./DoctorTerminal";
+import { type DoctorConnectionState, DoctorTerminal } from "./DoctorTerminal";
 
 export function ToolDoctorPanel({
   toolId,
@@ -22,6 +22,7 @@ export function ToolDoctorPanel({
   const [proposal, setProposal] = useState<DoctorProposal | null>();
   const [verification, setVerification] = useState<{ ready: boolean; message: string }>();
   const [startError, setStartError] = useState<string>();
+  const [connection, setConnection] = useState<DoctorConnectionState>("connecting");
   const active = useRead((api) => api("doctor/sessions/active").GET(), { staleTime: 0 });
   const startDoctor = useWrite((api) => api("doctor/sessions").POST());
   const stopDoctor = useWrite((api) => api("doctor/sessions/:sessionId").DELETE());
@@ -64,18 +65,24 @@ export function ToolDoctorPanel({
   }, [onClose]);
 
   return (
-    <section className="flex min-h-0 w-[min(44%,560px)] min-w-96 shrink-0 flex-col gap-2.5 overflow-hidden max-[980px]:h-[48%] max-[980px]:w-full max-[980px]:min-w-0">
-      <header className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#343434] bg-[#202020] px-3 py-2">
+    <section className="flex min-h-0 w-[min(48%,640px)] min-w-105 shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717] max-[980px]:h-[48%] max-[980px]:w-full max-[980px]:min-w-0">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-[#303030] border-b bg-[#202020] px-3 py-2">
         <span className="inline-flex items-center gap-2 font-medium text-[#ddd] text-xs">
           <Stethoscope size={14} /> Dependency Doctor
         </span>
-        <LoadingButton type="button" variant="ghost" size="xs" loading={stopDoctor.loading} onClick={stop}>
-          <Square size={11} /> Stop
-        </LoadingButton>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[10px] text-[#8f8f8f]">
+            <Circle className={connectionColor(connection)} fill="currentColor" size={6} />{" "}
+            {connectionLabel(connection)}
+          </span>
+          <LoadingButton type="button" variant="ghost" size="xs" loading={stopDoctor.loading} onClick={stop}>
+            <Square size={10} /> Stop
+          </LoadingButton>
+        </div>
       </header>
       {verification && !verification.ready && <Alert variant="warning" condensed title={verification.message} />}
       {startError && <Alert variant="error" condensed title="Doctor could not start" description={startError} />}
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden p-2">
         {visibleSessionId ? (
           visibleProposal ? (
             <DoctorProposalPanel
@@ -86,6 +93,8 @@ export function ToolDoctorPanel({
           ) : (
             <DoctorTerminal
               sessionId={visibleSessionId}
+              hideHeader
+              onConnectionChange={setConnection}
               onProposal={setProposal}
               onVerification={verified}
               onSessionEnd={ended}
@@ -109,4 +118,21 @@ function apiError(error: unknown) {
   if (error instanceof Error) return error.message;
   if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
   return "The local Codex Doctor could not start.";
+}
+
+function connectionColor(connection: DoctorConnectionState) {
+  if (connection === "connected") return "text-[#82be8b]";
+  if (connection === "installing") return "text-[#e0a24e]";
+  if (connection === "error") return "text-[#d87870]";
+  return "text-[#8f8f8f]";
+}
+
+function connectionLabel(connection: DoctorConnectionState) {
+  return {
+    connecting: "Connecting",
+    connected: "Connected",
+    installing: "Installing",
+    exited: "Closed",
+    error: "Error",
+  }[connection];
 }

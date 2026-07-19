@@ -21,30 +21,37 @@ export function RequirementNotice({
   if (!missing.length) return null;
 
   return (
-    <div className="grid gap-3 rounded-xl border border-[#5a4324] bg-[#2c251b] p-3">
-      <Alert
-        variant="warning"
-        condensed
-        title="This tool needs another app before it can run"
-        description="You can install the requirements yourself and retry, or explicitly launch Codex Doctor for help. The Doctor never starts automatically."
-      />
-      <ul className="m-0 grid gap-1 pl-5 text-[11px] text-[#d2c4ad]">
-        {missing.map((requirement) => (
-          <li key={requirement.name}>
-            <code>{requirement.name}</code>
-            {requirement.version ? ` ${requirement.version}` : ""}
-            {requirement.detectedVersion ? ` · found ${requirement.detectedVersion}` : " · not found"}
-          </li>
-        ))}
-      </ul>
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button type="button" size="xs" variant="ghost" onClick={retry}>
-          <RefreshCw size={12} /> Retry check
-        </Button>
-        <Button type="button" size="xs" variant="outlined" onClick={launchDoctor}>
-          <Bot size={12} /> Launch Codex Doctor
-        </Button>
-      </div>
-    </div>
+    <Alert
+      variant="warning"
+      condensed
+      title="Missing requirement"
+      description={
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 pt-1">
+          <span className="text-[11px] text-[#b9aa92]">
+            Install it yourself or let Codex Doctor prepare the commands.
+          </span>
+          <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+            {missing.map((requirement) => (
+              <code
+                className="rounded-md border border-[#5a4324] bg-[#211d17] px-2 py-1 text-[10px] text-[#d8c7aa]"
+                key={requirement.name}
+              >
+                {requirement.name}
+                {requirement.version ? ` ${requirement.version}` : ""}
+                {requirement.detectedVersion ? ` · ${requirement.detectedVersion}` : " · not found"}
+              </code>
+            ))}
+          </div>
+          <div className="ml-auto flex shrink-0 gap-1.5">
+            <Button type="button" size="xs" variant="ghost" onClick={retry}>
+              <RefreshCw size={12} /> Retry
+            </Button>
+            <Button type="button" size="xs" variant="outlined" onClick={launchDoctor}>
+              <Bot size={12} /> Open Doctor
+            </Button>
+          </div>
+        </div>
+      }
+    />
   );
 }
