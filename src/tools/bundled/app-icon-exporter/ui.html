@@ -118,7 +118,7 @@
         const scale = showAndroid ? Number($("android-scale").value) / 100 : 1;
         $("preview").style.objectFit = fit;
         $("preview").style.transform = `scale(${scale})`;
-        $("drop").style.backgroundColor = $("background").value;
+        $("drop").style.backgroundColor = selectedFile ? $("background").value : "";
         $("preview-label").textContent = showAndroid ? "Android adaptive preview" : "Export preview";
       }
       function setFile(file) {
