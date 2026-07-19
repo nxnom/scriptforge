@@ -72,7 +72,7 @@ export function ForgePage() {
   };
 
   return (
-    <section className="flex h-[calc(100dvh-52px)] min-h-0 flex-col gap-4 overflow-hidden max-[760px]:h-[calc(100dvh-88px)] max-[560px]:h-[calc(100dvh-80px)]">
+    <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <header className="flex shrink-0 items-center justify-between gap-4">
         <div>
           <h1 className="m-0 font-[Geist_Variable] text-2xl">Forge</h1>

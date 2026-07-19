@@ -151,6 +151,7 @@ Acceptance checks:
 
 Status: Pending
 
+- Polish the primary library into a compact, sidebar-free workspace with a fixed header/filter area, scrollable tool results, and a pinned import action.
 - Polish the primary demo path.
 - Add only the starter tools needed to strengthen the demo.
 - Complete README setup, architecture, evidence, limitations, and license sections.

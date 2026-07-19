@@ -38,7 +38,7 @@ export interface ToolSummary {
   origin?: "bundled" | "installed";
 }
 
-export function ToolCard({ tool }: { tool: ToolSummary }) {
+export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?: "grid" | "list" }) {
   const Icon = icons[tool.icon] ?? Wrench;
   const ready = tool.status === "ready";
   const needsInstall = tool.status === "needs-install";
@@ -47,7 +47,7 @@ export function ToolCard({ tool }: { tool: ToolSummary }) {
 
   return (
     <article
-      className={`relative min-h-44 rounded-2xl border border-[#333] bg-[#242424] transition-colors duration-150 ${available ? "hover:border-[#454545]" : ""} ${ready ? "shadow-[0_4px_16px_-4px_#00000038]" : ""}`}
+      className={`relative rounded-[20px] border border-[#333] bg-[#242424] transition-colors duration-150 ${layout === "grid" ? "min-h-44" : "min-h-31"} ${available ? "hover:border-[#4a4a4a]" : ""} ${ready ? "shadow-[0_4px_16px_-4px_#00000038]" : ""}`}
     >
       {available && (
         <Link
@@ -56,7 +56,9 @@ export function ToolCard({ tool }: { tool: ToolSummary }) {
           to={`/tools/${tool.id}`}
         />
       )}
-      <div className="pointer-events-none relative flex min-h-44 flex-col gap-3.5 p-4.5">
+      <div
+        className={`pointer-events-none relative flex flex-col gap-3.5 p-5.5 ${layout === "grid" ? "min-h-44" : "min-h-31"}`}
+      >
         <div className="flex items-center justify-between">
           <div className="grid size-10.5 place-items-center rounded-xl bg-[#2e2e2e] text-white">
             <Icon size={19} />

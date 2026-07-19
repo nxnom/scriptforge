@@ -65,7 +65,7 @@ export function ToolPage() {
   if (!toolId) return null;
 
   return (
-    <section className="flex h-[calc(100dvh-52px)] min-h-0 flex-col gap-3.5 overflow-hidden max-[760px]:h-auto max-[760px]:min-h-[calc(100dvh-82px)] max-[760px]:overflow-visible">
+    <section className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-hidden max-[760px]:overflow-y-auto">
       <header className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-3.5 max-[680px]:grid-cols-[auto_1fr]">
         <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
           <ArrowLeft size={14} /> Library
