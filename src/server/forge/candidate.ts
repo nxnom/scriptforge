@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { toolManifestSchema } from "../../tools/manifest";
 import type { ForgeCandidateDocument, ForgeCandidateRequest } from "./types";
 
-const maximumFileBytes = 500_000;
+export const maximumCandidateFileBytes = 3 * 1024 * 1024;
 
 export async function readForgeCandidate(
   directory: string,
@@ -56,7 +56,7 @@ async function readCandidateFile(directory: string, name: string) {
   const path = join(directory, name);
   const stats = await lstat(path).catch(() => undefined);
   if (!stats?.isFile() || stats.isSymbolicLink()) throw new Error(`Candidate ${name} is missing or unsafe.`);
-  if (stats.size > maximumFileBytes) throw new Error(`Candidate ${name} is too large to review.`);
+  if (stats.size > maximumCandidateFileBytes) throw new Error(`Candidate ${name} exceeds the 3 MB review limit.`);
   return readFile(path, "utf8");
 }
 

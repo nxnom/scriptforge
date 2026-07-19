@@ -10,7 +10,7 @@ Each tool contains:
 - An execution script — reads one JSON request from standard input and writes newline-delimited JSON lifecycle events to standard output.
 - `ui.html` — a self-contained plain HTML, CSS, and JavaScript interface.
 
-Generated interfaces do not use React, GeckoUI, runtime npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access. CDN scripts, remote ES modules, external stylesheets, remote fonts, and runtime downloads are intentionally blocked. Prefer native HTML, SVG, Canvas, and browser APIs. When a small third-party browser library is genuinely valuable, Forge may verify a pinned version and its redistribution license, then inline the required browser distribution and license notice directly in `ui.html`. The complete file must remain below the 500 KB candidate review limit and must be tested in the offline iframe.
+Generated interfaces do not use React, GeckoUI, runtime npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access. CDN scripts, remote ES modules, external stylesheets, remote fonts, and runtime downloads are intentionally blocked. Prefer native HTML, SVG, Canvas, and browser APIs. When a small third-party browser library is genuinely valuable, Forge may verify a pinned version and its redistribution license, then inline the required browser distribution and license notice directly in `ui.html`. The complete file must remain below the 3 MB candidate review limit and must be tested in the offline iframe.
 
 ## Persistent configuration
 

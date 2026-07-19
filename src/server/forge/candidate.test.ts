@@ -2,7 +2,7 @@ import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { readForgeCandidate } from "./candidate";
+import { maximumCandidateFileBytes, readForgeCandidate } from "./candidate";
 
 const roots: string[] = [];
 
@@ -48,6 +48,24 @@ describe("Forge candidate reader", () => {
     await expect(
       readForgeCandidate(root, { summary: "Ready", testSummary: "Processed a sample successfully." }),
     ).rejects.toThrow(/schemaVersion:.*id:.*version:.*requiredExecutables:/);
+  });
+
+  it("accepts an inlined browser library larger than the old 500 KB limit", async () => {
+    const root = await candidateDirectory();
+    await writeFile(join(root, "ui.html"), `<!doctype html><script>/* ${"x".repeat(600_000)} */</script>`);
+
+    await expect(
+      readForgeCandidate(root, { summary: "Ready", testSummary: "Processed a sample successfully." }),
+    ).resolves.toMatchObject({ name: "Tiny Tool" });
+  });
+
+  it("rejects a candidate file above the 3 MB review limit", async () => {
+    const root = await candidateDirectory();
+    await writeFile(join(root, "ui.html"), "x".repeat(maximumCandidateFileBytes + 1));
+
+    await expect(
+      readForgeCandidate(root, { summary: "Ready", testSummary: "Processed a sample successfully." }),
+    ).rejects.toThrow("exceeds the 3 MB review limit");
   });
 });
 
