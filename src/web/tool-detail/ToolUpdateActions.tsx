@@ -1,5 +1,5 @@
 import { Button, LoadingButton } from "@geckoui/geckoui";
-import { Pencil, Save, Square } from "lucide-react";
+import { Pencil, Square } from "lucide-react";
 
 export function ToolUpdateActions({
   installed,
@@ -45,7 +45,7 @@ export function ToolUpdateActions({
           title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
           onClick={save}
         >
-          <Save size={13} /> Update tool
+          <Pencil size={13} /> Update tool
         </LoadingButton>
       )}
     </>

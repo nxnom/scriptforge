@@ -1,5 +1,5 @@
 import { Button, ConfirmDialog, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
-import { Bot, Hammer, Save, ShieldCheck, Square, TerminalSquare } from "lucide-react";
+import { Bot, Hammer, Pencil, Save, ShieldCheck, Square, TerminalSquare } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
@@ -133,7 +133,8 @@ export function ForgePage() {
                 title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
                 onClick={save}
               >
-                <Save size={13} /> {targetToolId ? "Update tool" : "Save tool"}
+                {targetToolId ? <Pencil size={13} /> : <Save size={13} />}
+                {targetToolId ? "Update tool" : "Save tool"}
               </LoadingButton>
             )}
             {!visibleSessionId && (
