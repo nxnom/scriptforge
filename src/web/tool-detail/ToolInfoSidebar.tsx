@@ -1,4 +1,15 @@
-import { AppWindow, Box, Check, CircleAlert, Code2, HardDrive, Image, PackageCheck, Wrench } from "lucide-react";
+import {
+  AppWindow,
+  Box,
+  Check,
+  CircleAlert,
+  Code2,
+  Download,
+  HardDrive,
+  Image,
+  PackageCheck,
+  Wrench,
+} from "lucide-react";
 import type { ComponentType } from "react";
 import type { Requirement } from "../components/RequirementNotice";
 import type { ToolSummary } from "../components/ToolCard";
@@ -8,6 +19,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   image: Image,
   "code-2": Code2,
   "app-window": AppWindow,
+  download: Download,
 };
 
 export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; requirements: Requirement[] }) {

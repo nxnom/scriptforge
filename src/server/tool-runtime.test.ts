@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { degrees, PDFDocument } from "pdf-lib";
@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { toolManifestSchema } from "../tools/manifest";
 import { createApp } from "./app";
 import { ToolConfigurationService } from "./configuration/service";
+import { createToolRuntimeApiRoutes } from "./jobs/routes";
 import { ToolJobService } from "./jobs/service";
 import { RequirementService } from "./requirements/service";
 
@@ -92,6 +93,34 @@ describe("tool runtime host", () => {
 
     expect(response.status).toBe(202);
     await expect(response.json()).resolves.toMatchObject({ ok: true, jobId: expect.any(String) });
+  });
+
+  it("streams output byte ranges for large media previews and downloads", async () => {
+    const source = await sharp({
+      create: { width: 4, height: 4, channels: 3, background: { r: 84, g: 104, b: 255 } },
+    })
+      .png()
+      .toBuffer();
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+    const { jobId } = await service.start({
+      toolId: "image-resizer",
+      input: { width: 4, height: 4, fit: "contain", format: "png", quality: 82 },
+      files: [new File([filePart(source)], "source.png", { type: "image/png" })],
+    });
+    await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    if (result?.type !== "result") throw new Error("Image result was not emitted.");
+    const output = result.outputs[0];
+    if (!output) throw new Error("Image output was not emitted.");
+
+    const response = await createToolRuntimeApiRoutes(service).request(`/jobs/${jobId}/outputs/${output.id}`, {
+      headers: { Range: "bytes=0-7" },
+    });
+
+    expect(response.status).toBe(206);
+    expect(response.headers.get("accept-ranges")).toBe("bytes");
+    expect(response.headers.get("content-range")).toMatch(/^bytes 0-7\/\d+$/);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]));
   });
 
   it("merges, reorders, and rotates PDF pages through the bundled runner", async () => {
@@ -304,6 +333,95 @@ process.stdin.resume();`,
       });
     } finally {
       process.env.PATH = originalPath;
+    }
+  });
+
+  it("downloads and packs a playlist through the declared yt-dlp executable", async () => {
+    const binaryDirectory = join(jobsRoot, "yt-dlp-bin");
+    const executablePath = join(binaryDirectory, "yt-dlp");
+    const argumentsPath = join(jobsRoot, "yt-dlp-arguments.json");
+    await mkdir(binaryDirectory, { recursive: true });
+    await writeFile(
+      executablePath,
+      `#!/usr/bin/env node
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+if (args.includes("--version")) { console.log("2026.06.09"); process.exit(0); }
+fs.writeFileSync(process.env.SF_YTDLP_ARGUMENTS, JSON.stringify(args));
+process.stdout.write("SF_PROGRESS:50.0%|1MiB/s|00:02|1|");
+process.stdout.write("2\\nSF_PROGRESS:100.0%|1MiB/s|00:00|2|2\\n");
+fs.writeFileSync(path.join(process.cwd(), "01-first-id.mp4"), "first-video");
+fs.writeFileSync(path.join(process.cwd(), "02-second-id.webm"), "second-video");`,
+    );
+    await chmod(executablePath, 0o755);
+    const originalPath = process.env.PATH;
+    const originalArgumentsPath = process.env.SF_YTDLP_ARGUMENTS;
+    process.env.PATH = `${binaryDirectory}:${originalPath ?? ""}`;
+    process.env.SF_YTDLP_ARGUMENTS = argumentsPath;
+    try {
+      const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+      const unauthorized = await service.start({
+        toolId: "video-downloader",
+        input: { url: "https://example.com/video", quality: "best", playlist: false },
+        files: [],
+      });
+      await expect.poll(() => service.getSnapshot(unauthorized.jobId)?.status).toBe("failed");
+      expect(service.getSnapshot(unauthorized.jobId)?.events).toContainEqual({
+        type: "failed",
+        message: "Confirm that you are allowed to save this content.",
+      });
+
+      const { jobId } = await service.start({
+        toolId: "video-downloader",
+        input: {
+          url: "https://example.com/playlist?id=demo",
+          quality: "720",
+          playlist: true,
+          playlistStart: 2,
+          playlistEnd: 4,
+          authorized: true,
+        },
+        files: [],
+      });
+
+      await expect
+        .poll(() => service.getSnapshot(jobId)?.status)
+        .toSatisfy((status) => status === "succeeded" || status === "failed");
+      const failure = service.getSnapshot(jobId)?.events.find((event) => event.type === "failed");
+      if (failure?.type === "failed") throw new Error(failure.message);
+      const argumentsUsed = JSON.parse(await readFile(argumentsPath, "utf8"));
+      expect(argumentsUsed).toEqual(
+        expect.arrayContaining(["--no-config", "--yes-playlist", "--playlist-items", "2:4"]),
+      );
+      expect(argumentsUsed.at(-1)).toBe("https://example.com/playlist?id=demo");
+      const format = argumentsUsed[argumentsUsed.indexOf("--format") + 1];
+      expect(format).toContain("height<=720");
+      expect(format).not.toMatch(/\/best(?:$|\/)/);
+
+      const events = service.getSnapshot(jobId)?.events ?? [];
+      const progressEvents = events.filter((event) => event.type === "progress");
+      expect(progressEvents.some((event) => event.type === "progress" && event.label?.includes("1/2"))).toBe(true);
+      expect(progressEvents.some((event) => event.type === "progress" && event.label?.includes("2/2"))).toBe(true);
+      const values = progressEvents.map((event) => (event.type === "progress" ? event.value : 0));
+      expect(values).toEqual([...values].sort((left, right) => left - right));
+
+      const result = events.find((event) => event.type === "result");
+      if (result?.type !== "result") throw new Error("Video playlist result was not emitted.");
+      expect(result.outputs[0]).toMatchObject({
+        name: "video-playlist.zip",
+        mimeType: "application/zip",
+        metadata: { files: 2, playlist: true },
+      });
+      const stored = await service.readOutput(jobId, result.outputs[0]?.id ?? "");
+      if (!stored) throw new Error("Video playlist ZIP was not stored.");
+      const entries = readStoredZipEntries(stored.data);
+      expect(entries.get("01-first-id.mp4")?.toString()).toBe("first-video");
+      expect(entries.get("02-second-id.webm")?.toString()).toBe("second-video");
+    } finally {
+      process.env.PATH = originalPath;
+      if (originalArgumentsPath === undefined) delete process.env.SF_YTDLP_ARGUMENTS;
+      else process.env.SF_YTDLP_ARGUMENTS = originalArgumentsPath;
     }
   });
 

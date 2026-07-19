@@ -164,6 +164,13 @@ export class ToolJobService {
     return { output, data: await readFile(output.path) };
   }
 
+  async openOutput(jobId: string, outputId: string) {
+    const output = this.jobs.get(jobId)?.outputs.get(outputId);
+    if (!output) return;
+    const details = await stat(output.path);
+    return { output, path: output.path, size: details.size };
+  }
+
   async getToolUi(toolId: string) {
     const manifest = findBundledTool(toolId);
     if (manifest?.interface.type === "html") {

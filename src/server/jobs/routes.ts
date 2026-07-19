@@ -1,3 +1,5 @@
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
@@ -55,15 +57,48 @@ export function createToolRuntimeApiRoutes(service: ToolJobService) {
       },
     )
     .get("/jobs/:jobId/outputs/:outputId", async (c) => {
-      const result = await service.readOutput(c.req.param("jobId"), c.req.param("outputId"));
+      const result = await service.openOutput(c.req.param("jobId"), c.req.param("outputId"));
       if (!result) return c.json({ ok: false as const, error: "That output is no longer available." }, 404);
       const disposition = c.req.query("download") === "1" ? "attachment" : "inline";
+      const range = parseByteRange(c.req.header("range"), result.size);
+      if (range === null) {
+        c.header("Content-Range", `bytes */${result.size}`);
+        return c.body(null, 416);
+      }
+      const start = range?.start ?? 0;
+      const end = range?.end ?? Math.max(0, result.size - 1);
+      const length = result.size === 0 ? 0 : end - start + 1;
       c.header("Content-Type", result.output.mimeType);
-      c.header("Content-Length", String(result.data.byteLength));
-      c.header("Content-Disposition", `${disposition}; filename="${result.output.name}"`);
+      c.header("Content-Length", String(length));
+      c.header("Accept-Ranges", "bytes");
+      c.header("Content-Disposition", `${disposition}; filename="${safeFilename(result.output.name)}"`);
       c.header("Cache-Control", "no-store");
-      return c.body(Uint8Array.from(result.data));
+      if (range) {
+        c.status(206);
+        c.header("Content-Range", `bytes ${start}-${end}/${result.size}`);
+      }
+      if (result.size === 0) return c.body(new Uint8Array());
+      const stream = createReadStream(result.path, { start, end });
+      return c.body(Readable.toWeb(stream) as ReadableStream);
     });
+}
+
+function safeFilename(name: string) {
+  return name.replace(/["\r\n\\]/g, "_");
+}
+
+function parseByteRange(header: string | undefined, size: number): { start: number; end: number } | undefined | null {
+  if (!header) return;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match || size === 0) return null;
+  const [, rawStart, rawEnd] = match;
+  if (!rawStart && !rawEnd) return null;
+  const start = rawStart ? Number(rawStart) : Math.max(0, size - Number(rawEnd));
+  let end = rawEnd && rawStart ? Number(rawEnd) : size - 1;
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start >= size || end < start)
+    return null;
+  end = Math.min(end, size - 1);
+  return { start, end };
 }
 
 export function createJobWebSocketRoutes(service: ToolJobService) {

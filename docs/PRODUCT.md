@@ -137,6 +137,8 @@ The first end-to-end tool is an image resizer using the bundled `sharp` package.
 
 The bundled App Icon Exporter reuses `sharp` to build one local ZIP containing iPhone, iPad, macOS, watchOS, Android legacy/adaptive, and store artwork. It also prepares 1024 px and 1088 px source images for Apple Icon Composer with explicit instructions. It does not claim that one flattened bitmap can become Apple's editable layered `.icon` document.
 
+The bundled Video Downloader declares `yt-dlp` and uses the normal Needs install and opt-in Doctor path when it is absent. It supports one authorized video or a playlist range, selects a self-contained media stream so FFmpeg is not an undeclared dependency, packages multiple results into one local ZIP, and streams large outputs with byte-range support. The trusted runner validates the user's authorization acknowledgement even if browser UI validation is bypassed.
+
 ## Portable Tool Archives
 
 An installed tool exports as one `.forge` file containing its complete directory. Import validates the archive envelope, relative paths, manifest, required entry files, size limits, and identifier collisions before atomically reconstructing the tool under `~/.scriptforge/tools`. Import never loads or executes the runner.

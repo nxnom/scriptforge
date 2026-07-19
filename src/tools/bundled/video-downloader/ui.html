@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Downloader</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #151515; color: #f2f2f2; --surface: #202020; --soft: #292929; --border: #383838; --muted: #9b9b9b; --primary: #5468ff; }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; min-width: 0; min-height: 100%; }
+      body { margin: 0; background: #151515; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      h1, h2, p { margin: 0; }
+      .app { display: grid; min-height: 100vh; grid-template-columns: minmax(300px, .78fr) minmax(360px, 1.22fr); gap: 12px; padding: 14px; }
+      .panel { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+      .controls { display: flex; flex-direction: column; gap: 13px; padding: 16px; }
+      .intro { display: grid; gap: 4px; }
+      h1 { font-size: 20px; letter-spacing: -.025em; }
+      h2 { font-size: 13px; }
+      .muted { color: var(--muted); font-size: 11px; line-height: 1.45; }
+      .field { display: grid; min-width: 0; gap: 6px; color: #cfcfcf; font-size: 11px; font-weight: 700; }
+      input[type="url"], input[type="number"], select { width: 100%; min-width: 0; height: 39px; border: 1px solid #474747; border-radius: 9px; outline: none; background: #191919; color: #f2f2f2; }
+      input[type="url"], input[type="number"] { padding: 0 11px; }
+      select { padding: 0 10px; }
+      input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
+      .playlist { display: grid; gap: 10px; padding: 11px; border: 1px solid #3b3b3b; border-radius: 11px; background: #1b1b1b; }
+      .check { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: start; gap: 8px; color: #ddd; font-size: 11px; line-height: 1.4; cursor: pointer; }
+      .check input { width: 15px; height: 15px; margin: 0; accent-color: var(--primary); }
+      .range { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-left: 25px; }
+      .range.visible { display: grid; }
+      .rights { padding: 10px 11px; border: 1px solid #49412d; border-radius: 10px; background: #29251d; }
+      .rights strong { color: #e8d59f; }
+      .error { display: none; padding: 9px 10px; border: 1px solid #71403d; border-radius: 9px; background: #392422; color: #f2aaa4; font-size: 11px; line-height: 1.4; }
+      .error.visible { display: block; }
+      .run { min-height: 41px; border: 1px solid var(--primary); border-radius: 9px; background: var(--primary); color: white; font-weight: 800; }
+      .run:hover:not(:disabled) { background: #6375ff; }
+      .run:disabled { cursor: not-allowed; opacity: .45; }
+      .workspace { display: flex; min-width: 0; flex-direction: column; }
+      .workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .service-list { display: flex; flex-wrap: wrap; gap: 6px; }
+      .service { border: 1px solid #414141; border-radius: 999px; padding: 4px 8px; color: #b8b8b8; background: #262626; font-size: 9px; }
+      .status { display: grid; gap: 12px; padding: 16px; }
+      .progress-card { display: grid; gap: 8px; padding: 12px; border: 1px solid #3d3d3d; border-radius: 11px; background: #1b1b1b; }
+      .progress-copy { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #d6d6d6; font-size: 11px; }
+      .track { height: 5px; overflow: hidden; border-radius: 999px; background: #3b3b3b; }
+      .track span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s ease; }
+      .empty { display: grid; min-height: 230px; place-items: center; border: 1px dashed #3d3d3d; border-radius: 12px; padding: 28px; color: #858585; text-align: center; }
+      .empty strong { display: block; margin-bottom: 5px; color: #cfcfcf; font-size: 13px; }
+      .result { display: none; gap: 12px; }
+      .result.visible { display: grid; }
+      .result-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 13px; border: 1px solid #475490; border-radius: 11px; background: #242a45; }
+      .result-copy { min-width: 0; }
+      .result-copy strong { display: block; overflow: hidden; margin-bottom: 3px; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .download { border-radius: 8px; padding: 8px 11px; background: var(--primary); color: white; font-size: 10px; font-weight: 800; text-decoration: none; }
+      .media { display: none; width: 100%; max-height: 360px; border: 1px solid #363636; border-radius: 11px; background: #101010; }
+      .media.visible { display: block; }
+      details { margin-top: auto; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+      summary { padding: 10px 16px; cursor: pointer; }
+      pre { max-height: 150px; margin: 0; overflow: auto; padding: 0 16px 14px; white-space: pre-wrap; word-break: break-word; }
+      @media (max-width: 760px) { .app { grid-template-columns: 1fr; } .empty { min-height: 170px; } }
+      @media (max-width: 420px) { .app { padding: 10px; } .controls, .status { padding: 13px; } .result-card { grid-template-columns: 1fr; } .download { text-align: center; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel controls">
+        <header class="intro">
+          <h1>Video Downloader</h1>
+          <p class="muted">Save one video or a complete playlist with local yt-dlp.</p>
+        </header>
+        <label class="field">Video or playlist URL<input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…" /></label>
+        <label class="field">Quality<select id="quality"><option value="best">Best available single file</option><option value="1080">Up to 1080p</option><option value="720">Up to 720p</option><option value="480">Up to 480p</option><option value="small">Smallest available</option><option value="audio">Audio stream only</option></select></label>
+        <div class="playlist">
+          <label class="check"><input id="playlist" type="checkbox" /><span><strong>Download playlist</strong><br /><span class="muted">Enable this when the address points to a playlist.</span></span></label>
+          <div class="range" id="range">
+            <label class="field">Start item<input id="start" type="number" min="1" step="1" placeholder="1" /></label>
+            <label class="field">End item<input id="end" type="number" min="1" step="1" placeholder="All" /></label>
+          </div>
+        </div>
+        <label class="check rights"><input id="authorized" type="checkbox" /><span><strong>I am allowed to save this content.</strong><br /><span class="muted">Download only content you own, public-domain media, or material you have permission to copy. Follow the platform's terms and local law.</span></span></label>
+        <div class="error" id="error" role="alert"></div>
+        <button class="run" id="run" type="button" disabled>Download</button>
+      </section>
+      <section class="panel workspace">
+        <header class="workspace-head">
+          <h2>Local download</h2>
+          <div class="service-list"><span class="service">YouTube</span><span class="service">TikTok</span><span class="service">and other yt-dlp sites</span></div>
+        </header>
+        <div class="status">
+          <div class="progress-card">
+            <div class="progress-copy"><span id="progress-label">Ready</span><span id="progress-value">0%</span></div>
+            <div class="track"><span id="progress-bar"></span></div>
+          </div>
+          <div class="empty" id="empty"><span><strong>Your download will appear here</strong>Playlists with multiple files are automatically packed into one ZIP.</span></div>
+          <div class="result" id="result">
+            <!-- biome-ignore lint/a11y/useMediaCaption: arbitrary user-downloaded video does not provide a caption track URL. -->
+            <video class="media" id="video" controls playsinline></video>
+            <!-- biome-ignore lint/a11y/useMediaCaption: arbitrary user-downloaded audio does not provide a caption track URL. -->
+            <audio class="media" id="audio" controls></audio>
+            <div class="result-card">
+              <span class="result-copy"><strong id="result-name"></strong><span class="muted" id="result-meta"></span></span>
+              <a class="download" id="download" href="about:blank">Save file</a>
+            </div>
+          </div>
+        </div>
+        <details><summary>Run logs</summary><pre id="logs">Logs will appear after the download starts.</pre></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let running = false;
+      const fields = ["url", "quality", "playlist", "start", "end", "authorized"];
+      for (const id of fields) $(id).addEventListener("input", updateForm);
+      $("playlist").addEventListener("change", () => {
+        $("range").classList.toggle("visible", $("playlist").checked);
+        if (!$("playlist").checked) { $("start").value = ""; $("end").value = ""; }
+        updateForm();
+      });
+      function updateForm() {
+        $("run").disabled = running || !$("url").value.trim() || !$("authorized").checked;
+      }
+      $("run").addEventListener("click", () => {
+        const error = validate();
+        if (error) return showError(error);
+        running = true;
+        updateForm();
+        $("run").textContent = "Downloading…";
+        $("error").classList.remove("visible");
+        $("result").classList.remove("visible");
+        $("empty").style.display = "grid";
+        $("logs").textContent = "";
+        for (const media of [$("video"), $("audio")]) {
+          media.pause();
+          media.classList.remove("visible");
+          media.removeAttribute("src");
+          media.load();
+        }
+        setProgress(.01, "Sending request", true);
+        parent.postMessage({
+          source: "scriptforge-tool",
+          type: "run",
+          input: {
+            url: $("url").value.trim(),
+            quality: $("quality").value,
+            playlist: $("playlist").checked,
+            playlistStart: $("start").value,
+            playlistEnd: $("end").value,
+            authorized: true,
+          },
+          files: [],
+        }, "*");
+      });
+      function validate() {
+        try {
+          const parsed = new URL($("url").value.trim());
+          if (!["http:", "https:"].includes(parsed.protocol)) return "Enter an HTTP or HTTPS video address.";
+        } catch { return "Enter a complete video or playlist URL."; }
+        const startText = $("start").value;
+        const endText = $("end").value;
+        const start = Number(startText || 0);
+        const end = Number(endText || 0);
+        if (startText && (!Number.isSafeInteger(start) || start < 1)) return "Playlist start must be a positive whole number.";
+        if (endText && (!Number.isSafeInteger(end) || end < 1)) return "Playlist end must be a positive whole number.";
+        if ($("playlist").checked && start && end && start > end) return "Playlist start must be before playlist end.";
+        if (!$("authorized").checked) return "Confirm that you are allowed to save this content.";
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") setProgress(.02, "Starting yt-dlp");
+        if (message.type === "progress") setProgress(message.value, message.label || "Downloading");
+        if (message.type === "log" && typeof message.message === "string") $("logs").textContent += `${message.message}\n`;
+        if (message.type === "result") showResult(message.outputs?.[0]);
+        if (message.type === "failed") { showError(message.message || "The download failed."); finish(); }
+        if (message.type === "complete") finish();
+      });
+      let displayedProgress = 0;
+      function setProgress(value, label, reset = false) {
+        if (reset) displayedProgress = 0;
+        displayedProgress = Math.max(displayedProgress, Math.max(0, Math.min(1, Number(value) || 0)));
+        const percent = Math.round(displayedProgress * 100);
+        $("progress-label").textContent = label;
+        $("progress-value").textContent = `${percent}%`;
+        $("progress-bar").style.width = `${percent}%`;
+      }
+      function showResult(output) {
+        if (!output) return;
+        $("empty").style.display = "none";
+        $("result-name").textContent = output.name;
+        const count = Number(output.metadata?.files) || 1;
+        $("result-meta").textContent = `${count > 1 ? `${count} videos · ` : ""}${bytes(output.metadata?.bytes || 0)}`;
+        $("download").href = output.downloadUrl;
+        $("download").download = output.name;
+        $("download").textContent = output.mimeType === "application/zip" ? "Save ZIP" : "Save file";
+        for (const media of [$("video"), $("audio")]) { media.pause(); media.classList.remove("visible"); media.removeAttribute("src"); media.load(); }
+        const media = output.mimeType?.startsWith("video/") ? $("video") : output.mimeType?.startsWith("audio/") ? $("audio") : undefined;
+        if (media) { media.src = output.previewUrl; media.classList.add("visible"); media.addEventListener("error", () => { media.classList.remove("visible"); $("logs").textContent += "Browser preview unavailable; the saved file is still ready.\n"; }, { once: true }); }
+        $("result").classList.add("visible");
+      }
+      function showError(message) { $("error").textContent = message; $("error").classList.add("visible"); }
+      function finish() { running = false; $("run").textContent = "Download"; updateForm(); }
+      function bytes(value) { const number = Number(value) || 0; if (number < 1048576) return `${(number / 1024).toFixed(1)} KB`; if (number < 1073741824) return `${(number / 1048576).toFixed(1)} MB`; return `${(number / 1073741824).toFixed(2)} GB`; }
+      window.addEventListener("error", (event) => { showError(event.message || "The interface encountered an error."); finish(); });
+      window.addEventListener("unhandledrejection", (event) => { showError(event.reason?.message || String(event.reason)); finish(); });
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

@@ -31,6 +31,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   "scan-search": ScanSearch,
   "code-2": Code2,
   "app-window": AppWindow,
+  download: Download,
 };
 
 export interface ToolSummary {

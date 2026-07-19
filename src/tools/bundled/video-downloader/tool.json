@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "video-downloader",
+  "version": "1.0.0",
+  "name": "Video Downloader",
+  "description": "Save authorized videos or playlists from YouTube, TikTok, and other supported sites.",
+  "categories": ["Video", "Internet"],
+  "icon": "download",
+  "script": "run.mjs",
+  "interface": {
+    "type": "html",
+    "entry": "ui.html"
+  },
+  "requiredExecutables": [{ "name": "yt-dlp" }],
+  "configuration": []
+}
