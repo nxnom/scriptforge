@@ -9,6 +9,7 @@ describe("CandidateReview", () => {
 
     const preview = screen.getByTitle("Tiny Tool interface preview");
     expect(preview).toBeVisible();
+    expect(preview).toHaveAttribute("allow", "clipboard-write");
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Save tool" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();

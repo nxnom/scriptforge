@@ -53,6 +53,7 @@ export function ToolReview({
             className={`absolute inset-0 size-full border-0 bg-[#1a1a1a] ${tab === "preview" ? "block" : "hidden"}`}
             src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}
             title={`${toolName} interface`}
+            allow="clipboard-write"
             sandbox="allow-scripts allow-downloads"
           />
         )}

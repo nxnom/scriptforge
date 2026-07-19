@@ -88,6 +88,7 @@ export function CandidateReview({
             ref={iframeRef}
             title={`${candidate.name} interface preview`}
             className={`absolute inset-0 size-full border-0 bg-white ${tab === "preview" ? "block" : "hidden"}`}
+            allow="clipboard-write"
             sandbox="allow-scripts allow-downloads"
             srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
           />

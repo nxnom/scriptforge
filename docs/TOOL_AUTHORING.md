@@ -79,6 +79,7 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 - Do not send `File` objects directly across the sandbox boundary. When a tool uses files, read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use files.
 - Disable the action while a run is active and restore it after either `complete` or `failed`.
 - Surface bridge and runtime failures inside the interface, not only in DevTools.
+- The iframe grants `clipboard-write`. Copy buttons may call `navigator.clipboard.writeText` from a direct user click and should retain a selectable-text fallback for browsers or operating systems that still refuse clipboard access.
 
 ## Output previews
 

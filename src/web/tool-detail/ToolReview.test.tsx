@@ -60,6 +60,7 @@ describe("ToolReview", () => {
     );
 
     const preview = screen.getByTitle("Sample Tool interface");
+    expect(preview).toHaveAttribute("allow", "clipboard-write");
     fireEvent.click(screen.getByRole("button", { name: "Script" }));
     expect(preview).toBeInTheDocument();
     expect(preview).toHaveClass("hidden");

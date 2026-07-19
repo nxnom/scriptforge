@@ -61,4 +61,6 @@ The files array may be empty for tools that do not consume local files. When fil
 
 Bind running to an explicit button with type="button". Disable it and show loading immediately; restore it after failed or complete. Handle ready, accepted, progress { value, label }, log { level, message }, result { data?, outputs? }, failed { message }, and complete.
 
+The host grants clipboard-write permission to the iframe. A Copy action may call navigator.clipboard.writeText only from a direct user click. Keep a visible fallback that lets the user select and copy the same text if the browser or operating system still refuses clipboard access.
+
 When outputs exist, they provide relative previewUrl and downloadUrl; render only actions appropriate for those real files. For data results, update the dashboard, reading, table, chart, status, or metadata view that fits the tool. Add media load/error handlers when media outputs exist. Show bridge and runtime failures in the page, not only DevTools. Never use fetch, WebSocket, Node.js, direct filesystem APIs, or hard-coded hosts and ports.`;
