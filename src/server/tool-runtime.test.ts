@@ -3,12 +3,18 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { degrees, PDFDocument } from "pdf-lib";
+import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { toolManifestSchema } from "../tools/manifest";
 import { createApp } from "./app";
 import { ToolConfigurationService } from "./configuration/service";
 import { ToolJobService } from "./jobs/service";
 import { RequirementService } from "./requirements/service";
+
+function filePart(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
 
 describe("tool runtime host", () => {
   let jobsRoot: string;
@@ -33,6 +39,20 @@ describe("tool runtime host", () => {
     await expect(response.text()).resolves.toContain('source: "scriptforge-tool"');
   });
 
+  it("hydrates the bundled PDF editor without a runtime network dependency", async () => {
+    const app = createApp(undefined, { jobsRoot, toolsRoot: resolve("src/tools/bundled") });
+    const response = await app.request("/api/tools/pdf-toolkit/ui");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-security-policy")).toContain("worker-src blob:");
+    const html = await response.text();
+    expect(html).toContain("function getDocument");
+    expect(html).toContain("GlobalWorkerOptions.workerSrc");
+    expect(html).toContain("class PDFDocumentLoadingTask");
+    expect(html).not.toContain("__SCRIPT_FORGE_PDF_WORKER_BASE64__");
+    expect(html).not.toContain("cdn.");
+  });
+
   it("serves read-only script and manifest source without exposing the interface source", async () => {
     const app = createApp(undefined, { jobsRoot, toolsRoot: resolve("src/tools/bundled") });
     const response = await app.request("/api/tools/image-resizer/source");
@@ -54,6 +74,78 @@ describe("tool runtime host", () => {
 
     expect(response.status).toBe(202);
     await expect(response.json()).resolves.toMatchObject({ ok: true, jobId: expect.any(String) });
+  });
+
+  it("merges, reorders, and rotates PDF pages through the bundled runner", async () => {
+    const first = await PDFDocument.create();
+    first.addPage([300, 400]);
+    const second = await PDFDocument.create();
+    second.addPage([500, 600]);
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+
+    const { jobId } = await service.start({
+      toolId: "pdf-toolkit",
+      input: {
+        outputMode: "single",
+        compression: "none",
+        pages: [
+          { fileIndex: 1, pageIndex: 0, rotation: 90, width: 500, height: 600 },
+          { fileIndex: 0, pageIndex: 0, rotation: 0, width: 300, height: 400 },
+        ],
+      },
+      files: [
+        new File([filePart(await first.save())], "first.pdf", { type: "application/pdf" }),
+        new File([filePart(await second.save())], "second.pdf", { type: "application/pdf" }),
+      ],
+    });
+
+    await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    expect(result?.type).toBe("result");
+    if (result?.type !== "result") throw new Error("PDF result was not emitted.");
+    const output = result.outputs[0];
+    if (!output) throw new Error("Merged PDF output was not emitted.");
+    const stored = await service.readOutput(jobId, output.id);
+    const merged = await PDFDocument.load(stored?.data ?? new Uint8Array());
+    expect(merged.getPageCount()).toBe(2);
+    expect(merged.getPage(0).getSize()).toEqual({ width: 500, height: 600 });
+    expect(merged.getPage(0).getRotation()).toEqual(degrees(90));
+  });
+
+  it("compresses a rendered scan into a flattened PDF with honest metadata", async () => {
+    const source = await PDFDocument.create();
+    source.addPage([240, 320]);
+    const raster = await sharp({
+      create: { width: 480, height: 640, channels: 3, background: { r: 84, g: 104, b: 255 } },
+    })
+      .jpeg({ quality: 95 })
+      .toBuffer();
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+
+    const { jobId } = await service.start({
+      toolId: "pdf-toolkit",
+      input: {
+        outputMode: "single",
+        compression: "scan",
+        targetMb: 1,
+        pages: [{ fileIndex: 0, pageIndex: 0, rotation: 0, width: 240, height: 320, rasterFileIndex: 1 }],
+      },
+      files: [
+        new File([filePart(await source.save())], "scan.pdf", { type: "application/pdf" }),
+        new File([filePart(raster)], "page-1.jpg", { type: "image/jpeg" }),
+      ],
+    });
+
+    await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    if (result?.type !== "result") throw new Error("Compressed PDF result was not emitted.");
+    const output = result.outputs[0];
+    if (!output) throw new Error("Compressed PDF output was not emitted.");
+    expect(output.metadata).toMatchObject({ flattened: true, targetMet: true, pages: 1 });
+    const stored = await service.readOutput(jobId, output.id);
+    const compressed = await PDFDocument.load(stored?.data ?? new Uint8Array());
+    expect(compressed.getPageCount()).toBe(1);
+    expect(compressed.getPage(0).getSize()).toEqual({ width: 240, height: 320 });
   });
 
   it("completes a data-only candidate without inventing a file output", async () => {

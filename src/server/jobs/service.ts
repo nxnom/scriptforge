@@ -10,6 +10,7 @@ import type { ToolManifest } from "../../tools/manifest";
 import { findBundledTool } from "../../tools/registry";
 import { ToolConfigurationService } from "../configuration/service";
 import { RequirementService } from "../requirements/service";
+import { hydrateBundledToolUi } from "./bundled-ui-assets";
 import type { ToolJobEvent, ToolJobSnapshot, ToolOutput } from "./types";
 
 const scriptEventSchema = z.discriminatedUnion("type", [
@@ -100,9 +101,11 @@ export class ToolJobService {
     script: string,
     resolved: { config: Record<string, unknown>; secrets: string[] },
   ) {
-    if (files.length > 10) throw new Error("Choose no more than ten files.");
+    if (files.length > 60) throw new Error("Choose no more than 60 files.");
     if (files.some((file) => file.size > 25 * 1024 * 1024))
       throw new Error("Each input file must be 25 MB or smaller.");
+    if (files.reduce((total, file) => total + file.size, 0) > 250 * 1024 * 1024)
+      throw new Error("Choose files totaling 250 MB or less.");
 
     const id = randomUUID();
     const directory = join(this.jobsRoot, id);
@@ -166,7 +169,7 @@ export class ToolJobService {
     const manifest = findBundledTool(toolId);
     if (manifest?.interface.type === "html") {
       const directory = resolveBundledToolDirectory(toolId, this.toolsRoot);
-      return readFile(join(directory, manifest.interface.entry), "utf8");
+      return hydrateBundledToolUi(await readFile(join(directory, manifest.interface.entry), "utf8"));
     }
     const installed = await findInstalledTool(toolId, this.installedToolsRoot);
     if (installed?.manifest.interface.type !== "html") return;

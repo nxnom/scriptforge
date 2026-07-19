@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Toolkit</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        background: #171717;
+        color: #f5f5f5;
+        --panel: #222;
+        --panel-2: #292929;
+        --border: #3a3a3a;
+        --muted: #a3a3a3;
+        --primary: #5468ff;
+        --danger: #ff7979;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: #171717; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: .48; }
+      .app { display: grid; gap: 16px; padding: 18px; }
+      .toolbar, .actions, .file-row, .status-row { display: flex; align-items: center; gap: 10px; }
+      .toolbar { justify-content: space-between; flex-wrap: wrap; }
+      h1 { margin: 0; font-size: clamp(21px, 2.5vw, 28px); letter-spacing: -.03em; }
+      .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+      .button { min-height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; color: #f5f5f5; background: var(--panel-2); font-weight: 650; }
+      .button:hover { border-color: #5a5a5a; }
+      .button.primary { border-color: transparent; background: var(--primary); color: white; }
+      .button.ghost { background: transparent; }
+      .button.icon { width: 34px; min-height: 34px; padding: 0; font-size: 16px; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; min-height: 480px; }
+      .panel { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); overflow: hidden; }
+      .source-panel { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+      .source-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .source-head strong { font-size: 14px; }
+      .file-row { min-width: 0; overflow-x: auto; color: var(--muted); font-size: 12px; scrollbar-width: thin; }
+      .file-pill { padding: 5px 8px; border-radius: 999px; background: #303030; white-space: nowrap; }
+      .dropzone { display: grid; place-items: center; min-height: 420px; margin: 12px; border: 1px dashed #4d4d4d; border-radius: 12px; color: var(--muted); text-align: center; transition: border-color .15s, background .15s; }
+      .dropzone.dragging { border-color: var(--primary); background: rgba(84, 104, 255, .08); }
+      .dropzone strong { display: block; margin-bottom: 6px; color: #ededed; }
+      .pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); align-content: start; gap: 10px; padding: 12px; overflow: auto; }
+      .page { position: relative; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #1b1b1b; transition: border-color .15s, transform .15s; }
+      .page:hover, .page.dragging { border-color: var(--primary); }
+      .page.dragging { opacity: .55; transform: scale(.98); }
+      .thumb { display: grid; place-items: center; height: 150px; border-radius: 6px; overflow: hidden; background: #111; }
+      .thumb canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; box-shadow: 0 3px 12px #0008; }
+      .page-meta { display: flex; justify-content: space-between; gap: 6px; margin-top: 7px; color: var(--muted); font-size: 11px; }
+      .page-tools { display: flex; gap: 4px; margin-top: 7px; }
+      .page-tools button { flex: 1; min-height: 28px; border: 1px solid var(--border); border-radius: 7px; color: #ddd; background: #292929; }
+      .page-tools button:hover { border-color: #686868; }
+      .settings { display: flex; flex-direction: column; gap: 14px; padding: 14px; }
+      .field { display: grid; gap: 7px; }
+      .field label { color: #d8d8d8; font-size: 12px; font-weight: 650; }
+      select, input[type="number"] { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; color: #f5f5f5; background: #1b1b1b; }
+      .hint, .warning { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .warning { padding: 10px; border: 1px solid #765c25; border-radius: 9px; color: #e9c778; background: #362b18; }
+      .run { margin-top: auto; }
+      .run .button { width: 100%; }
+      .progress { height: 5px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: #3a3a3a; }
+      .progress span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s; }
+      .status-row { justify-content: space-between; margin-top: 7px; color: var(--muted); font-size: 11px; }
+      .message { display: none; padding: 10px 12px; border-radius: 9px; font-size: 13px; }
+      .message.visible { display: block; }
+      .message.error { border: 1px solid #754141; color: #ffb2b2; background: #3b2222; }
+      .message.success { border: 1px solid #386145; color: #a7e8b7; background: #203629; }
+      .results { display: none; grid-template-columns: minmax(0, 1fr) 260px; min-height: 430px; }
+      .results.visible { display: grid; }
+      .preview { min-height: 430px; border: 0; width: 100%; height: 100%; background: #111; }
+      .output-list { padding: 12px; border-left: 1px solid var(--border); overflow: auto; }
+      .output-list h2 { margin: 2px 0 12px; font-size: 15px; }
+      .output { display: grid; gap: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 9px; margin-bottom: 8px; background: #1b1b1b; }
+      .output strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+      .output a { color: #aeb7ff; font-size: 12px; text-decoration: none; }
+      details { border-top: 1px solid var(--border); padding-top: 10px; color: var(--muted); font-size: 12px; }
+      pre { max-height: 120px; overflow: auto; white-space: pre-wrap; color: #bbb; }
+      .hidden { display: none; }
+      @media (max-width: 760px) {
+        .app { padding: 12px; }
+        .workspace { grid-template-columns: 1fr; }
+        .settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .settings .run, .settings .warning, .settings details { grid-column: 1 / -1; }
+        .results.visible { grid-template-columns: 1fr; }
+        .output-list { border-left: 0; border-top: 1px solid var(--border); }
+      }
+      @media (max-width: 460px) {
+        .toolbar, .actions { align-items: stretch; }
+        .actions { width: 100%; }
+        .actions .button { flex: 1; }
+        .settings { grid-template-columns: 1fr; }
+        .pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="toolbar">
+        <div>
+          <h1>PDF Toolkit</h1>
+          <p class="subtitle">Merge, arrange, rotate, split, or shrink PDFs locally.</p>
+        </div>
+        <div class="actions">
+          <button class="button ghost hidden" id="reset" type="button">Start over</button>
+          <button class="button primary" id="choose" type="button">Add PDFs</button>
+          <input class="hidden" id="files" type="file" accept="application/pdf,.pdf" multiple />
+        </div>
+      </header>
+
+      <div class="message error" id="error" role="alert"></div>
+      <div class="message success" id="success" role="status"></div>
+
+      <section class="workspace" id="workspace">
+        <div class="panel source-panel">
+          <div class="source-head">
+            <strong id="page-count">Pages</strong>
+            <div class="file-row" id="file-list"></div>
+          </div>
+          <div class="dropzone" id="dropzone">
+            <div><strong>Drop PDF files here</strong><span>Add several PDFs to merge them, then drag pages into order.</span></div>
+          </div>
+          <div class="pages hidden" id="pages"></div>
+        </div>
+
+        <aside class="panel settings">
+          <div class="field">
+            <label for="output-mode">Output</label>
+            <select id="output-mode">
+              <option value="single">One combined PDF</option>
+              <option value="split">Separate PDF for each page</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="compression">File size</label>
+            <select id="compression">
+              <option value="none">Preserve quality and text</option>
+              <option value="scan">Shrink scanned pages</option>
+            </select>
+          </div>
+          <div class="field hidden" id="target-field">
+            <label for="target">Try to fit under (MB)</label>
+            <input id="target" type="number" min="0.1" max="100" step="0.1" placeholder="2" />
+          </div>
+          <p class="hint">Reordering, rotation, merge, and split keep selectable text and links.</p>
+          <p class="warning hidden" id="scan-warning">Scan compression flattens every page into an image. Selectable text, links, forms, and accessibility structure will be lost.</p>
+          <div class="run">
+            <button class="button primary" id="run" type="button" disabled>Create PDF</button>
+            <div class="progress"><span id="progress"></span></div>
+            <div class="status-row"><span id="status">Add a PDF to begin</span><span id="percent">0%</span></div>
+          </div>
+          <details><summary>Run logs</summary><pre id="logs"></pre></details>
+        </aside>
+      </section>
+
+      <section class="panel results" id="results">
+        <iframe class="preview" id="preview" title="PDF result preview"></iframe>
+        <div class="output-list"><h2>Results</h2><div id="outputs"></div></div>
+      </section>
+    </main>
+
+    <script type="module">
+      /*__SCRIPT_FORGE_PDFJS__*/
+
+      const workerBinary = atob("__SCRIPT_FORGE_PDF_WORKER_BASE64__");
+      const workerBytes = Uint8Array.from(workerBinary, (character) => character.charCodeAt(0));
+      const workerUrl = URL.createObjectURL(new Blob([workerBytes], { type: "text/javascript" }));
+      GlobalWorkerOptions.workerSrc = workerUrl;
+
+      const sourceFiles = [];
+      let pages = [];
+      let running = false;
+      let draggedPageId = null;
+      const byId = (id) => document.getElementById(id);
+      const elements = {
+        choose: byId("choose"), files: byId("files"), reset: byId("reset"), dropzone: byId("dropzone"),
+        pages: byId("pages"), fileList: byId("file-list"), pageCount: byId("page-count"), outputMode: byId("output-mode"),
+        compression: byId("compression"), targetField: byId("target-field"), target: byId("target"), scanWarning: byId("scan-warning"),
+        run: byId("run"), progress: byId("progress"), status: byId("status"), percent: byId("percent"), logs: byId("logs"),
+        error: byId("error"), success: byId("success"), workspace: byId("workspace"), results: byId("results"),
+        preview: byId("preview"), outputs: byId("outputs"),
+      };
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") setRunState(true, "Starting PDF operation", 0.05);
+        if (message.type === "progress") setRunState(true, message.label || "Working", message.value);
+        if (message.type === "log") appendLog(message.message);
+        if (message.type === "failed") finishWithError(message.message || "The PDF operation failed.");
+        if (message.type === "cancelled") finishWithError("The PDF operation was cancelled.");
+        if (message.type === "result") showResults(message.outputs || []);
+      });
+
+      elements.choose.addEventListener("click", () => elements.files.click());
+      elements.files.addEventListener("change", async () => {
+        await addFiles([...elements.files.files]);
+        elements.files.value = "";
+      });
+      elements.reset.addEventListener("click", reset);
+      elements.outputMode.addEventListener("change", syncOptions);
+      elements.compression.addEventListener("change", syncOptions);
+      elements.run.addEventListener("click", run);
+      for (const type of ["dragenter", "dragover"]) elements.dropzone.addEventListener(type, (event) => {
+        event.preventDefault(); elements.dropzone.classList.add("dragging");
+      });
+      for (const type of ["dragleave", "drop"]) elements.dropzone.addEventListener(type, (event) => {
+        event.preventDefault(); elements.dropzone.classList.remove("dragging");
+      });
+      elements.dropzone.addEventListener("drop", (event) => addFiles([...event.dataTransfer.files]));
+      elements.dropzone.addEventListener("click", () => elements.files.click());
+      elements.dropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") elements.files.click();
+      });
+      elements.dropzone.tabIndex = 0;
+
+      async function addFiles(files) {
+        clearMessages();
+        const pdfFiles = files.filter((file) => file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"));
+        if (!pdfFiles.length) return showError("Choose one or more PDF files.");
+        setRunState(true, "Reading PDFs", 0.03);
+        try {
+          for (const file of pdfFiles) {
+            const bytes = await file.arrayBuffer();
+            const documentTask = getDocument({ data: new Uint8Array(bytes) });
+            const pdf = await documentTask.promise;
+            if (pages.length + pdf.numPages > 50) throw new Error("This toolkit supports up to 50 pages per run.");
+            const fileIndex = sourceFiles.length;
+            sourceFiles.push({ file, bytes, pdf });
+            for (let pageIndex = 0; pageIndex < pdf.numPages; pageIndex += 1) {
+              const page = await pdf.getPage(pageIndex + 1);
+              const viewport = page.getViewport({ scale: 1 });
+              pages.push({ id: crypto.randomUUID(), fileIndex, pageIndex, rotation: 0, width: viewport.width, height: viewport.height, page });
+            }
+          }
+          renderFileList();
+          await renderPages();
+          setRunState(false, `${pages.length} page${pages.length === 1 ? "" : "s"} ready`, 0);
+        } catch (error) {
+          finishWithError(error?.name === "PasswordException" ? "Password-protected PDFs are not supported yet." : error.message);
+        }
+      }
+
+      async function renderPages() {
+        elements.dropzone.classList.toggle("hidden", pages.length > 0);
+        elements.pages.classList.toggle("hidden", pages.length === 0);
+        elements.reset.classList.toggle("hidden", pages.length === 0);
+        elements.run.disabled = pages.length === 0 || running;
+        elements.pageCount.textContent = pages.length ? `${pages.length} page${pages.length === 1 ? "" : "s"}` : "Pages";
+        elements.pages.replaceChildren();
+        for (const [index, item] of pages.entries()) {
+          const card = document.createElement("article");
+          card.className = "page";
+          card.draggable = true;
+          card.dataset.id = item.id;
+          card.innerHTML = `<div class="thumb"><canvas aria-label="Page ${index + 1} preview"></canvas></div>
+            <div class="page-meta"><span>Page ${index + 1}</span><span>${escapeHtml(sourceFiles[item.fileIndex].file.name)}</span></div>
+            <div class="page-tools">
+              <button type="button" data-action="left" title="Rotate left">↶</button>
+              <button type="button" data-action="previous" title="Move earlier">←</button>
+              <button type="button" data-action="next" title="Move later">→</button>
+              <button type="button" data-action="right" title="Rotate right">↷</button>
+              <button type="button" data-action="remove" title="Remove page">×</button>
+            </div>`;
+          card.addEventListener("dragstart", () => { draggedPageId = item.id; card.classList.add("dragging"); });
+          card.addEventListener("dragend", () => { draggedPageId = null; card.classList.remove("dragging"); });
+          card.addEventListener("dragover", (event) => event.preventDefault());
+          card.addEventListener("drop", async (event) => {
+            event.preventDefault();
+            const from = pages.findIndex((page) => page.id === draggedPageId);
+            const to = pages.findIndex((page) => page.id === item.id);
+            if (from < 0 || to < 0 || from === to) return;
+            pages.splice(to, 0, pages.splice(from, 1)[0]);
+            await renderPages();
+          });
+          card.addEventListener("click", async (event) => {
+            const action = event.target.closest("button")?.dataset.action;
+            if (!action) return;
+            const position = pages.findIndex((page) => page.id === item.id);
+            if (action === "remove") pages.splice(position, 1);
+            if (action === "left") item.rotation = (item.rotation + 270) % 360;
+            if (action === "right") item.rotation = (item.rotation + 90) % 360;
+            if (action === "previous" && position > 0) [pages[position - 1], pages[position]] = [pages[position], pages[position - 1]];
+            if (action === "next" && position < pages.length - 1) [pages[position + 1], pages[position]] = [pages[position], pages[position + 1]];
+            await renderPages();
+          });
+          elements.pages.append(card);
+          await renderThumbnail(item, card.querySelector("canvas"));
+        }
+      }
+
+      async function renderThumbnail(item, canvas) {
+        const viewport = item.page.getViewport({ scale: 0.34, rotation: item.page.rotate + item.rotation });
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        await item.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      }
+
+      function renderFileList() {
+        elements.fileList.replaceChildren(...sourceFiles.map(({ file }) => {
+          const pill = document.createElement("span");
+          pill.className = "file-pill";
+          pill.textContent = file.name;
+          return pill;
+        }));
+      }
+
+      function syncOptions() {
+        const scan = elements.compression.value === "scan";
+        elements.targetField.classList.toggle("hidden", !scan);
+        elements.scanWarning.classList.toggle("hidden", !scan);
+        if (scan) elements.outputMode.value = "single";
+        elements.outputMode.disabled = scan;
+      }
+
+      async function run() {
+        if (!pages.length || running) return;
+        clearMessages();
+        setRunState(true, "Preparing files", 0.02);
+        try {
+          const files = sourceFiles.map(({ file, bytes }) => ({
+            name: file.name, size: bytes.byteLength, type: "application/pdf", lastModified: file.lastModified, data: bytes.slice(0),
+          }));
+          const pageInput = pages.map((page) => ({
+            fileIndex: page.fileIndex, pageIndex: page.pageIndex, rotation: page.rotation, width: page.width, height: page.height,
+          }));
+          if (elements.compression.value === "scan") {
+            for (const [index, page] of pages.entries()) {
+              setRunState(true, `Rendering page ${index + 1} for compression`, 0.03 + (index / pages.length) * 0.2);
+              const viewport = page.page.getViewport({ scale: 1.6, rotation: page.page.rotate + page.rotation });
+              const natural = page.page.getViewport({ scale: 1, rotation: page.page.rotate + page.rotation });
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.ceil(viewport.width);
+              canvas.height = Math.ceil(viewport.height);
+              await page.page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+              const blob = await new Promise((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not render a PDF page.")), "image/jpeg", 0.9));
+              const data = await blob.arrayBuffer();
+              pageInput[index].width = natural.width;
+              pageInput[index].height = natural.height;
+              pageInput[index].rotation = 0;
+              pageInput[index].rasterFileIndex = files.length;
+              files.push({ name: `page-${index + 1}.jpg`, size: data.byteLength, type: "image/jpeg", lastModified: Date.now(), data });
+            }
+          }
+          parent.postMessage({
+            source: "scriptforge-tool", type: "run",
+            input: { pages: pageInput, outputMode: elements.outputMode.value, compression: elements.compression.value, targetMb: elements.target.value },
+            files,
+          }, "*", files.map((file) => file.data));
+        } catch (error) {
+          finishWithError(error.message || "Could not prepare the PDF operation.");
+        }
+      }
+
+      function showResults(outputs) {
+        running = false;
+        elements.run.disabled = false;
+        elements.progress.style.width = "100%";
+        elements.percent.textContent = "100%";
+        elements.status.textContent = "Complete";
+        elements.outputs.replaceChildren();
+        for (const output of outputs) {
+          const item = document.createElement("div");
+          item.className = "output";
+          const size = output.metadata?.bytes ? formatBytes(output.metadata.bytes) : "PDF";
+          item.innerHTML = `<strong>${escapeHtml(output.name)}</strong><span class="hint">${size}${output.metadata?.flattened ? " · flattened" : ""}</span><a href="${encodeURI(output.downloadUrl)}" download="${escapeHtml(output.name)}">Download PDF</a>`;
+          elements.outputs.append(item);
+        }
+        if (outputs[0]?.previewUrl) elements.preview.src = outputs[0].previewUrl;
+        elements.workspace.classList.add("hidden");
+        elements.results.classList.add("visible");
+        elements.reset.textContent = "Edit again";
+        elements.reset.classList.remove("hidden");
+        showSuccess(`Created ${outputs.length} PDF file${outputs.length === 1 ? "" : "s"}.`);
+      }
+
+      function reset() {
+        if (elements.results.classList.contains("visible")) {
+          elements.results.classList.remove("visible");
+          elements.workspace.classList.remove("hidden");
+          elements.preview.removeAttribute("src");
+          elements.reset.textContent = "Start over";
+          clearMessages();
+          return;
+        }
+        sourceFiles.splice(0);
+        pages = [];
+        elements.fileList.replaceChildren();
+        elements.pages.replaceChildren();
+        elements.reset.classList.add("hidden");
+        elements.dropzone.classList.remove("hidden");
+        elements.pages.classList.add("hidden");
+        elements.pageCount.textContent = "Pages";
+        elements.run.disabled = true;
+        setRunState(false, "Add a PDF to begin", 0);
+        clearMessages();
+      }
+
+      function setRunState(active, label, value) {
+        running = active;
+        elements.run.disabled = active || pages.length === 0;
+        const progress = Math.max(0, Math.min(1, Number(value) || 0));
+        elements.progress.style.width = `${progress * 100}%`;
+        elements.percent.textContent = `${Math.round(progress * 100)}%`;
+        elements.status.textContent = label;
+      }
+      function appendLog(message) { elements.logs.textContent += `${message}\n`; }
+      function finishWithError(message) { setRunState(false, "Could not finish", 0); showError(message); }
+      function clearMessages() { elements.error.classList.remove("visible"); elements.success.classList.remove("visible"); }
+      function showError(message) { elements.error.textContent = message; elements.error.classList.add("visible"); elements.success.classList.remove("visible"); }
+      function showSuccess(message) { elements.success.textContent = message; elements.success.classList.add("visible"); elements.error.classList.remove("visible"); }
+      function formatBytes(value) { return value < 1048576 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1048576).toFixed(1)} MB`; }
+      function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]); }
+
+      syncOptions();
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+      window.addEventListener("beforeunload", () => URL.revokeObjectURL(workerUrl));
+    </script>
+  </body>
+</html>

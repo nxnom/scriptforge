@@ -16,7 +16,7 @@ const runMessageSchema = z.object({
         data: z.instanceof(ArrayBuffer),
       }),
     )
-    .max(10),
+    .max(60),
 });
 
 export type ToolRunMessage = z.infer<typeof runMessageSchema>;

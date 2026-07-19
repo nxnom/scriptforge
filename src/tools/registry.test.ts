@@ -20,4 +20,13 @@ describe("bundled tool registry", () => {
   it("returns undefined for unknown tools", () => {
     expect(findBundledTool("missing")).toBeUndefined();
   });
+
+  it("includes the zero-install PDF toolkit", () => {
+    expect(findBundledTool("pdf-toolkit")).toMatchObject({
+      categories: ["PDF", "Documents"],
+      requiredExecutables: [],
+      script: "run.mjs",
+      interface: { type: "html", entry: "ui.html" },
+    });
+  });
 });

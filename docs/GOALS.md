@@ -161,6 +161,7 @@ Status: Pending
 - Keep Library, Tool Detail, and Forge route headers at the same 64px height so navigation does not shift the workspace vertically.
 - Polish the primary demo path.
 - Add only the starter tools needed to strengthen the demo.
+- Ship an offline PDF Toolkit for merge, page reorder, rotation, split, and clearly labeled scan flattening/compression without a system executable.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Record a public demo shorter than three minutes.
 - Capture the primary `/feedback` Codex Session ID.

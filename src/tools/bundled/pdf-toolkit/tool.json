@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "pdf-toolkit",
+  "version": "1.0.0",
+  "name": "PDF Toolkit",
+  "description": "Merge, reorder, rotate, split, and shrink PDFs without uploading them.",
+  "categories": ["PDF", "Documents"],
+  "icon": "file-text",
+  "script": "run.mjs",
+  "interface": {
+    "type": "html",
+    "entry": "ui.html"
+  },
+  "requiredExecutables": [],
+  "configuration": []
+}
