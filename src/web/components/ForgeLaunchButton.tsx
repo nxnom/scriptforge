@@ -12,7 +12,7 @@ export function ForgeLaunchButton() {
 
   const openDialog = useCallback(() => {
     Dialog.show({
-      className: "w-[min(620px,calc(100vw-24px))] max-w-none border border-[#393939] bg-[#242424] p-5",
+      className: "w-[min(620px,calc(100vw-24px))] max-w-none overflow-visible border border-[#393939] bg-[#242424] p-5",
       content: ({ dismiss }) => (
         <ForgePreflightDialog
           dismiss={dismiss}

@@ -72,6 +72,7 @@ Completed and verified:
 - Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
 - Explicit Stop control for the one active in-memory Codex terminal and Start session only when none is active.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
+- Successful Save stops the Forge Codex session and redirects to the installed tool detail page.
 
 Acceptance checks:
 

@@ -26,12 +26,13 @@ describe("Forge candidate save", () => {
     const configuration = new ToolConfigurationService(join(root, "config"), join(root, "secure", "master.key"));
     const jobs = new ToolJobService(join(root, "jobs"), undefined, installedRoot, undefined, configuration);
     const spawnCalls: Parameters<typeof spawnPty>[] = [];
+    const pty = fakePty();
     const service = new ForgeSessionService(
       { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
       stagingRoot,
       (...args) => {
         spawnCalls.push(args);
-        return fakePty();
+        return pty;
       },
       async () => undefined,
       { serverUrl: "http://127.0.0.1:4545", command: "node", args: ["mcp.js"] },
@@ -84,6 +85,8 @@ describe("Forge candidate save", () => {
       body: JSON.stringify({ revision: candidate.revision }),
     });
     expect(saved.status).toBe(201);
+    expect(service.getActiveSession()).toEqual({ sessionId: null });
+    expect(pty.kill).toHaveBeenCalledOnce();
     await expect(readFile(join(installedRoot, "tiny-tool", "ui.html"), "utf8")).resolves.toContain("Tiny Tool");
     await expect(configuration.resolve(runtime.manifest)).resolves.toMatchObject({
       config: { accessToken: "candidate-secret" },

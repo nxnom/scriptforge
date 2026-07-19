@@ -31,6 +31,7 @@ The selected track and pitch above are settled. Record them in the README once t
 - `tool.json` may declare persistent configuration fields but never configuration values. ScriptForge renders those fields in the trusted React shell, encrypts secret values locally, and injects resolved configuration only into the runner request.
 - The Doctor agent detects missing executables, determines installation steps for the current operating system, explains the exact commands, and waits for explicit approval before execution.
 - No generated tool is installed into the library until the user reviews it and clicks Save.
+- A successful Save stops the owning Forge Codex session and redirects directly to the installed tool detail page.
 - User tools saved from Forge or added through Import can be exported as one `.forge` archive or deleted after confirmation. Bundled starter tools cannot be deleted. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
 
 ## Technical Direction

@@ -26,7 +26,7 @@ export function ForgePage() {
 
   const openPreflight = useCallback(() => {
     Dialog.show({
-      className: "w-[min(620px,calc(100vw-24px))] max-w-none border border-[#393939] bg-[#242424] p-5",
+      className: "w-[min(620px,calc(100vw-24px))] max-w-none overflow-visible border border-[#393939] bg-[#242424] p-5",
       content: ({ dismiss }) => (
         <ForgePreflightDialog
           dismiss={dismiss}
@@ -118,7 +118,13 @@ export function ForgePage() {
                 onPanel={showPanel}
                 onCandidate={showCandidate}
               />
-              {candidate && <CandidateReview candidate={candidate} sessionId={visibleSessionId} />}
+              {candidate && (
+                <CandidateReview
+                  candidate={candidate}
+                  sessionId={visibleSessionId}
+                  onSaved={(tool) => navigate(`/tools/${tool.id}`, { replace: true })}
+                />
+              )}
             </div>
           )}
         </div>

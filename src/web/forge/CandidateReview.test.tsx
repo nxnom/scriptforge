@@ -1,11 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { CandidateReview } from "./CandidateReview";
 
 describe("CandidateReview", () => {
   it("keeps the active tester compact without duplicate review controls", () => {
-    render(<CandidateReview candidate={candidate()} sessionId="session-1" />);
+    render(<CandidateReview candidate={candidate()} sessionId="session-1" onSaved={vi.fn()} />);
 
     expect(screen.getByTitle("Tiny Tool interface preview")).toBeVisible();
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();

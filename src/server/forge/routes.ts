@@ -170,6 +170,7 @@ export function createForgeApiRoutes(
             await deleteInstalledTool(installed.manifest.id, installedToolsRoot);
             throw error;
           }
+          service.stop(sessionId);
           return c.json({ ok: true as const, tool: { id: installed.manifest.id, name: installed.manifest.name } }, 201);
         } catch (error) {
           return c.json(

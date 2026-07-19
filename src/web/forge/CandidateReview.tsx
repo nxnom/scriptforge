@@ -10,7 +10,15 @@ import { normalizeToolFile, type ToolRunMessage, useToolHostBridge } from "../to
 
 type CandidateTab = "preview" | "script" | "manifest";
 
-export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCandidateDocument; sessionId: string }) {
+export function CandidateReview({
+  candidate,
+  sessionId,
+  onSaved,
+}: {
+  candidate: ForgeCandidateDocument;
+  sessionId: string;
+  onSaved: (tool: { id: string; name: string }) => void;
+}) {
   const [tab, setTab] = useState<CandidateTab>("preview");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/jobs").POST());
@@ -59,6 +67,7 @@ export function CandidateReview({ candidate, sessionId }: { candidate: ForgeCand
     setSaved(true);
     invalidate("tools");
     toast.success(`${response.data.tool.name} was saved to your library.`);
+    onSaved(response.data.tool);
   };
 
   return (
