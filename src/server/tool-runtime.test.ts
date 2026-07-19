@@ -179,6 +179,7 @@ describe("tool runtime host", () => {
         platforms: ["iphone", "ipad", "macos", "watchos", "android", "icon-composer"],
         fit: "cover",
         background: "#ffffff",
+        androidScale: 0.7,
       },
       files: [new File([filePart(source)], "source.png", { type: "image/png" })],
     });

@@ -25,6 +25,7 @@ try {
   const selected = normalizePlatforms(request.input?.platforms);
   const fit = request.input?.fit === "contain" ? "contain" : "cover";
   const background = validColor(request.input?.background) ? request.input.background : "#ffffff";
+  const androidScale = boundedNumber(request.input?.androidScale, 0.45, 1, 0.62);
   emit({ type: "log", level: "info", message: `Reading ${file.name}` });
   emit({ type: "progress", value: 0.05, label: "Checking source image" });
 
@@ -100,7 +101,7 @@ try {
       entries.push({ path: `Android/app/src/main/res/mipmap-${density}/ic_launcher.png`, data: await render(size) });
       entries.push({
         path: `Android/app/src/main/res/mipmap-${density}/ic_launcher_foreground.png`,
-        data: await render(Math.round(size * 2.25), true, 0.62),
+        data: await render(Math.round(size * 2.25), true, androidScale),
       });
     }
     entries.push({ path: "Android/play-store-icon-512.png", data: await render(512) });
@@ -157,6 +158,11 @@ function normalizePlatforms(value) {
 
 function validColor(value) {
   return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+}
+
+function boundedNumber(value, minimum, maximum, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= minimum && number <= maximum ? number : fallback;
 }
 
 function scaleImages(idiom, points, marketing = true) {
