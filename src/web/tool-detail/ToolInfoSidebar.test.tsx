@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { paletteFor } from "../components/tool-card-palette";
 import { ToolInfoSidebar } from "./ToolInfoSidebar";
 
 afterEach(cleanup);
@@ -26,10 +27,10 @@ describe("ToolInfoSidebar", () => {
 
     const heading = screen.getByRole("heading", { name: "Image Resizer" });
     expect(heading).toBeVisible();
-    expect(heading.closest("section")).toHaveAttribute("data-palette");
+    expect(heading.closest("section")).toHaveAttribute("data-palette", paletteFor("Images").name);
     expect(screen.getAllByText("Built-in")).toHaveLength(2);
-    expect(screen.getAllByText("Built-in")[0]).toHaveClass("bg-[#252a48]", "text-[#aeb7ff]");
-    expect(screen.getByText("Images")).toHaveClass("ring-inset");
+    expect(screen.getAllByText("Built-in")[0]).toHaveClass("bg-[#292c3c]", "text-[#aeb7ff]");
+    expect(screen.getByText("Images")).toHaveClass("bg-[#2d2d2d]", "text-[#b8b8b8]");
     expect(screen.getByText("1.0.0")).toBeVisible();
     expect(screen.getByText("Node.js")).toBeVisible();
     expect(screen.getByText("None required")).toBeVisible();

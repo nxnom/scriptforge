@@ -8,7 +8,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = { image: Image }
 
 export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; requirements: Requirement[] }) {
   const Icon = icons[tool.icon] ?? Wrench;
-  const palette = paletteFor(tool.id);
+  const palette = paletteFor(tool.categories[0] ?? tool.id);
 
   return (
     <aside className="flex min-h-0 w-65 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-[900px]:w-full max-[900px]:overflow-visible max-[900px]:pr-0">
@@ -66,13 +66,16 @@ export function ToolInfoSidebar({ tool, requirements }: { tool: ToolSummary; req
 }
 
 function CategoryBadge({ category }: { category: string }) {
-  const palette = paletteFor(category);
-  return <span className={`rounded-full px-2 py-1 text-[9px] ring-1 ring-inset ${palette.icon}`}>{category}</span>;
+  return (
+    <span className="rounded-full bg-[#2d2d2d] px-2 py-1 text-[9px] text-[#b8b8b8] ring-1 ring-[#3a3a3a] ring-inset">
+      {category}
+    </span>
+  );
 }
 
 function BuiltinBadge() {
   return (
-    <span className="rounded-full border border-[#4655a1] bg-[#252a48] px-2 py-1 text-[9px] text-[#aeb7ff] shadow-[0_0_14px_-7px_#5468ff]">
+    <span className="rounded-full border border-[#3f466d] bg-[#292c3c] px-2 py-1 text-[9px] text-[#aeb7ff]">
       Built-in
     </span>
   );

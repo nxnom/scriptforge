@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToolCard, type ToolSummary } from "./ToolCard";
+import { paletteFor } from "./tool-card-palette";
 
 vi.mock("../api", () => ({
   useWrite: () => ({ trigger: vi.fn() }),
@@ -43,13 +44,13 @@ describe("ToolCard", () => {
     expect(container.querySelector("article > div")?.className).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
   });
 
-  it("uses stable accent, category, status, and built-in colors", () => {
+  it("uses a category accent with neutral labels and semantic status color", () => {
     renderCard({ ...tool(), origin: "bundled" });
 
-    expect(screen.getByRole("article")).toHaveAttribute("data-palette");
-    expect(screen.getByText("Video")).toHaveClass("ring-1");
+    expect(screen.getByRole("article")).toHaveAttribute("data-palette", paletteFor("Video").name);
+    expect(screen.getByText("Video")).toHaveClass("bg-[#2d2d2d]", "text-[#b8b8b8]");
     expect(screen.getByText("Ready")).toHaveClass("bg-[#20382b]");
-    expect(screen.getByText("Built-in")).toHaveClass("bg-[#252a48]", "text-[#aeb7ff]");
+    expect(screen.getByText("Built-in")).toHaveClass("bg-[#292c3c]", "text-[#aeb7ff]");
   });
 });
 

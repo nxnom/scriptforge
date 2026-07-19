@@ -46,7 +46,7 @@ export interface ToolSummary {
 
 export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?: "grid" | "list" }) {
   const Icon = icons[tool.icon] ?? Wrench;
-  const palette = paletteFor(tool.id);
+  const palette = paletteFor(tool.categories[0] ?? tool.id);
   const available = ["ready", "needs-install", "needs-config"].includes(tool.status);
   const className = `group relative h-full border border-[#363636] bg-[linear-gradient(145deg,#262626_0%,#222222_62%)] transition-[border-color,box-shadow] duration-150 ${available ? palette.hover : ""} ${tool.status === "ready" ? "shadow-[0_6px_20px_-8px_#00000070]" : ""}`;
 
@@ -57,7 +57,7 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
     >
       <span
         aria-hidden
-        className={`pointer-events-none absolute top-0 left-5 h-px w-24 bg-gradient-to-r opacity-80 transition-opacity group-hover:opacity-100 ${palette.accent}`}
+        className={`pointer-events-none absolute top-0 left-5 h-px w-24 bg-gradient-to-r opacity-45 transition-opacity group-hover:opacity-75 ${palette.accent}`}
       />
       {available && (
         <Link
@@ -159,24 +159,21 @@ function CardFooter({ tool }: { tool: ToolSummary }) {
 function CategoryBadges({ categories }: { categories: string[] }) {
   return (
     <span className="flex min-w-0 items-center gap-1 overflow-hidden">
-      {categories.map((category) => {
-        const palette = paletteFor(category);
-        return (
-          <span
-            key={category}
-            className={`max-w-24 truncate rounded-full px-2.5 py-1 text-[10px] ring-1 ring-inset ${palette.icon}`}
-          >
-            {category}
-          </span>
-        );
-      })}
+      {categories.map((category) => (
+        <span
+          key={category}
+          className="max-w-24 truncate rounded-full bg-[#2d2d2d] px-2.5 py-1 text-[10px] text-[#b8b8b8] ring-1 ring-[#3a3a3a] ring-inset"
+        >
+          {category}
+        </span>
+      ))}
     </span>
   );
 }
 
 function BuiltinBadge() {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#4655a1] bg-[#252a48] px-2 py-1 text-[10px] text-[#aeb7ff] shadow-[0_0_14px_-7px_#5468ff]">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#3f466d] bg-[#292c3c] px-2 py-1 text-[10px] text-[#aeb7ff]">
       <Box size={10} /> Built-in
     </span>
   );
