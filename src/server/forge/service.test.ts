@@ -176,6 +176,7 @@ describe("Forge terminal sessions", () => {
       service.sendFeedback(sessionId, 1, "Use PNG");
       expect(pty.write).toHaveBeenCalledWith("\x1b[200~Use PNG\x1b[201~");
       expect(events).toContainEqual({ type: "panel", panel: null });
+      expect(service.getSnapshot(sessionId)?.events.some((event) => event.type === "panel")).toBe(false);
       expect(() => service.sendFeedback(sessionId, 1, "Use PNG again")).toThrow("already answered");
       expect(pty.write).toHaveBeenCalledTimes(1);
       await vi.advanceTimersByTimeAsync(50);

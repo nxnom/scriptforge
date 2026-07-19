@@ -120,6 +120,7 @@ export class ForgeSessionService {
     session.panelVersion += 1;
     const panel = { ...request, version: session.panelVersion, createdAt: Date.now() };
     session.openPanelVersion = panel.version;
+    this.removePanelHistory(session);
     this.emit(session, { type: "panel", panel });
     return panel;
   }
@@ -165,9 +166,10 @@ export class ForgeSessionService {
     const session = this.activeSession(sessionId);
     if (session.openPanelVersion !== panelVersion) throw new Error("That Forge question was already answered.");
     session.openPanelVersion = undefined;
+    this.removePanelHistory(session);
     session.pty.write(`\x1b[200~${text}\x1b[201~`);
     if (dismiss) {
-      this.emit(session, { type: "panel", panel: null });
+      this.broadcast(session, { type: "panel", panel: null });
     }
     setTimeout(() => {
       if (!session.exited) session.pty.write("\r");
@@ -195,7 +197,15 @@ export class ForgeSessionService {
   private emit(session: ForgeSession, event: ForgeServerEvent) {
     session.history.push(event);
     if (session.history.length > 1_000) session.history.shift();
+    this.broadcast(session, event);
+  }
+
+  private broadcast(session: ForgeSession, event: ForgeServerEvent) {
     for (const listener of session.listeners) listener(event);
+  }
+
+  private removePanelHistory(session: ForgeSession) {
+    session.history = session.history.filter((event) => event.type !== "panel");
   }
 }
 
