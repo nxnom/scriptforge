@@ -41,17 +41,20 @@ describe("Codex Doctor sessions", () => {
 
     expect(calls).toHaveLength(0);
     const { sessionId } = await service.start("video-tool", { model: "gpt-5.6-sol", effort: "medium" });
-    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool" });
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool", proposal: null });
     expect(calls).toHaveLength(1);
     const token = doctorToken(calls[0]?.[1] ?? []);
     expect(() => service.propose(sessionId, "wrong", proposal())).toThrow("token");
-    service.propose(sessionId, token, proposal());
+    const proposed = service.propose(sessionId, token, proposal());
+    expect(service.getActiveSession()).toEqual({ sessionId, toolId: "video-tool", proposal: proposed });
+    expect(service.getSnapshot(sessionId)?.events.filter((event) => event.type === "proposal")).toHaveLength(1);
     expect(calls).toHaveLength(1);
 
     const events: unknown[] = [];
     service.subscribe(sessionId, (event) => events.push(event));
     service.approve(sessionId);
     expect(events).toContainEqual({ type: "proposal", proposal: null });
+    expect(service.getSnapshot(sessionId)?.events.some((event) => event.type === "proposal")).toBe(false);
     await expect.poll(() => calls.length).toBe(2);
     expect(calls[1]?.[0]).toBe("brew");
     expect(calls[1]?.[1]).toEqual(["install", "ffmpeg"]);
@@ -66,7 +69,7 @@ describe("Codex Doctor sessions", () => {
         message: "Every required executable is now available.",
       });
     service.stop(sessionId);
-    expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null });
+    expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null, proposal: null });
   });
 });
 

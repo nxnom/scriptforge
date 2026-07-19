@@ -89,7 +89,7 @@ export function ToolPage() {
         <RequirementNotice
           requirements={requirements.data.requirements}
           retry={requirements.trigger}
-          launchDoctor={() => navigate(`/doctor/${toolId}`)}
+          launchDoctor={() => navigate(`/doctor/${toolId}`, { state: { autoStart: true } })}
         />
       )}
       <iframe

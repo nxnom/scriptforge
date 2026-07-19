@@ -107,9 +107,9 @@ export class DoctorSessionService {
   getActiveSession(toolId?: string) {
     const session = this.session;
     if (!session || session.exited || (toolId && session.toolId !== toolId)) {
-      return { sessionId: null, toolId: null };
+      return { sessionId: null, toolId: null, proposal: null };
     }
-    return { sessionId: session.id, toolId: session.toolId };
+    return { sessionId: session.id, toolId: session.toolId, proposal: session.proposal ?? null };
   }
 
   subscribe(sessionId: string, listener: Listener) {
@@ -134,6 +134,7 @@ export class DoctorSessionService {
     if (token !== session.token) throw new Error("Invalid Doctor MCP token.");
     if (session.installing) throw new Error("Installation is already running.");
     session.proposal = { ...proposal, createdAt: Date.now() };
+    this.removeProposalHistory(session);
     this.emit(session, { type: "proposal", proposal: session.proposal });
     return session.proposal;
   }
@@ -144,7 +145,8 @@ export class DoctorSessionService {
     if (session.installing) throw new Error("Installation is already running.");
     const commands = session.proposal.commands;
     session.proposal = undefined;
-    this.emit(session, { type: "proposal", proposal: null });
+    this.removeProposalHistory(session);
+    this.broadcast(session, { type: "proposal", proposal: null });
     session.installing = true;
     this.emit(session, { type: "install-start" });
     void this.executeProposal(session, commands);
@@ -154,7 +156,8 @@ export class DoctorSessionService {
     const session = this.active(sessionId);
     if (!session.proposal) throw new Error("There is no installation proposal to reject.");
     session.proposal = undefined;
-    this.emit(session, { type: "proposal", proposal: null });
+    this.removeProposalHistory(session);
+    this.broadcast(session, { type: "proposal", proposal: null });
     paste(
       session.pty,
       `The user rejected the installation proposal.${feedback.trim() ? ` Feedback: ${feedback.trim()}` : ""} Propose safer corrected steps.`,
@@ -241,7 +244,15 @@ export class DoctorSessionService {
   private emit(session: DoctorSession, event: DoctorServerEvent) {
     session.history.push(event);
     if (session.history.length > 1_000) session.history.shift();
+    this.broadcast(session, event);
+  }
+
+  private broadcast(session: DoctorSession, event: DoctorServerEvent) {
     for (const listener of session.listeners) listener(event);
+  }
+
+  private removeProposalHistory(session: DoctorSession) {
+    session.history = session.history.filter((event) => event.type !== "proposal");
   }
 }
 

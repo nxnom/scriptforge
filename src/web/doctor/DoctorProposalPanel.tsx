@@ -35,7 +35,7 @@ export function DoctorProposalPanel({
   });
 
   return (
-    <aside className="flex w-[min(42%,520px)] min-w-90 flex-col overflow-y-auto rounded-2xl border border-[#3a3a3a] bg-[#202020] p-4 max-[900px]:w-full max-[900px]:min-w-0">
+    <aside className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-y-auto rounded-2xl border border-[#3a3a3a] bg-[#202020] p-4">
       <header className="flex items-start gap-3 border-[#343434] border-b pb-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#2d2d2d]">
           <ShieldCheck size={17} />

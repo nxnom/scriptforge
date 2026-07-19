@@ -56,9 +56,9 @@ Before a tool runs, ScriptForge checks every declared executable. When one is mi
 
 The MVP is macOS-first. Unsupported platforms must receive a useful explanation rather than failing silently or running a guessed command.
 
-A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor.
+A missing executable does not reject an otherwise valid saved or imported tool. The library keeps the tool, labels it Needs install, and blocks only execution. ScriptForge first shows the missing names and version constraints with a Retry action so the user may install them independently. Codex Doctor starts only after the user explicitly chooses Launch Codex Doctor; that action navigates to the Doctor workspace and starts the requested session without a second launch click.
 
-Doctor cannot install packages directly. It submits an executable-plus-arguments proposal through its dedicated MCP tool. ScriptForge displays that immutable proposal with Request changes and Install controls; Install is the separate approval boundary that starts `node-pty`. The proposal is dismissed immediately, the terminal shows the exact command and its output, and ScriptForge rechecks every declared requirement when the process ends.
+Doctor cannot install packages directly. It submits an executable-plus-arguments proposal through its dedicated MCP tool. ScriptForge replaces the Codex terminal with that immutable proposal and its Request changes and Install controls, so conversation output and installation approval never compete on screen. Install is the separate approval boundary that starts `node-pty`. The resolved proposal is removed from reconnect history, the terminal returns with the exact command and its output, and ScriptForge rechecks every declared requirement when the process ends.
 
 ## Technical Architecture
 

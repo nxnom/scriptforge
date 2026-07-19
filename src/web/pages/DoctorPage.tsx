@@ -1,7 +1,7 @@
 import { Alert, Button, LoadingButton, toast } from "@geckoui/geckoui";
 import { ArrowLeft, Bot, Square, Stethoscope } from "lucide-react";
-import { useCallback, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import type { DoctorProposal } from "../../server/doctor/types";
 import { invalidate, useRead, useWrite } from "../api";
 import { DoctorProposalPanel } from "../doctor/DoctorProposalPanel";
@@ -11,8 +11,10 @@ import { loadForgePreferences } from "../forge/preferences";
 export function DoctorPage() {
   const { toolId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const autoStarted = useRef(false);
   const [sessionId, setSessionId] = useState<string>();
-  const [proposal, setProposal] = useState<DoctorProposal | null>(null);
+  const [proposal, setProposal] = useState<DoctorProposal | null>();
   const [verification, setVerification] = useState<{ ready: boolean; message: string }>();
   const [startError, setStartError] = useState<string>();
   const tools = useRead((api) => api("tools").GET(), { staleTime: 5_000 });
@@ -29,16 +31,35 @@ export function DoctorPage() {
   const tool = tools.data?.tools.find((candidate) => candidate.id === toolId);
   const activeSessionId = activeSession.data?.toolId === toolId ? activeSession.data?.sessionId : undefined;
   const visibleSessionId = sessionId ?? activeSessionId ?? undefined;
+  const restoredProposal = activeSession.data?.toolId === toolId ? activeSession.data?.proposal : undefined;
+  const visibleProposal = proposal === undefined ? (restoredProposal ?? null) : proposal;
   const missing = requirements.data?.ok
     ? requirements.data.requirements.filter((requirement) => !requirement.available)
     : [];
-  const start = async () => {
+  const start = useCallback(async () => {
     if (!toolId) return;
     setStartError(undefined);
     const response = await startDoctor.trigger({ body: { toolId, ...loadForgePreferences() } });
     if (!response.data?.ok) return setStartError(apiError(response.error));
     setSessionId(response.data.sessionId);
-  };
+    setProposal(null);
+  }, [startDoctor.trigger, toolId]);
+  useEffect(() => {
+    const autoStart = Boolean((location.state as { autoStart?: boolean } | null)?.autoStart);
+    if (!autoStart || autoStarted.current || activeSession.loading || requirements.loading) return;
+    autoStarted.current = true;
+    navigate(location.pathname, { replace: true, state: null });
+    if (!visibleSessionId && missing.length > 0) void start();
+  }, [
+    activeSession.loading,
+    location.pathname,
+    location.state,
+    missing.length,
+    navigate,
+    requirements.loading,
+    start,
+    visibleSessionId,
+  ]);
   const stop = async () => {
     if (!visibleSessionId) return;
     const response = await stopDoctor.trigger({ params: { sessionId: visibleSessionId } });
@@ -57,6 +78,7 @@ export function DoctorPage() {
   );
   const sessionEnded = useCallback(() => {
     setSessionId(undefined);
+    setProposal(null);
     activeSession.trigger();
   }, [activeSession.trigger]);
 
@@ -85,15 +107,20 @@ export function DoctorPage() {
       {startError && <Alert variant="error" condensed title="Doctor could not start" description={startError} />}
 
       {visibleSessionId ? (
-        <div className="flex min-h-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
-          <DoctorTerminal
-            sessionId={visibleSessionId}
-            onProposal={setProposal}
-            onVerification={verified}
-            onSessionEnd={sessionEnded}
-          />
-          {proposal && (
-            <DoctorProposalPanel sessionId={visibleSessionId} proposal={proposal} onDismiss={() => setProposal(null)} />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {visibleProposal ? (
+            <DoctorProposalPanel
+              sessionId={visibleSessionId}
+              proposal={visibleProposal}
+              onDismiss={() => setProposal(null)}
+            />
+          ) : (
+            <DoctorTerminal
+              sessionId={visibleSessionId}
+              onProposal={setProposal}
+              onVerification={verified}
+              onSessionEnd={sessionEnded}
+            />
           )}
         </div>
       ) : (
