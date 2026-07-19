@@ -44,12 +44,12 @@ describe("ToolCard", () => {
     expect(container.querySelector("article > div")?.className).toContain("grid-cols-[auto_minmax(0,1fr)_auto]");
   });
 
-  it("uses a category accent with neutral labels and semantic status color", () => {
+  it("uses a category accent, neutral labels, and no redundant ready badge", () => {
     renderCard({ ...tool(), origin: "bundled" });
 
     expect(screen.getByRole("article")).toHaveAttribute("data-palette", paletteFor("Video").name);
     expect(screen.getByText("Video")).toHaveClass("bg-[#2d2d2d]", "text-[#b8b8b8]");
-    expect(screen.getByText("Ready")).toHaveClass("bg-[#20382b]");
+    expect(screen.queryByText("Ready")).not.toBeInTheDocument();
     expect(screen.getByText("Built-in")).toHaveClass("bg-[#292c3c]", "text-[#aeb7ff]");
   });
 });

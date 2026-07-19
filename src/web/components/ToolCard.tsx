@@ -1,7 +1,6 @@
 import {
   AudioWaveform,
   Box,
-  Check,
   Download,
   Files,
   FileText,
@@ -180,18 +179,16 @@ function BuiltinBadge() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const ready = status === "ready";
+  if (status === "ready") return null;
   const needsInstall = status === "needs-install";
   const needsConfig = status === "needs-config";
-  const Icon = ready ? Check : needsInstall ? Download : needsConfig ? KeyRound : Sparkles;
-  const label = ready ? "Ready" : needsInstall ? "Needs install" : needsConfig ? "Setup required" : "Unavailable";
-  const tone = ready
-    ? "bg-[#20382b] text-[#99d8ae] ring-[#315a42]"
-    : needsInstall
-      ? "bg-[#44331e] text-[#e8b76d] ring-[#6a4e2b]"
-      : needsConfig
-        ? "bg-[#35284a] text-[#c8a8f2] ring-[#584275]"
-        : "bg-[#3d2528] text-[#e69a9f] ring-[#66383d]";
+  const Icon = needsInstall ? Download : needsConfig ? KeyRound : Sparkles;
+  const label = needsInstall ? "Needs install" : needsConfig ? "Setup required" : "Unavailable";
+  const tone = needsInstall
+    ? "bg-[#44331e] text-[#e8b76d] ring-[#6a4e2b]"
+    : needsConfig
+      ? "bg-[#35284a] text-[#c8a8f2] ring-[#584275]"
+      : "bg-[#3d2528] text-[#e69a9f] ring-[#66383d]";
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 rounded-full py-1 pr-2.5 pl-2 text-[10px] font-[650] ring-1 ring-inset ${tone}`}
