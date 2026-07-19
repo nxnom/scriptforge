@@ -46,15 +46,14 @@
       .dropzone { display: grid; place-items: center; min-height: 420px; margin: 12px; border: 1px dashed #4d4d4d; border-radius: 12px; color: var(--muted); text-align: center; transition: border-color .15s, background .15s; }
       .dropzone.dragging { border-color: var(--primary); background: rgba(84, 104, 255, .08); }
       .dropzone strong { display: block; margin-bottom: 6px; color: #ededed; }
-      .pages { display: grid; width: 100%; grid-auto-flow: column; grid-auto-columns: 160px; grid-template-rows: max-content; align-content: start; align-items: start; gap: 10px; padding: 14px 16px 18px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scroll-padding-inline: 16px; scrollbar-gutter: stable; touch-action: pan-x; }
+      .pages { position: relative; display: grid; width: 100%; min-height: 0; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-content: start; align-items: start; gap: 12px; padding: 14px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scroll-padding-block: 14px; scrollbar-gutter: stable; }
       .page { position: relative; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: #1b1b1b; transition: border-color .15s, transform .15s; }
       .page:hover, .page.dragging { border-color: var(--primary); }
       .page.dragging { opacity: .55; transform: scale(.98); }
-      .thumb { display: grid; place-items: center; height: 150px; border-radius: 6px; overflow: hidden; background: #111; }
+      .thumb { position: relative; display: grid; place-items: center; height: 180px; border-radius: 6px; overflow: hidden; background: #111; }
       .thumb canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; box-shadow: 0 3px 12px #0008; }
-      .page-meta { display: flex; justify-content: space-between; gap: 6px; margin-top: 7px; color: var(--muted); font-size: 11px; }
-      .page-meta span { min-width: 0; }
-      .page-meta span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .page-number { position: absolute; top: 7px; left: 7px; z-index: 1; min-width: 25px; padding: 3px 6px; border-radius: 999px; color: white; background: #111d; font-size: 10px; font-weight: 700; text-align: center; backdrop-filter: blur(6px); }
+      .page-meta { margin-top: 7px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
       .page-tools { display: flex; gap: 4px; margin-top: 7px; }
       .page-tools button { flex: 1; min-height: 28px; border: 1px solid var(--border); border-radius: 7px; color: #ddd; background: #292929; }
       .page-tools button:hover { border-color: #686868; }
@@ -108,7 +107,7 @@
         .actions { width: 100%; }
         .actions .button { flex: 1; }
         .settings { grid-template-columns: 1fr; }
-        .pages { grid-auto-columns: 148px; }
+        .pages { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); padding: 10px; }
       }
     </style>
   </head>
@@ -248,11 +247,6 @@
       elements.dropzone.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") elements.files.click();
       });
-      elements.pages.addEventListener("wheel", (event) => {
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || elements.pages.scrollWidth <= elements.pages.clientWidth) return;
-        event.preventDefault();
-        elements.pages.scrollLeft += event.deltaY;
-      }, { passive: false });
       elements.dropzone.tabIndex = 0;
 
       async function addFiles(files) {
@@ -282,7 +276,7 @@
       }
 
       async function renderPages() {
-        const previousScroll = elements.pages.scrollLeft;
+        const previousScroll = elements.pages.scrollTop;
         const thumbnailRenders = [];
         elements.dropzone.classList.toggle("hidden", pages.length > 0);
         elements.pages.classList.toggle("hidden", pages.length === 0);
@@ -297,8 +291,8 @@
           card.draggable = true;
           card.dataset.id = item.id;
           card.dataset.index = String(index + 1);
-          card.innerHTML = `<div class="thumb"><canvas aria-label="Page ${index + 1} preview"></canvas></div>
-            <div class="page-meta"><span>Page ${index + 1}</span><span>${escapeHtml(sourceFiles[item.fileIndex].file.name)}</span></div>
+          card.innerHTML = `<div class="thumb"><span class="page-number">${index + 1}</span><canvas aria-label="Page ${index + 1} preview"></canvas></div>
+            <div class="page-meta" title="${escapeHtml(sourceFiles[item.fileIndex].file.name)}">${escapeHtml(sourceFiles[item.fileIndex].file.name)}</div>
             <div class="page-tools">
               <button type="button" data-action="left" title="Rotate left">↶</button>
               <button type="button" data-action="right" title="Rotate right">↷</button>
@@ -348,9 +342,9 @@
           elements.pages.append(card);
           thumbnailRenders.push(renderThumbnail(item, card.querySelector("canvas")));
         }
-        elements.pages.scrollLeft = Math.min(
+        elements.pages.scrollTop = Math.min(
           previousScroll,
-          Math.max(0, elements.pages.scrollWidth - elements.pages.clientWidth),
+          Math.max(0, elements.pages.scrollHeight - elements.pages.clientHeight),
         );
         await Promise.all(thumbnailRenders);
       }
@@ -362,7 +356,7 @@
         const card = elements.pages.querySelector(`[data-index="${pageNumber}"]`);
         if (!card) return;
         elements.pages.scrollTo({
-          left: card.offsetLeft - Math.max(0, (elements.pages.clientWidth - card.offsetWidth) / 2),
+          top: card.offsetTop - Math.max(0, (elements.pages.clientHeight - card.offsetHeight) / 2),
           behavior: "smooth",
         });
       }
