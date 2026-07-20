@@ -148,6 +148,7 @@ If the repository is public, include an appropriate license and ensure no secret
 14. Tool packages contain `tool.json`, their execution files, and `ui.html`; do not generate separate test files inside a tool. After any necessary questions are resolved, Codex must exercise the standalone runner with realistic temporary input, fix failures, rerun it, and report the successful check before presenting the candidate. The exact candidate revision is then tested through an explicit user-approved run in the sandboxed tester iframe before Save. Keep automated tests focused on ScriptForge's host bridge, runner, validation, and safety boundaries.
 15. Style the React ScriptForge shell with Tailwind utility classes directly in components. Keep global CSS limited to imports, design tokens, base element rules, and targeted GeckoUI theme overrides. Self-contained tool `ui.html` files may use ordinary CSS classes and do not depend on Tailwind.
 16. Build manifest-driven configuration forms with the same React Hook Form, Zod, and GeckoUI rules as other application forms. Secret fields never have defaults, are never prefilled after saving, and remain unchanged when an empty replacement is submitted.
+17. Keep icon, badge, and avatar layout selectors isolated from descendant typography selectors. Never use a broad rule such as `.card span` when the component also contains a span-based icon wrapper; give the text wrapper a dedicated class and verify that every glyph remains horizontally and vertically centered after the full cascade is applied.
 
 ## Evidence Log
 
