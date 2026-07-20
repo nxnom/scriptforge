@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-20
+
 ### Changed
 
 - Forge authoring guidance now requires folder-based tools to pair manual paths with a custom, runner-backed folder browser.
@@ -42,7 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/nxnom/scriptforge/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/nxnom/scriptforge/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nxnom/scriptforge/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nxnom/scriptforge/releases/tag/v0.1.0
