@@ -149,4 +149,6 @@ The bundled image tools accept local PNG, JPEG, or WebP files, so no separate sa
 
 ## License and Acknowledgements
 
-A project license will be selected before publishing the judging repository. Built with OpenAI Codex, GPT-5.6, Hono, React, GeckoUI, Spoosh, Sharp, `pdf-lib` (MIT), PDF.js (Apache-2.0), [FFmpeg](https://ffmpeg.org/), [Silicon](https://github.com/Aloxaf/silicon) (MIT), and [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense).
+ScriptForge is released under the [MIT License](./LICENSE). Release history is recorded in the [changelog](./CHANGELOG.md).
+
+Built with OpenAI Codex, GPT-5.6, Hono, React, GeckoUI, Spoosh, Sharp, `pdf-lib` (MIT), PDF.js (Apache-2.0), [FFmpeg](https://ffmpeg.org/), [Silicon](https://github.com/Aloxaf/silicon) (MIT), and [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Unlicense).

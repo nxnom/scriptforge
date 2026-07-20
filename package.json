@@ -2,12 +2,30 @@
   "name": "scriptforge",
   "version": "0.1.0",
   "description": "A local app store for utilities forged on demand with Codex.",
+  "keywords": [
+    "codex",
+    "local-first",
+    "productivity",
+    "utilities"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nxnom/scriptforge.git"
+  },
+  "homepage": "https://github.com/nxnom/scriptforge#readme",
+  "bugs": {
+    "url": "https://github.com/nxnom/scriptforge/issues"
+  },
   "type": "module",
   "bin": {
     "scriptforge": "dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "node scripts/clean-dist.mjs && pnpm build:web && pnpm build:server && pnpm build:tools",
