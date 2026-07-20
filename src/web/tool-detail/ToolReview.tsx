@@ -1,5 +1,5 @@
-import { Spinner } from "@geckoui/geckoui";
-import { Code2, Eye, FileJson } from "lucide-react";
+import { Button, Spinner, Tooltip } from "@geckoui/geckoui";
+import { Code2, Eye, FileJson, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
 import { useRead } from "../api";
@@ -30,26 +30,43 @@ export function ToolReview({
   launchDoctor: () => void;
 }) {
   const [tab, setTab] = useState<ToolTab>("preview");
+  const [previewKey, setPreviewKey] = useState(0);
   const source = useRead((api) => api("tools/:toolId/source").GET({ params: { toolId } }), { staleTime: 30_000 });
   const sourceData = source.data?.ok ? source.data : undefined;
   const selectedSource = tab === "script" ? sourceData?.scriptSource : sourceData?.manifestSource;
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <nav className="flex h-10 shrink-0 items-stretch gap-6 border-[#333] border-b px-1" aria-label="Tool files">
-        <TabButton active={tab === "preview"} onClick={() => setTab("preview")} icon={<Eye size={14} />}>
-          Preview
-        </TabButton>
-        <TabButton active={tab === "script"} onClick={() => setTab("script")} icon={<Code2 size={14} />}>
-          Script
-        </TabButton>
-        <TabButton active={tab === "manifest"} onClick={() => setTab("manifest")} icon={<FileJson size={14} />}>
-          Details
-        </TabButton>
+      <nav className="flex h-10 shrink-0 items-center border-[#333] border-b px-1" aria-label="Tool files">
+        <div className="flex h-full min-w-0 flex-1 items-stretch gap-6">
+          <TabButton active={tab === "preview"} onClick={() => setTab("preview")} icon={<Eye size={14} />}>
+            Preview
+          </TabButton>
+          <TabButton active={tab === "script"} onClick={() => setTab("script")} icon={<Code2 size={14} />}>
+            Script
+          </TabButton>
+          <TabButton active={tab === "manifest"} onClick={() => setTab("manifest")} icon={<FileJson size={14} />}>
+            Details
+          </TabButton>
+        </div>
+        {tab === "preview" && toolReady && (
+          <Tooltip content="Reload preview" triggerAsChild>
+            <Button
+              aria-label="Reload preview"
+              variant="icon"
+              size="xs"
+              disabled={!listening || configurationLoading}
+              onClick={() => setPreviewKey((current) => current + 1)}
+            >
+              <RotateCw size={13} />
+            </Button>
+          </Tooltip>
+        )}
       </nav>
       <div className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-2xl border border-[#333] bg-[#151515]">
         {toolReady && (
           <iframe
+            key={previewKey}
             ref={iframeRef}
             className={`absolute inset-0 size-full border-0 bg-[#1a1a1a] ${tab === "preview" ? "block" : "hidden"}`}
             src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}

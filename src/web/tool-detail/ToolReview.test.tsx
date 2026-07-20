@@ -62,10 +62,34 @@ describe("ToolReview", () => {
     const preview = screen.getByTitle("Sample Tool interface");
     expect(preview).toHaveAttribute("allow", "clipboard-read; clipboard-write");
     expect(preview).toHaveAttribute("sandbox", "allow-downloads allow-forms allow-modals allow-scripts");
+    expect(screen.getByRole("button", { name: "Reload preview" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Script" }));
     expect(preview).toBeInTheDocument();
     expect(preview).toHaveClass("hidden");
+    expect(screen.queryByRole("button", { name: "Reload preview" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(screen.getByTitle("Sample Tool interface")).toBe(preview);
+  });
+
+  it("reloads the installed tool preview iframe", () => {
+    const iframeRef = createRef<HTMLIFrameElement>();
+    render(
+      <ToolReview
+        toolId="sample-tool"
+        toolName="Sample Tool"
+        toolReady
+        listening
+        configurationLoading={false}
+        iframeRef={iframeRef}
+        requirements={[]}
+        retryRequirements={vi.fn()}
+        launchDoctor={vi.fn()}
+      />,
+    );
+    const preview = screen.getByTitle("Sample Tool interface");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload preview" }));
+
+    expect(screen.getByTitle("Sample Tool interface")).not.toBe(preview);
   });
 });
