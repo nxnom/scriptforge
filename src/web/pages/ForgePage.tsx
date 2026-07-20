@@ -24,6 +24,7 @@ export function ForgePage() {
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
   const [candidateTested, setCandidateTested] = useState(false);
+  const [savedCandidateRevision, setSavedCandidateRevision] = useState<string>();
   const [savedToolId, setSavedToolId] = useState<string>();
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
   const drafts = useRead((api) => api("forge/sessions").GET(), { staleTime: 0 });
@@ -42,6 +43,7 @@ export function ForgePage() {
     setPanel(null);
     setCandidate(null);
     setCandidateTested(false);
+    setSavedCandidateRevision(undefined);
     setSavedToolId(undefined);
   }, []);
   const openPreflight = useCallback(() => {
@@ -114,6 +116,7 @@ export function ForgePage() {
     setPanel(null);
     setCandidate(null);
     setCandidateTested(false);
+    setSavedCandidateRevision(undefined);
     setSavedToolId(undefined);
     invalidate("forge/sessions");
   }, []);
@@ -164,6 +167,7 @@ export function ForgePage() {
     invalidate("tools");
     invalidate("forge/sessions/active");
     setSavedToolId(response.data.tool.id);
+    setSavedCandidateRevision(candidate.revision);
     setCandidateTested(false);
     toast.success(
       response.data.action === "updated"
@@ -185,7 +189,7 @@ export function ForgePage() {
                 <Square size={12} /> Stop session
               </LoadingButton>
             )}
-            {visibleSessionId && candidate && (
+            {visibleSessionId && candidate && candidate.revision !== savedCandidateRevision && (
               <LoadingButton
                 variant="outlined"
                 size="sm"

@@ -1,11 +1,12 @@
 import { Button, LoadingButton, Tooltip } from "@geckoui/geckoui";
-import { Pencil, Square } from "lucide-react";
+import { Pencil, Save, Square } from "lucide-react";
 
 export function ToolUpdateActions({
   installed,
   sessionActive,
   candidateReady,
   candidateTested,
+  candidateSaved,
   stopping,
   saving,
   start,
@@ -16,6 +17,7 @@ export function ToolUpdateActions({
   sessionActive: boolean;
   candidateReady: boolean;
   candidateTested: boolean;
+  candidateSaved: boolean;
   stopping: boolean;
   saving: boolean;
   start: () => void;
@@ -36,7 +38,7 @@ export function ToolUpdateActions({
           <Square size={12} /> Stop session
         </LoadingButton>
       )}
-      {sessionActive && candidateReady && (
+      {sessionActive && candidateReady && !candidateSaved && (
         <LoadingButton
           size="sm"
           variant="outlined"
@@ -45,7 +47,7 @@ export function ToolUpdateActions({
           title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
           onClick={save}
         >
-          <Pencil size={13} /> Update tool
+          <Save size={13} /> Save changes
         </LoadingButton>
       )}
     </>

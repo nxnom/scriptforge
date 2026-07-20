@@ -25,6 +25,7 @@ export function ToolPage() {
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
   const [candidateTested, setCandidateTested] = useState(false);
+  const [savedCandidateRevision, setSavedCandidateRevision] = useState<string>();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
   const requirements = useRead((api) => api("tools/:toolId/requirements").GET({ params: { toolId: toolId ?? "" } }), {
@@ -93,6 +94,7 @@ export function ToolPage() {
     setPanel(null);
     setCandidate(null);
     setCandidateTested(false);
+    setSavedCandidateRevision(undefined);
     invalidate("forge/sessions/active");
   }, []);
   const openUpdate = () => {
@@ -112,6 +114,7 @@ export function ToolPage() {
             setPanel(null);
             setCandidate(null);
             setCandidateTested(false);
+            setSavedCandidateRevision(undefined);
             setDoctorOpen(false);
             invalidate("forge/sessions/active");
           }}
@@ -149,6 +152,7 @@ export function ToolPage() {
     });
     if (!response.data?.ok) return toast.error(apiErrorMessage(response.error, "The tool could not be updated."));
     invalidate("tools");
+    setSavedCandidateRevision(candidate.revision);
     setCandidateTested(false);
     toast.success(`${response.data.tool.name} was updated.`);
   };
@@ -169,6 +173,7 @@ export function ToolPage() {
                 sessionActive={Boolean(visibleUpdateId)}
                 candidateReady={Boolean(candidate)}
                 candidateTested={candidateTested}
+                candidateSaved={candidate?.revision === savedCandidateRevision}
                 stopping={stopUpdate.loading}
                 saving={saveUpdate.loading}
                 start={openUpdate}

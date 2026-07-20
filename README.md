@@ -30,7 +30,7 @@ The local application shell, bundled image-resizer workflow, full MCP-guided For
 - Kickoff-authorized standalone runner checks before Codex can present a candidate
 - Candidate tester with lifecycle events, bridge diagnostics, zero-file runs, and data or file results
 - Exact tested-revision saving into the filesystem-backed library
-- Save keeps the Forge Codex session open and changes the approval action to Save changes so the user can keep refining until they click Stop
+- Save keeps the Forge Codex session open, hides the completed save action for that exact revision, and uses Save changes consistently when later revisions are ready in Forge or an installed-tool update
 - Dynamic one-to-three-category manifests, with existing category reuse, legacy installed-tool compatibility, category search, and responsive category filters
 - Concurrent scoped Codex terminals: one new-tool session plus one update session per installed tool, each with its own Stop control
 - The Start Forge dialog defaults to a fresh session but can select, resume, or inline-confirm deletion of stopped/interrupted sessions; deletion removes the cached option immediately with automatic rollback on failure, and resumed work continues the exact Codex conversation in its preserved staging directory
