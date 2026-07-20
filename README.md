@@ -14,7 +14,9 @@ The result is one local workspace for everyday image, document, media, and file 
 
 ## Demo
 
-The public video demonstration will be linked here before the Build Week submission deadline.
+[![Watch the ScriptForge demo](./media/thumbnail.png)](https://youtu.be/BfAgOkKB_R0?si=pHGSvFtccHbtdrgG)
+
+[Watch the public demo on YouTube](https://youtu.be/BfAgOkKB_R0?si=pHGSvFtccHbtdrgG) · [View the repository video](./media/scriptforge.mp4)
 
 ## Key Features
 
