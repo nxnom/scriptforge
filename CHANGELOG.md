@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-20
+
 ### Added
 
 - Built-in SMTP Campaign Sender for personalized CSV campaigns sent directly through a user-configured SMTP server, with encrypted credentials, attachments, throttling, test sends, and downloadable acceptance reports.
@@ -52,7 +54,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/nxnom/scriptforge/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/nxnom/scriptforge/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/nxnom/scriptforge/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nxnom/scriptforge/compare/v0.1.0...v0.1.1
