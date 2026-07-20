@@ -10,7 +10,7 @@ type ForgeMcpPublishers = {
 
 export function createForgeMcpServer(publish: ForgeMcpPublishers, options: { allowDependencyInstalls?: boolean } = {}) {
   const server = new McpServer(
-    { name: "scriptforge", version: "0.1.0" },
+    { name: "scriptforge", version: "0.1.1" },
     { instructions: createForgeMcpInstructions(options) },
   );
   server.registerTool(

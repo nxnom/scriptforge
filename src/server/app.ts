@@ -92,7 +92,7 @@ export function createApiRoutes(
       c.json({
         ok: true as const,
         name: "ScriptForge",
-        version: "0.1.0",
+        version: "0.1.1",
       }),
     )
     .get("/tools", async (c) => {

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-20
+
 ### Added
 
 - MIT project license.
@@ -25,5 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/nxnom/scriptforge/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nxnom/scriptforge/releases/tag/v0.1.0
