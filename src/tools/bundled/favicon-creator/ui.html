@@ -50,7 +50,6 @@
       input[type="text"], select { padding: 7px 9px; }
       input[type="color"] { padding: 4px; }
       input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
-      .color-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .progress { display: none; gap: 7px; }
       .progress.visible { display: grid; }
       .progress-copy { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
@@ -101,8 +100,8 @@
       summary { padding: 10px 15px; cursor: pointer; }
       pre { max-height: 110px; margin: 0; overflow: auto; padding: 0 15px 13px; white-space: pre-wrap; }
       @media (max-width: 780px) { .app { grid-template-columns: 1fr; } .preview-stage { min-height: 200px; } }
-      @media (max-width: 520px) { .app { padding: 11px; } .preview-stage, .artwork-grid, .packs { grid-template-columns: 1fr; } .fields { grid-template-columns: 1fr; } label.wide { grid-column: auto; } .color-row { grid-template-columns: repeat(3, 1fr); } }
-      @media (max-width: 360px) { .color-row { grid-template-columns: 1fr; } .result { align-items: stretch; flex-direction: column; } .download { text-align: center; } }
+      @media (max-width: 520px) { .app { padding: 11px; } .preview-stage, .artwork-grid, .packs { grid-template-columns: 1fr; } .fields { grid-template-columns: 1fr; } label.wide { grid-column: auto; } }
+      @media (max-width: 360px) { .result { align-items: stretch; flex-direction: column; } .download { text-align: center; } }
     </style>
   </head>
   <body>
@@ -123,12 +122,7 @@
         <div class="fields">
           <label class="field wide">App or site name<input id="app-name" type="text" maxlength="60" value="My App"></label>
           <label class="field">Short name<input id="short-name" type="text" maxlength="24" value="My App"></label>
-          <label class="field">Artwork fit<select id="fit"><option value="cover">Fill square — crop edges</option><option value="contain">Fit inside — add background</option></select></label>
-        </div>
-        <div class="color-row">
-          <label class="field">Light background<input id="light-background" type="color" value="#ffffff"></label>
-          <label class="field">Dark background<input id="dark-background" type="color" value="#171717"></label>
-          <label class="field">Theme color<input id="theme-color" type="color" value="#5468ff"></label>
+          <label class="field">Artwork fit<select id="fit"><option value="cover">Fill square — crop edges</option><option value="contain">Fit inside — add safe padding</option></select></label>
         </div>
         <div class="progress" id="progress"><div class="progress-copy"><span id="progress-label">Starting…</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
         <div class="error" id="error" role="alert"></div>
@@ -137,8 +131,8 @@
       <section class="panel output">
         <header class="output-head"><h2>Live theme preview</h2><p class="muted">The adaptive SVG follows each visitor’s browser color scheme.</p></header>
         <div class="preview-stage">
-          <div class="browser" id="light-browser"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="light-stage" alt="Light theme favicon preview"><span class="tab-title" id="light-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page" id="light-page"><div class="page-copy"><strong>Light background</strong><span>Theme color accents the active tab.</span></div></div></div>
-          <div class="browser dark" id="dark-browser"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="dark-stage" alt="Dark theme favicon preview"><span class="tab-title" id="dark-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page" id="dark-page"><div class="page-copy"><strong>Dark background</strong><span>Theme color accents the active tab.</span></div></div></div>
+          <div class="browser"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="light-stage" alt="Light theme favicon preview"><span class="tab-title" id="light-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page"><div class="page-copy"><strong>Light browser theme</strong><span>Your favicon appears in the active tab above.</span></div></div></div>
+          <div class="browser dark"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="dark-stage" alt="Dark theme favicon preview"><span class="tab-title" id="dark-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page"><div class="page-copy"><strong>Dark browser theme</strong><span>Your favicon appears in the active tab above.</span></div></div></div>
         </div>
         <div class="packs">
           <div class="pack"><span class="pack-icon">W</span><span class="pack-copy"><strong>Web browsers</strong><span>SVG, multi-size ICO, and PNG fallbacks</span></span></div>
@@ -176,15 +170,6 @@
         $("dark-artwork").classList.toggle("visible", hasDark);
         $("light-stage").src = urls.light || emptyPreview("#ffffff");
         $("dark-stage").src = (hasDark && urls.dark) || urls.light || emptyPreview("#171717");
-        const lightBackground = $("light-background").value;
-        const darkBackground = $("dark-background").value;
-        const themeColor = $("theme-color").value;
-        $("light-stage").style.setProperty("--icon-bg", lightBackground);
-        $("dark-stage").style.setProperty("--icon-bg", darkBackground);
-        $("light-page").style.setProperty("--page-bg", lightBackground);
-        $("dark-page").style.setProperty("--page-bg", darkBackground);
-        $("light-browser").style.setProperty("--theme", themeColor);
-        $("dark-browser").style.setProperty("--theme", themeColor);
         $("light-title").textContent = $("app-name").value.trim() || "My App";
         $("dark-title").textContent = $("app-name").value.trim() || "My App";
         $("run").disabled = running || !files.light || (hasDark && !files.dark);
@@ -196,7 +181,7 @@
         for (const name of ["dragleave", "drop"]) $(`${theme}-drop`).addEventListener(name, (event) => { event.preventDefault(); $(`${theme}-drop`).classList.remove("dragging"); });
         $(`${theme}-drop`).addEventListener("drop", (event) => choose(theme, event.dataTransfer.files[0]));
       }
-      for (const id of ["has-dark", "app-name", "light-background", "dark-background", "theme-color", "fit"]) $(id).addEventListener("input", update);
+      for (const id of ["has-dark", "app-name", "fit"]) $(id).addEventListener("input", update);
 
       $("run").addEventListener("click", async () => {
         const hasDark = $("has-dark").checked;
@@ -206,7 +191,7 @@
         try {
           const selected = hasDark ? [files.light, files.dark] : [files.light];
           const descriptors = await Promise.all(selected.map(async (file) => ({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified, data: await file.arrayBuffer() })));
-          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { hasDark, appName: $("app-name").value, shortName: $("short-name").value, fit: $("fit").value, lightBackground: $("light-background").value, darkBackground: $("dark-background").value, themeColor: $("theme-color").value }, files: descriptors }, "*");
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { hasDark, appName: $("app-name").value, shortName: $("short-name").value, fit: $("fit").value }, files: descriptors }, "*");
         } catch (error) { showError(error instanceof Error ? error.message : "The artwork could not be read."); finish(); }
       });
 

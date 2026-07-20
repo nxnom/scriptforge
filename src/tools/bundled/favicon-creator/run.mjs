@@ -27,9 +27,9 @@ try {
   const appName = cleanName(request.input?.appName) || "My App";
   const shortName = cleanName(request.input?.shortName) || appName.slice(0, 12);
   const fit = request.input?.fit === "contain" ? "contain" : "cover";
-  const lightBackground = validColor(request.input?.lightBackground) ? request.input.lightBackground : "#ffffff";
-  const darkBackground = validColor(request.input?.darkBackground) ? request.input.darkBackground : "#171717";
-  const themeColor = validColor(request.input?.themeColor) ? request.input.themeColor : "#5468ff";
+  const lightBackground = "#ffffff";
+  const darkBackground = "#171717";
+  const themeColor = "#5468ff";
   const sources = { light: lightFile, dark: darkFile ?? lightFile };
 
   emit({ type: "log", level: "info", message: `Reading ${darkFile ? "light and dark artwork" : lightFile.name}` });
@@ -164,10 +164,6 @@ function cleanName(value) {
         .trim()
         .slice(0, 60)
     : "";
-}
-
-function validColor(value) {
-  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 }
 
 function escapeXml(value) {
