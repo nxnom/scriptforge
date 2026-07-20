@@ -3,7 +3,7 @@ import { form as spooshForm } from "@spoosh/core";
 import { Code2, Eye, FileJson, RotateCw, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
-import { toolDocumentPolicy, toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
+import { toolIframeAllow } from "../../shared/tool-iframe-policy";
 import { useRead, useWrite } from "../api";
 import { CodeViewer } from "../components/CodeViewer";
 import { openCandidateConfiguration } from "../configuration/ToolConfigurationDialog";
@@ -104,8 +104,7 @@ export function CandidateReview({
             title={`${candidate.name} interface preview`}
             className={`absolute inset-0 size-full border-0 bg-white ${tab === "preview" ? "block" : "hidden"}`}
             allow={toolIframeAllow}
-            sandbox={toolIframeSandbox}
-            srcDoc={bridge.listening && !configuration.loading ? previewDocument(candidate.interfaceHtml) : undefined}
+            srcDoc={bridge.listening && !configuration.loading ? candidate.interfaceHtml : undefined}
           />
           {tab !== "preview" && (
             <CodeViewer
@@ -158,13 +157,6 @@ function TabButton({
       {icon} {children}
     </button>
   );
-}
-
-function previewDocument(html: string) {
-  const policy = `<meta http-equiv="Content-Security-Policy" content="${toolDocumentPolicy}">`;
-  return /<head(\s[^>]*)?>/i.test(html)
-    ? html.replace(/<head(\s[^>]*)?>/i, (head) => `${head}${policy}`)
-    : `${policy}${html}`;
 }
 
 function candidateError(error: unknown) {

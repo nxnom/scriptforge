@@ -10,7 +10,7 @@ Each tool contains:
 - An execution script — reads one JSON request from standard input and writes newline-delimited JSON lifecycle events to standard output.
 - `ui.html` — a self-contained plain HTML, CSS, and JavaScript interface.
 
-Generated interfaces do not use React, GeckoUI, runtime npm packages, or direct Node.js APIs. They run in a sandboxed iframe without direct filesystem or network access. CDN scripts, remote ES modules, external stylesheets, remote fonts, and runtime downloads are intentionally blocked. Prefer native HTML, SVG, Canvas, and browser APIs. When a small third-party browser library is genuinely valuable, Forge may verify a pinned version and its redistribution license, then inline the required browser distribution and license notice directly in `ui.html`. The complete file must remain below the 3 MB candidate review limit and must be tested in the offline iframe.
+Generated interfaces do not use React or GeckoUI unless the user explicitly requests a framework build. They run same-origin without an iframe sandbox attribute or restrictive Content Security Policy. Network requests, WebSockets, ScriptForge APIs, CDNs, remote ES modules, external stylesheets, remote fonts, frames, workers, media devices, and browser filesystem APIs are allowed. Browser JavaScript cannot import Node.js directly, but the trusted `run.mjs` process has normal Node.js filesystem, process, and network permissions. Pin important remote dependencies when practical and verify redistribution licenses for code or assets shipped inside the tool.
 
 ## Persistent configuration
 
@@ -78,17 +78,17 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 ## User actions and files
 
 - Bind execution to an explicit button click with `type="button"`, or deliberately disable native form validation before relying on a form `submit` handler. Native constraint validation can prevent `submit` from firing without producing an application error.
-- Do not send `File` objects directly across the sandbox boundary. When a tool uses files, read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use files.
+- When using the standard job bridge, do not send `File` objects directly. Read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use copied file input. In-place filesystem tools may instead send paths or operation parameters to their trusted runner.
 - Disable the action while a run is active and restore it after either `complete` or `failed`.
 - Surface bridge and runtime failures inside the interface, not only in DevTools.
-- The iframe grants browser-side scripts, downloads, forms, modal dialogs, and clipboard read/write. Copy buttons may call `navigator.clipboard.writeText` from a direct user click and should retain a selectable-text fallback for browsers or operating systems that still refuse clipboard access.
+- The iframe is unsandboxed and same-origin. It may use normal browser capabilities and make network or same-origin API requests. Some browser features still require the browser's own user gesture or operating-system permission.
 
 ## Output previews
 
 - The host returns same-origin `previewUrl` and `downloadUrl` values for approved job outputs.
 - Assign `previewUrl` to an appropriate `<img>`, `<video>`, or `<audio>` element. Assign `downloadUrl` to an explicit save link.
 - Keep output URLs relative. ScriptForge can run directly on its local server or through a development proxy, so a tool must not hard-code a host or port.
-- The iframe content policy allows same-origin images, media, and nested result frames plus `blob:` and `data:` previews. Do not depend on a browser-native PDF viewer inside another iframe because some browsers block it inside any sandbox; use an inlined PDF renderer when a visual PDF preview is essential. It intentionally keeps `connect-src 'none'`; tool JavaScript must never fetch ScriptForge APIs directly.
+- There is no tool-specific CSP. Same-origin and remote images, media, scripts, modules, fonts, frames, APIs, and `blob:`/`data:` previews are available subject to ordinary browser and remote-server CORS behavior.
 - Add media `load` and `error` handlers so a failed preview becomes a visible message and log entry.
 
 ## Lifecycle events and logs
@@ -125,9 +125,9 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Progress and logs describe the real execution stages.
 - Success produces a visible preview or useful metadata and a save action.
 - Preview failures and run failures are visible inside the tool interface.
-- No generated browser code calls `fetch`, opens a WebSocket, or accesses Node.js or the filesystem.
-- No generated browser code depends on a CDN, remote module, stylesheet, font, or other runtime network resource. Any permitted third-party browser code is pinned, license-checked, and inlined in `ui.html`.
+- Generated browser code may call `fetch`, open WebSockets, use ScriptForge APIs, load remote resources, or use browser filesystem APIs. Node.js work remains in `run.mjs`.
+- Remote dependencies are allowed. Pin important versions when practical, handle network failures visibly, and record licenses for redistributed code or assets.
 - Persistent values are declared in the manifest, secrets are not collected by `ui.html`, and the runner does not log or return them.
-- The manifest declares every external executable the script may invoke.
+- The manifest declares external executable dependencies needed for readiness checks and Doctor guidance; the runner is trusted and not sandboxed to that list.
 - The candidate presentation states what standalone check actually ran and what result was verified.
 - The exact reviewed candidate revision is the revision that is tested and saved.

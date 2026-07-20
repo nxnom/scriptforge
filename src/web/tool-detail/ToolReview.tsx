@@ -1,7 +1,7 @@
 import { Button, Spinner, Tooltip } from "@geckoui/geckoui";
 import { Code2, Eye, FileJson, RotateCw } from "lucide-react";
 import { useState } from "react";
-import { toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
+import { toolIframeAllow } from "../../shared/tool-iframe-policy";
 import { useRead } from "../api";
 import { CodeViewer } from "../components/CodeViewer";
 import { type Requirement, RequirementNotice } from "../components/RequirementNotice";
@@ -72,7 +72,6 @@ export function ToolReview({
             src={listening && !configurationLoading ? `/api/tools/${toolId}/ui` : undefined}
             title={`${toolName} interface`}
             allow={toolIframeAllow}
-            sandbox={toolIframeSandbox}
           />
         )}
         {tab === "preview" && !toolReady && (

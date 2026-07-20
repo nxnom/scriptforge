@@ -36,8 +36,9 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).not.toContain("run it without asking for permission again");
     expect(client.getInstructions()).toContain("brew info, apt-cache policy, winget show, or npm view");
     expect(client.getInstructions()).toContain("Never assume a package name matches an executable name");
-    expect(client.getInstructions()).toContain("The iframe intentionally blocks CDN scripts");
-    expect(client.getInstructions()).toContain("inline only its required browser distribution into ui.html");
+    expect(client.getInstructions()).toContain("The iframe is same-origin, has no sandbox attribute");
+    expect(client.getInstructions()).toContain("Tool runners are trusted local Node.js programs");
+    expect(client.getInstructions()).toContain("Pin important remote dependencies when practical");
     expect(client.getInstructions()).toContain("text-to-speech belongs to Audio");
     expect(client.getInstructions()).toContain("Accuracy is more important than reuse");
     expect(client.getInstructions()).not.toContain('"categories": ["Files"]');

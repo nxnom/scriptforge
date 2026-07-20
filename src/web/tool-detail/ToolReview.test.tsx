@@ -60,8 +60,8 @@ describe("ToolReview", () => {
     );
 
     const preview = screen.getByTitle("Sample Tool interface");
-    expect(preview).toHaveAttribute("allow", "clipboard-read; clipboard-write");
-    expect(preview).toHaveAttribute("sandbox", "allow-downloads allow-forms allow-modals allow-scripts");
+    expect(preview).not.toHaveAttribute("sandbox");
+    expect(preview).toHaveAttribute("allow", expect.stringContaining("clipboard-write *"));
     expect(screen.getByRole("button", { name: "Reload preview" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Script" }));
     expect(preview).toBeInTheDocument();

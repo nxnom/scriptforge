@@ -70,8 +70,8 @@ Completed and verified:
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
 - Contextual plain-language question panels with validated Markdown, Mermaid, HTML, and input blocks; clear requests begin immediately without a mandatory kickoff approval.
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
-- Staging-file candidate discovery with a sandboxed `ui.html` preview and read-only script/details review beside the live terminal.
-- Exact-revision candidate execution through the sandboxed tester bridge, including tools with no file input or downloadable output.
+- Staging-file candidate discovery with a live `ui.html` preview and read-only script/details review beside the terminal.
+- Exact-revision candidate execution through the tester bridge, including tools with no file input or downloadable output.
 - Explicit Stop controls end only their owning Codex terminal; unrelated new-tool and per-tool update sessions remain active.
 - Confirm explicit Forge stops, return to the Library after stopping, and keep candidate Save beside the session control once Preview testing succeeds.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
@@ -166,6 +166,7 @@ Status: Pending
 - Ship a zero-install App Icon Exporter that packages Apple and Android assets into one ZIP and treats Icon Composer's layered `.icon` format honestly.
 - Ship a zero-install Favicon Creator that packages adaptive light/dark browser icons, Apple touch assets, Android/PWA icons, and Windows tiles into one ZIP.
 - Ship an FFmpeg Media Toolkit for local video/audio conversion, compression, resizing, trimming, extraction, GIFs, frame ZIPs, and audio-track changes through the normal Dependency Doctor path.
+- Remove iframe CSP/sandbox restrictions and treat tool interfaces and runners as trusted local apps with network, same-origin API, browser filesystem, local filesystem, and process access; use the model for an in-place duplicate-file cleaner without a ZIP round trip.
 - Ship an authorized-content Video Downloader backed by declared `yt-dlp`, with single-video and playlist ranges, honest no-FFmpeg quality choices, and memory-safe streamed results.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Record a public demo shorter than three minutes.

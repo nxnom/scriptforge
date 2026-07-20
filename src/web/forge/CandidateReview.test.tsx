@@ -11,8 +11,8 @@ describe("CandidateReview", () => {
 
     const preview = screen.getByTitle("Tiny Tool interface preview");
     expect(preview).toBeVisible();
-    expect(preview).toHaveAttribute("allow", "clipboard-read; clipboard-write");
-    expect(preview).toHaveAttribute("sandbox", "allow-downloads allow-forms allow-modals allow-scripts");
+    expect(preview).not.toHaveAttribute("sandbox");
+    expect(preview).toHaveAttribute("allow", expect.stringContaining("clipboard-write *"));
     expect(screen.getByRole("button", { name: "Script" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Save tool" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve candidate" })).not.toBeInTheDocument();
@@ -30,7 +30,7 @@ describe("CandidateReview", () => {
     expect(screen.getByTitle("Tiny Tool interface preview")).toBe(preview);
   });
 
-  it("reloads the sandboxed preview iframe", () => {
+  it("reloads the unrestricted preview iframe", () => {
     render(<CandidateReview candidate={candidate()} sessionId="session-1" onTestStatusChange={vi.fn()} />);
     const preview = screen.getByTitle("Tiny Tool interface preview");
 

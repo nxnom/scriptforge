@@ -45,15 +45,12 @@ describe("tool runtime host", () => {
     await rm(jobsRoot, { recursive: true, force: true });
   });
 
-  it("serves the self-contained tool UI with a restricted content policy", async () => {
+  it("serves the tool UI without a restrictive content policy", async () => {
     const app = createApp(undefined, { jobsRoot, toolsRoot: resolve("src/tools/bundled") });
     const response = await app.request("/api/tools/image-resizer/ui");
 
     expect(response.status).toBe(200);
-    const contentPolicy = response.headers.get("content-security-policy");
-    expect(contentPolicy).toContain("connect-src 'none'");
-    expect(contentPolicy).toContain("img-src 'self' blob: data:");
-    expect(contentPolicy).toContain("media-src 'self' blob: data:");
+    expect(response.headers.get("content-security-policy")).toBeNull();
     await expect(response.text()).resolves.toContain('source: "scriptforge-tool"');
   });
 
@@ -62,8 +59,7 @@ describe("tool runtime host", () => {
     const response = await app.request("/api/tools/pdf-toolkit/ui");
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-security-policy")).toContain("script-src 'unsafe-inline' blob:");
-    expect(response.headers.get("content-security-policy")).toContain("worker-src blob:");
+    expect(response.headers.get("content-security-policy")).toBeNull();
     const html = await response.text();
     expect(html).toContain("function getDocument");
     expect(html).toContain("GlobalWorkerOptions.workerSrc");

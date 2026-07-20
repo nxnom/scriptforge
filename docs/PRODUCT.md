@@ -31,17 +31,19 @@ A local tool initially lives in its own directory and contains:
 
 `tool.json` describes the portable tool itself: its version, script and interface entrypoints, categories, configuration schema, and `requiredExecutables`. It does not prescribe how dependencies are installed. The detail page derives Runtime from the validated script entrypoint, derives Source from the directory in which ScriptForge discovered the package (bundled or saved/imported), and reports local execution from the host runtime. Source must not be stored in the archive because the same tool can change origin after export and import.
 
+Tool runners are trusted local Node.js programs. They have the same filesystem, process, and network permissions as ScriptForge and may work directly in any location available to the current operating-system user. Filesystem tools should update requested files in place rather than copying whole folders into job storage or returning replacement ZIPs. Executable declarations remain useful for readiness checks and Doctor, but they do not sandbox runner behavior.
+
 Generated tools follow the bridge, lifecycle, preview, and logging rules in [TOOL_AUTHORING.md](./TOOL_AUTHORING.md). The Forge system prompt should draw from that contract so new tools use the same tested host integration.
 
-The generated `ui.html` is self-contained plain HTML, CSS, and JavaScript. Codex chooses controls, actions, and result presentation appropriate to the specific task, such as live readings, tables, charts, drag-and-drop input, progress, before/after previews, playable media, genuine downloadable output, or metadata. Unless the user requests another style, generated interfaces use ScriptForge's compact dark visual system with `#5468ff` primary actions and focus accents, avoid marketing-style introductions, keep the primary flow in the initial panel viewport when practical, and replace empty file drop zones with compact selected-file content instead of duplicating both states. A single fluid layout must fill the iframe and adapt from the 420–620px Forge tester to the wide installed Tool page; the whole app is never placed in an arbitrary centered max-width wrapper. Inputs and meaningful results stack narrowly and use balanced side-by-side or dashboard regions when wide. Tools are not required to accept files or create a downloadable snapshot. The interface runs in a sandboxed iframe and communicates only through a controlled ScriptForge host bridge. One shared iframe policy grants ordinary browser UI capabilities—scripts, downloads, forms, modal dialogs, clipboard read/write, workers, and same-origin result frames—consistently in Forge and installed previews. It still blocks CDNs, arbitrary runtime network access, Node.js, shell, and unrestricted filesystem access. Simple charts should use native SVG or Canvas; a genuinely useful small third-party browser library may be pinned, source- and license-checked during Forge, and inlined into `ui.html` under the 3 MB candidate review limit so it remains offline and portable.
+The generated `ui.html` is plain HTML, CSS, and JavaScript. Codex chooses controls, actions, and result presentation appropriate to the specific task, such as live readings, tables, charts, drag-and-drop input, progress, before/after previews, playable media, genuine downloadable output, or metadata. Unless the user requests another style, generated interfaces use ScriptForge's compact dark visual system with `#5468ff` primary actions and focus accents, avoid marketing-style introductions, keep the primary flow in the initial panel viewport when practical, and replace empty file drop zones with compact selected-file content instead of duplicating both states. A single fluid layout must fill the iframe and adapt from the 420–620px Forge tester to the wide installed Tool page; the whole app is never placed in an arbitrary centered max-width wrapper. Inputs and meaningful results stack narrowly and use balanced side-by-side or dashboard regions when wide. Tools are not required to accept files or create a downloadable snapshot. The interface runs in a same-origin iframe with no sandbox attribute and no restrictive Content Security Policy. It may use ScriptForge APIs, arbitrary network services, remote modules, CDNs, frames, forms, workers, media devices, and browser filesystem APIs. Browser code cannot import Node.js merely because it is unsandboxed, but it can ask its trusted `run.mjs` process to perform local filesystem, process, and network work.
 
 Before building, Codex's kickoff panel asks every unresolved question that materially changes user-facing behavior and suggests a focused set of relevant options. Request terms such as “live,” “automatic,” “monitor,” and “sync” are treated as requirements rather than labels. For live tools, the kickoff resolves cadence and automatic versus Start/Pause behavior; a manual refresh-only result is rejected as incomplete.
 
 For the MVP, each tool uses a JavaScript `run.mjs` orchestration entrypoint. Node.js is already guaranteed by `npx scriptforge`, while the entrypoint may invoke any external executables declared by the tool.
 
-Tool packages do not contain generated test files. Candidate behavior is exercised through a user-approved run in the sandboxed tester iframe; ScriptForge itself tests the shared host bridge, runner, validation, and safety boundaries.
+Tool packages do not contain generated test files. Candidate behavior is exercised through a user-approved run in the unrestricted tester iframe; ScriptForge itself tests the shared host bridge, runner, validation, and trust boundaries.
 
-The runtime supplies controlled capabilities for declared executable calls, lifecycle, progress, structured logs, safe output registration, and cancellation. Every tool receives basic queued/running/succeeded/failed/cancelled state even when detailed percentage progress is unavailable.
+The runtime supplies job execution, lifecycle, progress, structured logs, output registration, and cancellation. Tool runners otherwise use normal Node.js capabilities without filesystem, executable, or network containment. Every tool receives basic queued/running/succeeded/failed/cancelled state even when detailed percentage progress is unavailable.
 
 Generated scripts must log startup, major stages, external command activity, completion, and failures. Logs are structured for polished presentation in the generated interface, with raw CLI output available as collapsible detail. ScriptForge redacts sensitive values before events reach browser code.
 
@@ -75,13 +77,18 @@ React + GeckoUI application shell
 
 Generated HTML/JS tool UI
   └── controlled host bridge ─────────────────> tool runner ─────> declared CLI executables
+             ├── same-origin + internet access
+             └── browser filesystem APIs
+
+Tool runner
+  └── normal Node.js permissions ─────────────> local files, processes, and network
 ```
 
 The main application uses GeckoUI with Tailwind utility classes directly in React components. Generated tool interfaces intentionally use neither React nor GeckoUI: they are lightweight, self-contained HTML/CSS/JS authored for the tool.
 
 Each Forge workspace displays its own real interactive Codex TUI through xterm.js. ScriptForge permits one new-tool session plus one update session per installed tool, so independent tools can be edited concurrently without replacing another PTY. Each Stop action ends only its owning session. The GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, installs or atomically updates the copy under `~/.scriptforge/tools`, and keeps the owning Codex PTY alive until Stop is clicked.
 
-Installed tool detail pages use the same compact Preview, Script, and Details tabs. Preview renders the sandboxed `ui.html`; Script shows read-only `run.mjs`; Details shows read-only `tool.json`. Source views include line numbers and lightweight syntax highlighting. The HTML source is not exposed. Script and manifest inspection remain available even when missing dependencies block Preview and execution.
+Installed tool detail pages use the same compact Preview, Script, and Details tabs. Preview renders the unrestricted `ui.html`; Script shows read-only `run.mjs`; Details shows read-only `tool.json`. Source views include line numbers and lightweight syntax highlighting. The HTML source is not exposed. Script and manifest inspection remain available even when missing dependencies block Preview and execution.
 
 ## Local Data
 
@@ -124,7 +131,8 @@ The MVP is one publishable `scriptforge` npm package containing the CLI, Hono se
 - Localhost-only server exposure by default.
 - Staged generation before installation.
 - No candidate execution or library save without approval. Dependency installation also requires separate approval in the default mode.
-- No direct shell, Node.js, or unrestricted filesystem capability exposed to generated browser JavaScript.
+- Tool interfaces are unsandboxed, same-origin, and network-enabled. Tool runners execute with the current operating-system user's normal Node.js permissions.
+- Destructive tools still present the concrete deletion or overwrite immediately before execution so accidental data loss is not silent.
 - Preserve Codex approval and sandbox behavior by default. Forge may pass `--dangerously-bypass-approvals-and-sandbox` only when the user explicitly enables the warned, off-by-default preflight option; remember that preference in browser local storage. That opt-in pre-authorizes Codex to install dependencies genuinely required to build and test the current candidate, try reasonable alternatives, and continue without another prompt. It does not authorize unrelated machine changes, Codex installation/authentication, or saving the tool.
 - Required executables are visible in the manifest and review UI.
 - Saving verifies that the candidate has not changed since the reviewed/tested revision.

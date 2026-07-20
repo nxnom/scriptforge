@@ -12,12 +12,11 @@ describe("local API", () => {
     await expect(response.json()).resolves.toMatchObject({ ok: true, name: "ScriptForge" });
   });
 
-  it("serves tool interfaces with the shared browser capability policy", async () => {
+  it("serves tool interfaces without a restrictive content policy", async () => {
     const response = await createApp().request("/api/tools/pdf-toolkit/ui");
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-security-policy")).toContain("frame-src 'self' blob: data:");
-    expect(response.headers.get("content-security-policy")).toContain("worker-src blob:");
+    expect(response.headers.get("content-security-policy")).toBeNull();
     const html = await response.text();
     expect(html).toContain('id="result-pages"');
     expect(html).not.toContain('id="preview"');
