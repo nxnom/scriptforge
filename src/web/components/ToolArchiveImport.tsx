@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { form as spooshForm } from "@spoosh/core";
 import { FileArchive, PackageOpen } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { invalidate, useWrite } from "../api";
 
@@ -13,7 +12,6 @@ const importSchema = z.object({
 type ImportForm = z.infer<typeof importSchema>;
 
 export function ToolArchiveImport() {
-  const navigate = useNavigate();
   const importTool = useWrite((api) => api("tools/import").POST());
   const form = useForm<ImportForm>({
     resolver: zodResolver(importSchema),
@@ -29,7 +27,7 @@ export function ToolArchiveImport() {
           ? `${response.data.tool.name} imported.`
           : `${response.data.tool.name} imported and needs a dependency.`,
       );
-      navigate(`/tools/${response.data.tool.id}`);
+      form.resetField("files");
     } catch (error) {
       form.resetField("files");
       toast.error(apiError(error));

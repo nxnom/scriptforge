@@ -53,5 +53,6 @@ describe("ToolArchiveImport", () => {
     await waitFor(() => expect(mocks.trigger).toHaveBeenCalledOnce());
     expect(screen.queryByRole("button", { name: "Import tool" })).not.toBeInTheDocument();
     expect(mocks.invalidate).toHaveBeenCalledWith("tools");
+    await waitFor(() => expect(screen.getByText("Add a tool from a .forge file")).toBeVisible());
   });
 });
