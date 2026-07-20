@@ -16,7 +16,7 @@ The result is one local workspace for everyday image, document, media, and file 
 
 https://github.com/user-attachments/assets/7f55d0ac-5350-430f-9d3d-dd3933fa12c9
 
-[Watch the public demo on YouTube](https://youtu.be/BfAgOkKB_R0?si=pHGSvFtccHbtdrgG) · [View the repository video](./media/scriptforge.mp4)
+[Watch the public demo on YouTube](https://youtu.be/BfAgOkKB_R0?si=pHGSvFtccHbtdrgG) 
 
 ## Key Features
 
