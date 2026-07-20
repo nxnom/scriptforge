@@ -4,7 +4,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ForgeSessionSelect } from "./ForgeSessionSelect";
 
-const mocks = vi.hoisted(() => ({ trigger: vi.fn(), invalidate: vi.fn(), closeMenu: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trigger: vi.fn(), closeMenu: vi.fn() }));
 
 vi.mock("@geckoui/geckoui", () => ({
   Label: ({ children }: { children: ReactNode }) => <span>{children}</span>,
@@ -44,7 +44,6 @@ vi.mock("../api", () => ({
     loading: false,
   }),
   useWrite: () => ({ trigger: mocks.trigger, loading: false }),
-  invalidate: mocks.invalidate,
 }));
 
 afterEach(() => {
@@ -64,11 +63,25 @@ describe("ForgeSessionSelect", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
     await waitFor(() =>
-      expect(mocks.trigger).toHaveBeenCalledWith({
-        params: { sessionId: "d2b4af99-5e48-43bf-8af4-7c700e5405b1" },
-      }),
+      expect(mocks.trigger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: { sessionId: "d2b4af99-5e48-43bf-8af4-7c700e5405b1" },
+          optimistic: expect.any(Function),
+        }),
+      ),
     );
-    expect(mocks.invalidate).toHaveBeenCalledWith("forge/sessions");
+
+    const optimistic = mocks.trigger.mock.calls[0]?.[0].optimistic;
+    const set = vi.fn();
+    const cache = vi.fn(() => ({ set }));
+    optimistic(cache);
+    expect(cache).toHaveBeenCalledWith("forge/sessions");
+    const update = set.mock.calls[0]?.[0];
+    expect(
+      update({
+        sessions: [{ sessionId: "d2b4af99-5e48-43bf-8af4-7c700e5405b1" }, { sessionId: "keep-this-session" }],
+      }),
+    ).toEqual({ sessions: [{ sessionId: "keep-this-session" }] });
   });
 });
 

@@ -41,6 +41,9 @@ importers:
       '@spoosh/plugin-invalidation':
         specifier: ^0.11.0
         version: 0.11.0(@spoosh/core@0.18.3)
+      '@spoosh/plugin-optimistic':
+        specifier: ^0.10.0
+        version: 0.10.0(@spoosh/core@0.18.3)(@spoosh/plugin-invalidation@0.11.0(@spoosh/core@0.18.3))
       '@spoosh/react':
         specifier: ^0.15.4
         version: 0.15.4(@spoosh/core@0.18.3)(react@19.2.7)
@@ -1174,6 +1177,12 @@ packages:
     resolution: {integrity: sha512-0tt3UJMbSo9vco7ceTatOExfbzLn/l1WZaQGychc5OvXgyyucMzuBGUg5N3ncixhintNysPzghVSErELMBK0Mg==}
     peerDependencies:
       '@spoosh/core': '>=0.18.0'
+
+  '@spoosh/plugin-optimistic@0.10.0':
+    resolution: {integrity: sha512-Lxf6unslu/kl7OJyi5aOF9e/Kdwp0FJ3DA3Ztsbc5ufP3C3OelT0zM0EJUUFiiuGkpMk+YlScd+/Z1LShq+kQw==}
+    peerDependencies:
+      '@spoosh/core': '>=0.18.0'
+      '@spoosh/plugin-invalidation': '>=0.11.0'
 
   '@spoosh/react@0.15.4':
     resolution: {integrity: sha512-Lv4qcasTR9OBcfzJR9HpHHKUyTBqHNz5unbEOMPfBPHV7nKA8/s7cReM88k1h5L77JECkSRtxyIoRVZTZ9n48Q==}
@@ -4071,6 +4080,11 @@ snapshots:
   '@spoosh/plugin-invalidation@0.11.0(@spoosh/core@0.18.3)':
     dependencies:
       '@spoosh/core': 0.18.3
+
+  '@spoosh/plugin-optimistic@0.10.0(@spoosh/core@0.18.3)(@spoosh/plugin-invalidation@0.11.0(@spoosh/core@0.18.3))':
+    dependencies:
+      '@spoosh/core': 0.18.3
+      '@spoosh/plugin-invalidation': 0.11.0(@spoosh/core@0.18.3)
 
   '@spoosh/react@0.15.4(@spoosh/core@0.18.3)(react@19.2.7)':
     dependencies:

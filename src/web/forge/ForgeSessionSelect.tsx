@@ -2,7 +2,7 @@ import { Button, Label, LoadingButton, RHFError, RHFSelect, SelectOption, toast 
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { invalidate, useRead, useWrite } from "../api";
+import { useRead, useWrite } from "../api";
 import { forgeError } from "./forgeError";
 
 export function ForgeSessionSelect({ disabled }: { disabled: boolean }) {
@@ -13,12 +13,18 @@ export function ForgeSessionSelect({ disabled }: { disabled: boolean }) {
   const [pendingDelete, setPendingDelete] = useState<(typeof sessions)[number]>();
   const deleteSession = async () => {
     if (!pendingDelete) return;
-    const response = await discard.trigger({ params: { sessionId: pendingDelete.sessionId } });
+    const response = await discard.trigger({
+      params: { sessionId: pendingDelete.sessionId },
+      optimistic: (cache) =>
+        cache("forge/sessions").set((current) => ({
+          ...current,
+          sessions: current.sessions.filter((session) => session.sessionId !== pendingDelete.sessionId),
+        })),
+    });
     if (!response.data?.ok) return toast.error(forgeError(response.error));
     if (form.getValues("resumeSessionId") === pendingDelete.sessionId) {
       form.setValue("resumeSessionId", "", { shouldDirty: true });
     }
-    invalidate("forge/sessions");
     toast.success(`${pendingDelete.name} was deleted.`);
     setPendingDelete(undefined);
   };

@@ -33,7 +33,7 @@ The local application shell, bundled image-resizer workflow, full MCP-guided For
 - Save keeps the Forge Codex session open and changes the approval action to Save changes so the user can keep refining until they click Stop
 - Dynamic one-to-three-category manifests, with existing category reuse, legacy installed-tool compatibility, category search, and responsive category filters
 - Concurrent scoped Codex terminals: one new-tool session plus one update session per installed tool, each with its own Stop control
-- The Start Forge dialog defaults to a fresh session but can select, resume, or inline-confirm deletion of stopped/interrupted sessions; resumed work continues the exact Codex conversation in its preserved staging directory
+- The Start Forge dialog defaults to a fresh session but can select, resume, or inline-confirm deletion of stopped/interrupted sessions; deletion removes the cached option immediately with automatic rollback on failure, and resumed work continues the exact Codex conversation in its preserved staging directory
 - Missing-executable and version detection that keeps tools installed while blocking only their execution
 - Opt-in Codex Doctor embedded beside the tool interface; it proposes OS-specific commands, waits for a separate Install click, streams installer-only terminal output, and verifies requirements afterward
 - Dependency-free `.forge` export/import archives that preserve complete tool directories, validate and import immediately after selection, and never execute imported code
