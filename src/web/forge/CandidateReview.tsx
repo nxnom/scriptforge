@@ -18,7 +18,7 @@ export function CandidateReview({
 }: {
   candidate: ForgeCandidateDocument;
   sessionId: string;
-  onTestStatusChange: (ready: boolean) => void;
+  onTestStatusChange?: (ready: boolean) => void;
 }) {
   const [tab, setTab] = useState<CandidateTab>("preview");
   const [previewKey, setPreviewKey] = useState(0);
@@ -63,7 +63,7 @@ export function CandidateReview({
       jobStatus: bridge.jobStatus ?? "none",
       tested,
     });
-    onTestStatusChange(tested);
+    onTestStatusChange?.(tested);
   }, [bridge.jobStatus, candidate.revision, onTestStatusChange, sessionId]);
 
   return (

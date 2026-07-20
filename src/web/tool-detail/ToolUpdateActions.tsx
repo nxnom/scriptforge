@@ -5,7 +5,6 @@ export function ToolUpdateActions({
   installed,
   sessionActive,
   candidateReady,
-  candidateTested,
   candidateSaved,
   stopping,
   saving,
@@ -16,7 +15,6 @@ export function ToolUpdateActions({
   installed: boolean;
   sessionActive: boolean;
   candidateReady: boolean;
-  candidateTested: boolean;
   candidateSaved: boolean;
   stopping: boolean;
   saving: boolean;
@@ -39,14 +37,7 @@ export function ToolUpdateActions({
         </LoadingButton>
       )}
       {sessionActive && candidateReady && !candidateSaved && (
-        <LoadingButton
-          size="sm"
-          variant="outlined"
-          loading={saving}
-          disabled={!candidateTested}
-          title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
-          onClick={save}
-        >
+        <LoadingButton size="sm" variant="outlined" loading={saving} onClick={save}>
           <Save size={13} /> Save changes
         </LoadingButton>
       )}

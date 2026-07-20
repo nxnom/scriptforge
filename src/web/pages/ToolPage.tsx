@@ -212,7 +212,6 @@ export function ToolPage() {
                 installed={installedTool}
                 sessionActive={Boolean(visibleUpdateId)}
                 candidateReady={Boolean(candidate)}
-                candidateTested={candidateTested}
                 candidateSaved={candidate?.revision === savedCandidateRevision}
                 stopping={stopUpdate.loading}
                 saving={saveUpdate.loading}

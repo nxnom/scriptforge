@@ -23,7 +23,6 @@ export function ForgePage() {
   const [endedSessionId, setEndedSessionId] = useState<string>();
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
-  const [candidateTested, setCandidateTested] = useState(false);
   const [savedCandidateRevision, setSavedCandidateRevision] = useState<string>();
   const [savedToolId, setSavedToolId] = useState<string>();
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
@@ -42,7 +41,6 @@ export function ForgePage() {
     setEndedSessionId(undefined);
     setPanel(null);
     setCandidate(null);
-    setCandidateTested(false);
     setSavedCandidateRevision(undefined);
     setSavedToolId(undefined);
   }, []);
@@ -115,7 +113,6 @@ export function ForgePage() {
     setSessionId(undefined);
     setPanel(null);
     setCandidate(null);
-    setCandidateTested(false);
     setSavedCandidateRevision(undefined);
     setSavedToolId(undefined);
     invalidate("forge/sessions");
@@ -125,7 +122,6 @@ export function ForgePage() {
   }, []);
   const showCandidate = useCallback((next: ForgeCandidateDocument) => {
     setCandidate(next);
-    setCandidateTested(false);
     setPanel(null);
   }, []);
   const stopSession = async () => {
@@ -168,7 +164,6 @@ export function ForgePage() {
     invalidate("forge/sessions/active");
     setSavedToolId(response.data.tool.id);
     setSavedCandidateRevision(candidate.revision);
-    setCandidateTested(false);
     toast.success(
       response.data.action === "updated"
         ? `${response.data.tool.name} was updated.`
@@ -190,14 +185,7 @@ export function ForgePage() {
               </LoadingButton>
             )}
             {visibleSessionId && candidate && candidate.revision !== savedCandidateRevision && (
-              <LoadingButton
-                variant="outlined"
-                size="sm"
-                loading={saveCandidate.loading}
-                disabled={!candidateTested}
-                title={candidateTested ? undefined : "Run this candidate successfully in Preview first"}
-                onClick={save}
-              >
+              <LoadingButton variant="outlined" size="sm" loading={saveCandidate.loading} onClick={save}>
                 <Save size={13} />
                 {targetToolId ? "Save changes" : "Save tool"}
               </LoadingButton>
@@ -231,12 +219,7 @@ export function ForgePage() {
                     onCandidate={showCandidate}
                   />
                   {candidate && (
-                    <CandidateReview
-                      key={candidate.revision}
-                      candidate={candidate}
-                      sessionId={visibleSessionId}
-                      onTestStatusChange={setCandidateTested}
-                    />
+                    <CandidateReview key={candidate.revision} candidate={candidate} sessionId={visibleSessionId} />
                   )}
                 </div>
               )}

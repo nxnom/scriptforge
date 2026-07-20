@@ -13,32 +13,14 @@ describe("ToolUpdateActions", () => {
     expect(screen.queryByRole("button", { name: "Update tool" })).not.toBeInTheDocument();
   });
 
-  it("uses Save changes and hides it after the candidate is saved", () => {
+  it("keeps Save changes clickable before Preview and hides it after the candidate is saved", () => {
     const { rerender } = render(
-      <ToolUpdateActions
-        {...handlers}
-        {...state}
-        installed
-        sessionActive
-        candidateReady
-        candidateTested
-        candidateSaved={false}
-      />,
+      <ToolUpdateActions {...handlers} {...state} installed sessionActive candidateReady candidateSaved={false} />,
     );
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Update tool" })).not.toBeInTheDocument();
 
-    rerender(
-      <ToolUpdateActions
-        {...handlers}
-        {...state}
-        installed
-        sessionActive
-        candidateReady
-        candidateTested
-        candidateSaved
-      />,
-    );
+    rerender(<ToolUpdateActions {...handlers} {...state} installed sessionActive candidateReady candidateSaved />);
     expect(screen.queryByRole("button", { name: "Save changes" })).not.toBeInTheDocument();
   });
 });
@@ -46,7 +28,6 @@ describe("ToolUpdateActions", () => {
 const state = {
   sessionActive: false,
   candidateReady: false,
-  candidateTested: false,
   candidateSaved: false,
   stopping: false,
   saving: false,
