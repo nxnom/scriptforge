@@ -55,7 +55,16 @@ export function CandidateReview({
     [candidate.revision, sessionId, startCandidate.trigger],
   );
   const bridge = useToolHostBridge({ iframeRef, startJob: runCandidate });
-  useEffect(() => onTestStatusChange(bridge.jobStatus === "succeeded"), [bridge.jobStatus, onTestStatusChange]);
+  useEffect(() => {
+    const tested = bridge.jobStatus === "succeeded";
+    console.debug("[ScriptForge][CandidateReview] Candidate test state", {
+      sessionId,
+      revision: candidate.revision,
+      jobStatus: bridge.jobStatus ?? "none",
+      tested,
+    });
+    onTestStatusChange(tested);
+  }, [bridge.jobStatus, candidate.revision, onTestStatusChange, sessionId]);
 
   return (
     <aside className="flex min-h-0 w-[min(48%,620px)] min-w-[420px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#1d1d1d] max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0">

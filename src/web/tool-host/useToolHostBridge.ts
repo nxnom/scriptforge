@@ -70,7 +70,11 @@ export function useToolHostBridge({
         try {
           const payload = JSON.parse(String(event.data));
           record(`Received job event ${String(payload.type)}`);
-          if (payload.type === "status") setJobStatus(payload.status as JobStatus);
+          if (payload.type === "status") {
+            const status = payload.status as JobStatus;
+            console.debug("[ScriptForge][ToolHostBridge] Runner status received", { jobId, status });
+            setJobStatus(status);
+          }
           post(payload);
         } catch {
           fail("ScriptForge received an invalid job event.");

@@ -1,6 +1,6 @@
 import { Alert, ConfirmDialog, Dialog, toast } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { invalidate, useRead, useWrite } from "../api";
@@ -49,6 +49,24 @@ export function ToolPage() {
     (session) => session.scope === "update" && session.toolId === toolId,
   )?.sessionId;
   const visibleUpdateId = updateSessionId ?? (restoredUpdateId !== endedSessionId ? restoredUpdateId : undefined);
+  useEffect(() => {
+    console.debug("[ScriptForge][ToolPage] Save changes eligibility", {
+      toolId,
+      sessionId: visibleUpdateId ?? "none",
+      candidateRevision: candidate?.revision ?? "none",
+      savedCandidateRevision: savedCandidateRevision ?? "none",
+      candidateTested,
+      candidateSaved: Boolean(candidate && candidate.revision === savedCandidateRevision),
+      canSave: Boolean(
+        visibleUpdateId &&
+          candidate &&
+          candidateTested &&
+          candidate.revision !== savedCandidateRevision &&
+          !saveUpdate.loading,
+      ),
+      saveLoading: saveUpdate.loading,
+    });
+  }, [candidate, candidateTested, savedCandidateRevision, saveUpdate.loading, toolId, visibleUpdateId]);
   const runTool = useCallback(
     async (message: ToolRunMessage) => {
       if (!toolId) throw new Error("The selected tool is unavailable.");
