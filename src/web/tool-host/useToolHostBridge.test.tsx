@@ -76,6 +76,32 @@ describe("useToolHostBridge", () => {
     await waitFor(() => expect(iframe).toHaveAttribute("data-listening", "false"));
     expect(startJob).not.toHaveBeenCalled();
   });
+
+  it("keeps successful status and unique diagnostics when the start callback changes", async () => {
+    vi.stubGlobal("WebSocket", FakeWebSocket);
+    FakeWebSocket.instances = [];
+    const firstStart = vi.fn(async () => ({ jobId: "job-1" }));
+    const { container, rerender } = render(<BridgeHarness startJob={firstStart} />);
+    const iframe = container.querySelector("iframe");
+    if (!iframe?.contentWindow) throw new Error("Test iframe is unavailable.");
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        source: iframe.contentWindow,
+        data: { source: "scriptforge-tool", type: "run", input: {}, files: [] },
+      }),
+    );
+    await waitFor(() => expect(FakeWebSocket.instances).toHaveLength(1));
+    FakeWebSocket.instances[0]?.emit({ type: "status", status: "succeeded" });
+    await waitFor(() => expect(iframe).toHaveAttribute("data-status", "succeeded"));
+
+    rerender(<BridgeHarness startJob={vi.fn(async () => ({ jobId: "job-2" }))} />);
+
+    expect(iframe).toHaveAttribute("data-status", "succeeded");
+    const diagnosticIds = JSON.parse(iframe.dataset.diagnosticIds ?? "[]") as string[];
+    expect(new Set(diagnosticIds).size).toBe(diagnosticIds.length);
+    expect(FakeWebSocket.instances).toHaveLength(1);
+  });
 });
 
 function BridgeHarness({
@@ -87,12 +113,26 @@ function BridgeHarness({
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridge = useToolHostBridge({ iframeRef, startJob, enabled });
-  return <iframe ref={iframeRef} title="tool" data-listening={bridge.listening} />;
+  return (
+    <iframe
+      ref={iframeRef}
+      title="tool"
+      data-listening={bridge.listening}
+      data-status={bridge.jobStatus}
+      data-diagnostic-ids={JSON.stringify(bridge.diagnostics.map((entry) => entry.id))}
+    />
+  );
 }
 
 class FakeWebSocket {
+  static instances: FakeWebSocket[] = [];
   onmessage?: (event: MessageEvent) => void;
   onerror?: () => void;
-  constructor(readonly url: string) {}
+  constructor(readonly url: string) {
+    FakeWebSocket.instances.push(this);
+  }
+  emit(payload: unknown) {
+    this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) }));
+  }
   close() {}
 }

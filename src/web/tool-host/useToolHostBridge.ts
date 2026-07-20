@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import type { JobStatus } from "../../server/jobs/types";
 
@@ -33,6 +33,9 @@ export function useToolHostBridge({
   const [hostError, setHostError] = useState<string>();
   const [jobStatus, setJobStatus] = useState<JobStatus>();
   const [diagnostics, setDiagnostics] = useState<Array<{ id: string; message: string }>>([]);
+  const startJobRef = useRef(startJob);
+  const diagnosticIdRef = useRef(0);
+  startJobRef.current = startJob;
 
   useEffect(() => {
     setJobStatus(undefined);
@@ -42,11 +45,10 @@ export function useToolHostBridge({
       return;
     }
     let socket: WebSocket | undefined;
-    let diagnosticId = 0;
     const record = (message: string) =>
       setDiagnostics((current) => [
         ...current.slice(-39),
-        { id: `${Date.now()}-${diagnosticId++}`, message: `${new Date().toLocaleTimeString()} · ${message}` },
+        { id: String(diagnosticIdRef.current++), message: `${new Date().toLocaleTimeString()} · ${message}` },
       ]);
     const post = (message: Record<string, unknown>) => {
       const target = iframeRef.current?.contentWindow;
@@ -92,7 +94,7 @@ export function useToolHostBridge({
       setJobStatus("queued");
       record(`Run request validated with ${parsed.data.files.length} file(s)`);
       try {
-        const result = await startJob(parsed.data);
+        const result = await startJobRef.current(parsed.data);
         post({ type: "accepted" });
         connect(result.jobId);
       } catch (error) {
@@ -107,7 +109,7 @@ export function useToolHostBridge({
       window.removeEventListener("message", handleMessage);
       socket?.close();
     };
-  }, [enabled, iframeRef, startJob]);
+  }, [enabled, iframeRef]);
 
   return { listening, hostError, diagnostics, jobStatus };
 }
