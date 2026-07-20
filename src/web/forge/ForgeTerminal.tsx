@@ -15,7 +15,13 @@ type ForgeTerminalProps = {
 
 export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }: ForgeTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const onSessionEndRef = useRef(onSessionEnd);
+  const onPanelRef = useRef(onPanel);
+  const onCandidateRef = useRef(onCandidate);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
+  onSessionEndRef.current = onSessionEnd;
+  onPanelRef.current = onPanel;
+  onCandidateRef.current = onCandidate;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -61,6 +67,7 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
         socket = new WebSocket(`${protocol}//${window.location.host}/ws/forge/${sessionId}`);
         const connectedSocket = socket;
         connectedSocket.addEventListener("open", () => {
+          if (disposed) return;
           setConnection("connected");
           terminal.clear();
           fit.fit();
@@ -68,22 +75,23 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
           terminal.focus();
         });
         connectedSocket.addEventListener("message", (event) => {
+          if (disposed) return;
           try {
             const message = JSON.parse(String(event.data));
             if (message.type === "output") terminal.write(String(message.data));
-            if (message.type === "panel") onPanel(message.panel as ForgePanelDocument | null);
-            if (message.type === "candidate") onCandidate(message.candidate as ForgeCandidateDocument);
+            if (message.type === "panel") onPanelRef.current(message.panel as ForgePanelDocument | null);
+            if (message.type === "candidate") onCandidateRef.current(message.candidate as ForgeCandidateDocument);
             if (message.type === "exit") {
               active = false;
               setConnection("exited");
               terminal.writeln(`\r\n\x1b[90mCodex exited with code ${Number(message.exitCode)}.\x1b[0m`);
-              onSessionEnd(sessionId);
+              onSessionEndRef.current(sessionId);
             }
             if (message.type === "error") {
               active = false;
               setConnection("error");
               terminal.writeln(`\r\n\x1b[31m${String(message.message)}\x1b[0m`);
-              if (String(message.message).includes("does not exist")) onSessionEnd(sessionId);
+              if (String(message.message).includes("does not exist")) onSessionEndRef.current(sessionId);
             }
           } catch {
             active = false;
@@ -92,10 +100,12 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
           }
         });
         connectedSocket.addEventListener("error", () => {
+          if (disposed) return;
           active = false;
           setConnection("error");
         });
         connectedSocket.addEventListener("close", () => {
+          if (disposed) return;
           active = false;
           setConnection((current) => (current === "connected" ? "exited" : current));
         });
@@ -128,7 +138,7 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
       socket?.close(1000);
       terminal.dispose();
     };
-  }, [onCandidate, onPanel, onSessionEnd, sessionId]);
+  }, [sessionId]);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#171717]">
