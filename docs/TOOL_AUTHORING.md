@@ -79,6 +79,11 @@ Always verify `event.source`, the message `source`, and the message shape. Do no
 
 - Bind execution to an explicit button click with `type="button"`, or deliberately disable native form validation before relying on a form `submit` handler. Native constraint validation can prevent `submit` from firing without producing an application error.
 - When using the standard job bridge, do not send `File` objects directly. Read each selected file with `arrayBuffer()` and send a descriptor containing `name`, `size`, `type`, `lastModified`, and `data`. Send `files: []` when the tool does not use copied file input. In-place filesystem tools may instead send paths or operation parameters to their trusted runner.
+- A tool that operates on existing folders must not provide only a pasted-path input. It provides both manual absolute-path entry and an **Add folder** or **Choose folder** action that opens a custom folder-browser dialog.
+- Folder browsing uses a read-only runner action over the normal bridge, such as `{ action: "browseFolders", path, showHidden }` with `files: []`. The runner defaults to the user's home directory, resolves roots and parents cross-platform, validates directories, and returns the current path, parent path, and child folder names and paths as structured data.
+- The dialog includes Close, Up, an editable current-path field with Go, a scrollable folder list, an optional hidden-folder toggle, visible errors, and **Add this folder** or **Choose this folder**. Multiple-folder tools append confirmed paths as removable rows.
+- Do not use `<input type="file" webkitdirectory>` as the only folder picker. It exposes selected files and relative names rather than the absolute folder path required for an in-place filesystem operation.
+- Browsing is non-mutating. Deletion, overwrite, or cleanup happens only through the separate primary action after an appropriate preview or confirmation.
 - Disable the action while a run is active and restore it after either `complete` or `failed`.
 - Surface bridge and runtime failures inside the interface, not only in DevTools.
 - The iframe is unsandboxed and same-origin. It may use normal browser capabilities and make network or same-origin API requests. Some browser features still require the browser's own user gesture or operating-system permission.
@@ -121,6 +126,7 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Essential controls and the primary action fit in the initial tester viewport whenever practical.
 - Selecting files replaces the empty picker instead of creating a second, duplicate file-preview area.
 - Selected files cross the bridge as `ArrayBuffer` descriptors.
+- Folder-based tools offer manual absolute paths and a working custom folder browser rather than only a pasted-path field.
 - Inputs are validated again by the execution script; the UI is not trusted.
 - Progress and logs describe the real execution stages.
 - Success produces a visible preview or useful metadata and a save action.

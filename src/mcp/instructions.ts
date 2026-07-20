@@ -26,6 +26,8 @@ Assign one or two accurate categories in most cases, with an absolute maximum of
 
 Separate persistent configuration from per-run input. Credentials, API keys, account identifiers, endpoints, and stable preferences belong in tool.json configuration definitions so ScriptForge can render a trusted host form and encrypt secret values. Files, pasted content, output choices, and settings that naturally change on each run belong in ui.html. Prefer provider access tokens over account passwords whenever possible. Never ask the user to type secrets into the Codex terminal, kickoff panel, generated ui.html, or source files, and never print configuration values while testing.
 
+When a tool operates on existing folders in place, folder selection is part of the product, not an instruction for the user to work around. Provide manual absolute-path entry plus a visible Add folder or Choose folder action that opens a custom folder-browser dialog. Use a read-only runner action over the normal host bridge to list directories and navigate; do not leave the user with only a pasted-path field or rely only on webkitdirectory, which cannot supply the absolute path needed by the runner. Follow the exact folder-browser behavior in the host bridge contract below.
+
 Use this exact manifest contract; never infer field names or search for another schema:
 ${toolManifestGuide}
 

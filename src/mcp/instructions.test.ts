@@ -17,4 +17,18 @@ describe("Forge MCP instructions", () => {
     expect(instructions).toContain("applicable runner or UI-only check");
     expect(instructions).toContain("Preview is available for the user's optional review");
   });
+
+  it("requires a custom browser for tools that operate on folders", () => {
+    const instructions = createForgeMcpInstructions();
+
+    expect(instructions).toContain(
+      "Provide manual absolute-path entry plus a visible Add folder or Choose folder action",
+    );
+    expect(instructions).toContain('{ action: "browseFolders", path, showHidden }');
+    expect(instructions).toContain("Close, Up, an editable current-path field with Go");
+    expect(instructions).toContain("do not leave the user with only a pasted-path field");
+    expect(instructions).toContain(
+      "Folder browsing itself must never perform the tool's destructive or mutating action",
+    );
+  });
 });
