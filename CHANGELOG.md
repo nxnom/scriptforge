@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Published-package Quick Start and public npm verification evidence in the README.
 - Changelog included in future npm package artifacts.
 - Accessible GitHub repository link in the main Library header.
+- Concise judge-facing README with Codex CLI setup and detailed architecture and Build Week evidence documents.
 
 ## [0.1.0] - 2026-07-20
 
