@@ -50,7 +50,7 @@ export function ToolPage() {
   )?.sessionId;
   const visibleUpdateId = updateSessionId ?? (restoredUpdateId !== endedSessionId ? restoredUpdateId : undefined);
   useEffect(() => {
-    console.debug("[ScriptForge][ToolPage] Save changes eligibility", {
+    console.log("[ScriptForge][ToolPage] Save changes eligibility", {
       toolId,
       sessionId: visibleUpdateId ?? "none",
       candidateRevision: candidate?.revision ?? "none",
@@ -163,10 +163,32 @@ export function ToolPage() {
     });
   };
   const saveCandidateUpdate = async () => {
-    if (!visibleUpdateId || !candidate) return;
+    console.log("[ScriptForge][ToolPage] Save changes clicked", {
+      toolId,
+      sessionId: visibleUpdateId ?? "none",
+      candidateRevision: candidate?.revision ?? "none",
+      candidateTested,
+      saveLoading: saveUpdate.loading,
+    });
+    if (!visibleUpdateId || !candidate) {
+      console.warn("[ScriptForge][ToolPage] Save changes stopped before request", {
+        hasSession: Boolean(visibleUpdateId),
+        hasCandidate: Boolean(candidate),
+      });
+      return;
+    }
+    console.log("[ScriptForge][ToolPage] Sending candidate save request", {
+      sessionId: visibleUpdateId,
+      revision: candidate.revision,
+    });
     const response = await saveUpdate.trigger({
       params: { sessionId: visibleUpdateId },
       body: { revision: candidate.revision },
+    });
+    console.log("[ScriptForge][ToolPage] Candidate save response", {
+      ok: response.data?.ok === true,
+      hasError: Boolean(response.error),
+      action: response.data?.ok ? response.data.action : undefined,
     });
     if (!response.data?.ok) return toast.error(apiErrorMessage(response.error, "The tool could not be updated."));
     invalidate("tools");

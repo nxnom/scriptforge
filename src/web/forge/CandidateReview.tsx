@@ -57,7 +57,7 @@ export function CandidateReview({
   const bridge = useToolHostBridge({ iframeRef, startJob: runCandidate });
   useEffect(() => {
     const tested = bridge.jobStatus === "succeeded";
-    console.debug("[ScriptForge][CandidateReview] Candidate test state", {
+    console.log("[ScriptForge][CandidateReview] Candidate test state", {
       sessionId,
       revision: candidate.revision,
       jobStatus: bridge.jobStatus ?? "none",

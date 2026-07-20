@@ -72,7 +72,7 @@ export function useToolHostBridge({
           record(`Received job event ${String(payload.type)}`);
           if (payload.type === "status") {
             const status = payload.status as JobStatus;
-            console.debug("[ScriptForge][ToolHostBridge] Runner status received", { jobId, status });
+            console.log("[ScriptForge][ToolHostBridge] Runner status received", { jobId, status });
             setJobStatus(status);
           }
           post(payload);
