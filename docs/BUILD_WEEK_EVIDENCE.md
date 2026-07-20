@@ -19,7 +19,7 @@ Codex helped:
 - Inspect and translate the Pencil design into the React and GeckoUI shell.
 - Configure the typed Hono and Spoosh API boundary.
 - Implement and debug the generic tool runner, host bridge, PTY terminal, MCP server, and resumable sessions.
-- Build and exercise the bundled PDF, icon, favicon, FFmpeg, screenshot, and download tools.
+- Build and exercise the bundled PDF, icon, favicon, FFmpeg, screenshot, download, and direct-SMTP tools.
 - Diagnose exact-revision saving, iframe state, duplicated React keys, optimistic deletion, and package behavior.
 - Create automated integration coverage and complete isolated npm-package smoke tests.
 
@@ -42,18 +42,19 @@ Codex helped:
 - Favicon Creator keeps conventional root filenames, generates an adaptive light/dark SVG, and includes browser, Apple, Android/PWA, and Windows fallbacks.
 - FFmpeg Media Toolkit uses fixed, shell-free templates and validates format, quality, dimensions, time ranges, frame rates, and frame limits before execution.
 - Video Downloader requires an authorization confirmation, avoids secretly requiring FFmpeg for its capped single-file formats, and streams direct or ZIP results.
+- SMTP Campaign Sender uses the user's own SMTP server, keeps its password in encrypted runner-only configuration, and reports SMTP acceptance without claiming inbox delivery or adding remote engagement tracking.
 - Remote code and assets remain subject to pinned-version, licensing, attribution, and failure-state expectations even though trusted tools may access the internet.
 
 ## Verification and Evaluation
 
-The repository is checked with Biome, TypeScript, Vitest, and production builds. The automated suite currently contains 126 tests covering manifest validation, library filtering, host/API/MCP boundaries, concurrent and resumable Forge sessions, exact candidate selection and saving, Dependency Doctor approvals, trusted iframe behavior, `.forge` validation, encrypted configuration, redaction, card interactions, bundled PDF and media workflows, and streamed results.
+The repository is checked with Biome, TypeScript, Vitest, and production builds. The automated suite currently contains 131 tests covering manifest validation, library filtering, host/API/MCP boundaries, concurrent and resumable Forge sessions, exact candidate selection and saving, Dependency Doctor approvals, trusted iframe behavior, `.forge` validation, encrypted configuration, redaction, card interactions, bundled PDF and media workflows, direct SMTP delivery, and streamed results.
 
 The clean-package smoke test on July 20, 2026:
 
 1. Built the publishable tarball.
 2. Installed it with npm in an isolated temporary project with zero reported vulnerabilities.
 3. Launched it through `npx --no-install scriptforge --no-open`.
-4. Loaded the packaged React shell and seven bundled manifests.
+4. Loaded the packaged React shell and eight bundled manifests.
 5. Completed a real Image Resizer job over HTTP and WebSocket.
 6. Observed `queued`, `running`, and `succeeded` events and decoded the requested 8 × 6 PNG output.
 7. Repeated public-package startup verification with `npx --yes scriptforge@0.1.0 --no-open`, including automatic fallback from occupied port `4545`.
@@ -62,4 +63,5 @@ Additional focused checks include:
 
 - Favicon ZIP inspection for browser, Apple, PWA/Android, and Windows assets; ICO header validation; adaptive SVG theme validation; manifest parsing; and PNG decoding.
 - A real FFmpeg matrix across ten operations using generated two-second video/audio fixtures, plus deterministic host-integration checks for arguments, progress, output metadata, frame limits, and ZIP contents.
+- Direct SMTP delivery to Mailpit with authentication, two CSV-personalized recipients, sender and reply-to parsing, unsubscribe footers, and server-visible message content, plus a deterministic local SMTP integration test for attachments and acceptance reports.
 - Archive round trips, traversal rejection, missing-executable imports, deletion protection, configuration encryption, and secret redaction.

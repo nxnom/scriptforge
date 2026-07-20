@@ -170,6 +170,7 @@ Status: Pending
 - Ship an FFmpeg Media Toolkit for local video/audio conversion, compression, resizing, trimming, extraction, GIFs, frame ZIPs, and audio-track changes through the normal Dependency Doctor path.
 - Remove iframe CSP/sandbox restrictions and treat tool interfaces and runners as trusted local apps with network, same-origin API, browser filesystem, local filesystem, and process access; use the model for an in-place duplicate-file cleaner without a ZIP round trip.
 - Ship an authorized-content Video Downloader backed by declared `yt-dlp`, with single-video and playlist ranges, honest no-FFmpeg quality choices, and memory-safe streamed results.
+- Ship a zero-install SMTP Campaign Sender that personalizes local CSV rows, uses encrypted runner-only credentials, sends through the user's own SMTP server, and exports an honest server-acceptance report.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Validate the packed npm artifact from an isolated npm install through CLI launch, HTTP/WebSocket lifecycle, and a real bundled-tool output.
 - Record a public demo shorter than three minutes.

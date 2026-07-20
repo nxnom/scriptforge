@@ -4,6 +4,7 @@ import faviconCreatorManifest from "./bundled/favicon-creator/tool.json";
 import imageResizerManifest from "./bundled/image-resizer/tool.json";
 import mediaToolkitManifest from "./bundled/media-toolkit/tool.json";
 import pdfToolkitManifest from "./bundled/pdf-toolkit/tool.json";
+import smtpCampaignSenderManifest from "./bundled/smtp-campaign-sender/tool.json";
 import videoDownloaderManifest from "./bundled/video-downloader/tool.json";
 import { type ToolManifest, toolManifestSchema } from "./manifest";
 
@@ -15,6 +16,7 @@ const bundledManifests = [
   toolManifestSchema.parse(pdfToolkitManifest),
   toolManifestSchema.parse(codeScreenshotManifest),
   toolManifestSchema.parse(videoDownloaderManifest),
+  toolManifestSchema.parse(smtpCampaignSenderManifest),
 ] satisfies ToolManifest[];
 
 export function listBundledTools(): ToolManifest[] {

@@ -56,3 +56,4 @@ That power makes review important. Users should save Forge candidates only after
 - **FFmpeg Media Toolkit:** Uses allowlisted, shell-free FFmpeg argument templates.
 - **Code Screenshot Studio:** Declares Silicon and uses the Dependency Doctor flow when missing.
 - **Video Downloader:** Declares `yt-dlp`, requires authorization confirmation, and streams large results rather than buffering them in memory.
+- **SMTP Campaign Sender:** Uses Node.js TCP/TLS directly to authenticate with a user-configured SMTP server, personalize CSV recipients, send MIME messages and attachments, and export an acceptance report. SMTP credentials use the encrypted configuration store and never enter the iframe.

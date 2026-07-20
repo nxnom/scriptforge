@@ -1,12 +1,14 @@
 // @vitest-environment node
 
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { degrees, PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { toolManifestSchema } from "../tools/manifest";
+import { findBundledTool } from "../tools/registry";
 import { createApp } from "./app";
 import { ToolConfigurationService } from "./configuration/service";
 import { createToolRuntimeApiRoutes } from "./jobs/routes";
@@ -688,5 +690,124 @@ fs.writeFileSync(path.join(process.cwd(), "02-second-id.webm"), "second-video");
       outputs: [],
       data: { username: "maya", token: "[REDACTED]" },
     });
+  });
+
+  it("sends a personalized campaign through SMTP and returns a delivery report", async () => {
+    const commands: string[] = [];
+    const messages: string[] = [];
+    const server = createServer((socket) => {
+      let buffer = "";
+      let receivingData = false;
+      socket.write("220 local.test ESMTP\r\n");
+      socket.on("data", (chunk) => {
+        buffer += chunk.toString("utf8");
+        while (buffer) {
+          if (receivingData) {
+            const end = buffer.indexOf("\r\n.\r\n");
+            if (end < 0) return;
+            messages.push(buffer.slice(0, end));
+            buffer = buffer.slice(end + 5);
+            receivingData = false;
+            socket.write("250 2.0.0 queued\r\n");
+            continue;
+          }
+          const end = buffer.indexOf("\r\n");
+          if (end < 0) return;
+          const command = buffer.slice(0, end);
+          buffer = buffer.slice(end + 2);
+          commands.push(command);
+          if (command.startsWith("EHLO "))
+            socket.write("250-local.test\r\n250-AUTH PLAIN LOGIN\r\n250 SIZE 10000000\r\n");
+          else if (command.startsWith("AUTH PLAIN ")) socket.write("235 2.7.0 authenticated\r\n");
+          else if (command.startsWith("MAIL FROM:")) socket.write("250 2.1.0 sender accepted\r\n");
+          else if (command.startsWith("RCPT TO:")) socket.write("250 2.1.5 recipient accepted\r\n");
+          else if (command === "DATA") {
+            receivingData = true;
+            socket.write("354 end with dot\r\n");
+          } else if (command === "RSET") socket.write("250 reset\r\n");
+          else if (command === "QUIT") {
+            socket.write("221 bye\r\n");
+            socket.end();
+          } else socket.write("500 unsupported\r\n");
+        }
+      });
+    });
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("SMTP test server did not bind to a TCP port.");
+      const manifest = findBundledTool("smtp-campaign-sender");
+      if (!manifest) throw new Error("SMTP Campaign Sender manifest is unavailable.");
+      const configuration = new ToolConfigurationService(
+        join(jobsRoot, "smtp-config"),
+        join(jobsRoot, "smtp-secure", "master.key"),
+      );
+      await configuration.save(manifest, {
+        smtpHost: "127.0.0.1",
+        smtpPort: address.port,
+        smtpSecurity: "none",
+        smtpUsername: "local-user",
+        smtpPassword: "local-password",
+        senderEmail: "sender@example.com",
+        senderName: "Example Team",
+        replyTo: "reply@example.com",
+      });
+      const service = new ToolJobService(
+        join(jobsRoot, "smtp-jobs"),
+        resolve("src/tools/bundled"),
+        undefined,
+        undefined,
+        configuration,
+      );
+      const csv = "email,name,company\nalex@example.com,Alex,Northwind\nsam@example.com,Sam,Contoso\n";
+      const { jobId } = await service.start({
+        toolId: manifest.id,
+        input: {
+          mode: "campaign",
+          csvFileName: "recipients.csv",
+          subject: "Hello {{name}} at {{company}}",
+          textBody: "Hi {{name}}, this is for {{company}}.",
+          htmlBody: "",
+          testRecipient: "",
+          delayMs: 0,
+          authorized: true,
+        },
+        files: [
+          new File([csv], "recipients.csv", { type: "text/csv" }),
+          new File(["Local attachment"], "brief.txt", { type: "text/plain" }),
+        ],
+      });
+
+      await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
+      expect(commands).toEqual(
+        expect.arrayContaining([
+          "MAIL FROM:<sender@example.com>",
+          "RCPT TO:<alex@example.com>",
+          "RCPT TO:<sam@example.com>",
+        ]),
+      );
+      expect(commands.some((command) => command.includes("local-password"))).toBe(false);
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toContain("Subject: Hello Alex at Northwind");
+      expect(messages[0]).toContain('Content-Disposition: attachment; filename="brief.txt"');
+      expect(messages[0]).toContain(Buffer.from("Local attachment").toString("base64"));
+      const bodyMatch = messages[0]?.match(
+        /Content-Type: text\/plain; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+?)\r\n--/,
+      );
+      expect(Buffer.from(bodyMatch?.[1]?.replaceAll("\r\n", "") ?? "", "base64").toString("utf8")).toBe(
+        'Hi Alex, this is for Northwind.\n\nTo opt out, reply with "unsubscribe".',
+      );
+      const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+      if (result?.type !== "result") throw new Error("SMTP campaign result was not emitted.");
+      expect(result.data).toEqual({ sent: 2, failed: 0, total: 2, mode: "campaign" });
+      const stored = await service.readOutput(jobId, result.outputs[0]?.id ?? "");
+      if (!stored) throw new Error("SMTP campaign report was not stored.");
+      expect(stored.data.toString("utf8")).toContain('"alex@example.com","sent","2.0.0 queued"');
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 });

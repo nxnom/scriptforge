@@ -18,7 +18,7 @@ The public video demonstration will be linked here before the Build Week submiss
 
 ## Key Features
 
-- Launch seven ready-to-use image, PDF, icon, favicon, code screenshot, and media tools with one `npx scriptforge` command.
+- Launch eight ready-to-use image, PDF, icon, favicon, code screenshot, media, download, and direct-SMTP email tools with one `npx scriptforge` command.
 - Forge new utilities through a real interactive Codex CLI session powered by GPT-5.6.
 - Review generated interfaces and scripts, save them locally, resume interrupted work, and update installed tools.
 - Run tools with previews, progress, structured logs, cancellation, and optional Dependency Doctor guidance.
@@ -42,6 +42,8 @@ codex login
 See the official [Codex CLI documentation](https://learn.chatgpt.com/docs/codex/cli) for other installation and authentication options.
 
 Some bundled tools have optional system dependencies. FFmpeg Media Toolkit requires `ffmpeg`, Code Screenshot Studio requires `silicon`, and Video Downloader requires `yt-dlp`. Missing dependencies keep a tool visible and block only its execution until resolved.
+
+SMTP Campaign Sender requires access to an SMTP account. Its host, sender identity, username, and encrypted password or app password are saved through Tool configuration—not environment variables—and the secret is resolved only for the local Node.js runner.
 
 ## Quick Start
 
@@ -74,7 +76,7 @@ None are required. Do not place OpenAI credentials in this repository; Codex CLI
 
 ## Test and Sample Data
 
-The image tools accept ordinary PNG, JPEG, or WebP files, so no separate sample dataset is required. A simple first test is to open **Image Resizer**, choose an image, resize it, and save the result.
+The image tools accept ordinary PNG, JPEG, or WebP files, so no separate sample dataset is required. A simple first test is to open **Image Resizer**, choose an image, resize it, and save the result. SMTP Campaign Sender accepts a CSV with an `email` header and any additional columns used as `{{variable}}` placeholders; use addresses you control when testing.
 
 For repository verification:
 
@@ -103,7 +105,7 @@ See [Architecture](./docs/ARCHITECTURE.md) for the complete runtime and trust mo
 - **User-facing model role:** GPT-5.6 collaborates with the user, creates and exercises tool candidates, repairs failures, and presents exact revisions for review and saving. It also powers the optional Dependency Doctor diagnosis flow.
 - **Codex acceleration:** Codex helped define the product and trust model, implement the Hono/Spoosh boundary, build the generic runner and Forge terminal, diagnose PTY and iframe integration, create the bundled tools, and write verification tests.
 - **Key decisions:** ScriptForge uses filesystem manifests instead of a database, keeps the server on localhost, preserves explicit Save as the installation boundary, and treats reviewed tools as trusted local code.
-- **Verification:** Biome, TypeScript, 126 automated tests, production builds, isolated npm package installation, HTTP/WebSocket lifecycle checks, and a real bundled image-resizer output have passed.
+- **Verification:** Biome, TypeScript, 131 automated tests, production builds, isolated npm package installation, HTTP/WebSocket lifecycle checks, a real bundled image-resizer output, and direct SMTP delivery through Mailpit have passed.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`
 
 See [Build Week Evidence](./docs/BUILD_WEEK_EVIDENCE.md) for the detailed implementation decisions and evaluation record.

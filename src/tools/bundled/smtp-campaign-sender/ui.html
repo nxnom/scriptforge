@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SMTP Campaign Sender</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #151515; color: #f2f2f2; --surface: #202020; --soft: #292929; --border: #393939; --muted: #9d9d9d; --primary: #5468ff; --danger: #f09a92; }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; min-width: 0; min-height: 100%; }
+      body { margin: 0; background: #151515; }
+      button, input, textarea, select { font: inherit; }
+      button, .drop { cursor: pointer; }
+      h1, h2, h3, p { margin: 0; }
+      .app { display: grid; min-height: 100vh; grid-template-columns: minmax(330px, .88fr) minmax(420px, 1.12fr); gap: 12px; padding: 14px; }
+      .panel { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+      .composer { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+      .intro { display: grid; gap: 5px; }
+      h1 { font-size: 20px; letter-spacing: -.025em; }
+      h2 { font-size: 13px; }
+      h3 { font-size: 11px; }
+      .muted { color: var(--muted); font-size: 11px; line-height: 1.45; }
+      .drop { display: grid; min-height: 104px; place-items: center; gap: 4px; border: 1px dashed #4b4b4b; border-radius: 11px; padding: 16px; background: #1b1b1b; text-align: center; }
+      .drop:hover, .drop.dragging { border-color: var(--primary); background: #23263a; }
+      .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+      .drop strong { font-size: 12px; }
+      .file-summary { display: none; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid #414141; border-radius: 10px; background: #292929; }
+      .file-summary.visible { display: grid; }
+      .file-copy { min-width: 0; }
+      .file-copy strong { display: block; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .icon { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: #aaa; }
+      .icon:hover { background: #383838; color: white; }
+      .field { display: grid; min-width: 0; gap: 6px; color: #c9c9c9; font-size: 11px; font-weight: 700; }
+      input[type="text"], input[type="email"], input[type="number"], textarea { width: 100%; min-width: 0; border: 1px solid #494949; border-radius: 9px; outline: none; background: #191919; color: #f2f2f2; }
+      input[type="text"], input[type="email"], input[type="number"] { height: 38px; padding: 0 10px; }
+      textarea { min-height: 104px; resize: vertical; padding: 10px; line-height: 1.5; }
+      input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
+      .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 10px; background: #191919; }
+      .tab { height: 32px; border: 0; border-radius: 7px; background: transparent; color: #999; font-size: 10px; font-weight: 750; }
+      .tab.active { background: #333; color: white; }
+      .body-field { display: none; }
+      .body-field.active { display: grid; }
+      .row { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 9px; }
+      .attachments { display: grid; gap: 7px; }
+      .attach-button { width: max-content; border: 1px solid #444; border-radius: 8px; padding: 7px 10px; background: #292929; color: #ddd; font-size: 10px; font-weight: 700; }
+      .attach-button input { display: none; }
+      .attachment-list { display: flex; flex-wrap: wrap; gap: 6px; }
+      .attachment { max-width: 100%; overflow: hidden; border: 1px solid #404040; border-radius: 999px; padding: 4px 8px; color: #bdbdbd; background: #262626; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+      .confirm { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: start; gap: 8px; padding: 10px; border: 1px solid #49412d; border-radius: 10px; background: #29251d; color: #dfd2ac; font-size: 10px; line-height: 1.45; }
+      .confirm input { width: 15px; height: 15px; margin: 0; accent-color: var(--primary); }
+      .error { display: none; padding: 9px 10px; border: 1px solid #71403d; border-radius: 9px; background: #392422; color: var(--danger); font-size: 10px; line-height: 1.45; }
+      .error.visible { display: block; }
+      .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .action { min-height: 39px; border-radius: 9px; font-size: 11px; font-weight: 800; }
+      .action.secondary { border: 1px solid #4a4a4a; background: #292929; color: #e5e5e5; }
+      .action.primary { border: 1px solid var(--primary); background: var(--primary); color: white; }
+      .action:hover:not(:disabled) { filter: brightness(1.1); }
+      .action:disabled { cursor: not-allowed; opacity: .42; }
+      .workspace { display: flex; min-width: 0; flex-direction: column; }
+      .workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .local-badge { border: 1px solid #454c77; border-radius: 999px; padding: 4px 8px; background: #292d45; color: #b8c0ff; font-size: 9px; font-weight: 750; }
+      .workspace-body { display: grid; gap: 12px; padding: 16px; }
+      .progress-card { display: grid; gap: 8px; padding: 11px 12px; border: 1px solid #3d3d3d; border-radius: 10px; background: #1b1b1b; }
+      .progress-copy { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #cfcfcf; font-size: 10px; }
+      .track { height: 5px; overflow: hidden; border-radius: 999px; background: #393939; }
+      .track span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s ease; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .stat { display: grid; gap: 4px; padding: 10px; border: 1px solid #3d3d3d; border-radius: 10px; background: #1b1b1b; }
+      .stat strong { font-size: 17px; }
+      .stat span { color: #929292; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+      .preview { display: grid; gap: 10px; border: 1px solid #3d3d3d; border-radius: 11px; padding: 12px; background: #1b1b1b; }
+      .preview-line { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; font-size: 10px; line-height: 1.45; }
+      .preview-line span:first-child { color: #858585; }
+      .preview-line span:last-child { overflow-wrap: anywhere; }
+      .preview-body { min-height: 150px; max-height: 280px; overflow: auto; border-top: 1px solid #363636; padding-top: 11px; color: #d5d5d5; font-size: 11px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .table-wrap { overflow: auto; border: 1px solid #3d3d3d; border-radius: 11px; }
+      table { width: 100%; border-collapse: collapse; font-size: 10px; }
+      th, td { max-width: 190px; overflow: hidden; border-bottom: 1px solid #343434; padding: 8px 10px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+      th { position: sticky; top: 0; background: #292929; color: #aaa; }
+      tr:last-child td { border-bottom: 0; }
+      .empty { min-height: 210px; display: grid; place-items: center; border: 1px dashed #3d3d3d; border-radius: 11px; padding: 24px; color: #858585; font-size: 11px; text-align: center; }
+      .result { display: none; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border: 1px solid #48558f; border-radius: 11px; padding: 12px; background: #252a44; }
+      .result.visible { display: grid; }
+      .result strong { display: block; margin-bottom: 3px; font-size: 12px; }
+      .download { border-radius: 8px; padding: 8px 11px; background: var(--primary); color: white; font-size: 10px; font-weight: 800; text-decoration: none; }
+      details { margin-top: auto; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+      summary { padding: 10px 16px; cursor: pointer; }
+      pre { max-height: 160px; margin: 0; overflow: auto; padding: 0 16px 14px; white-space: pre-wrap; word-break: break-word; }
+      @media (max-width: 820px) { .app { grid-template-columns: 1fr; } .preview-body { min-height: 120px; } }
+      @media (max-width: 440px) { .app { padding: 10px; } .composer, .workspace-body { padding: 13px; } .row, .actions, .result { grid-template-columns: 1fr; } .download { text-align: center; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel composer">
+        <header class="intro">
+          <h1>SMTP Campaign Sender</h1>
+          <p class="muted">Personalize a CSV and send directly through your configured SMTP server.</p>
+        </header>
+        <label class="drop" id="drop">
+          <strong>Choose or drop recipient CSV</strong>
+          <span class="muted">Requires an <b>email</b> column · other columns become &#123;&#123;variables&#125;&#125;</span>
+          <input id="csv" type="file" accept=".csv,text/csv" />
+        </label>
+        <div class="file-summary" id="file-summary">
+          <div class="file-copy"><strong id="file-name"></strong><span class="muted" id="file-meta"></span></div>
+          <button class="icon" id="remove-csv" type="button" aria-label="Remove recipient CSV">×</button>
+        </div>
+        <label class="field">Subject<input id="subject" type="text" placeholder="A quick idea for {{company}}" /></label>
+        <div class="tabs" role="tablist" aria-label="Message format">
+          <button class="tab active" id="text-tab" type="button" role="tab" aria-selected="true">Plain text</button>
+          <button class="tab" id="html-tab" type="button" role="tab" aria-selected="false">HTML</button>
+        </div>
+        <label class="field body-field active" id="text-field">Plain-text message<textarea id="text-body" placeholder="Hi {{name}},&#10;&#10;…"></textarea></label>
+        <label class="field body-field" id="html-field">HTML message<textarea id="html-body" spellcheck="false" placeholder="<p>Hi {{name}},</p>"></textarea></label>
+        <div class="attachments">
+          <h3>Attachments</h3>
+          <label class="attach-button">Add files<input id="attachments" type="file" multiple /></label>
+          <div class="attachment-list" id="attachment-list"></div>
+        </div>
+        <div class="row">
+          <label class="field">Test recipient<input id="test-recipient" type="email" placeholder="you@example.com" /></label>
+          <label class="field">Delay (ms)<input id="delay" type="number" min="0" max="3600000" step="100" value="1000" /></label>
+        </div>
+        <label class="confirm"><input id="authorized" type="checkbox" /><span>I may contact these recipients, will identify the sender, and will honor unsubscribe requests. Messages include a reply-to-unsubscribe footer.</span></label>
+        <div class="error" id="error" role="alert"></div>
+        <div class="actions">
+          <button class="action secondary" id="send-test" type="button">Send test</button>
+          <button class="action primary" id="send-campaign" type="button">Send campaign</button>
+        </div>
+      </section>
+      <section class="panel workspace">
+        <header class="workspace-head"><h2>Campaign preview</h2><span class="local-badge">Local runner · direct SMTP</span></header>
+        <div class="workspace-body">
+          <div class="progress-card">
+            <div class="progress-copy"><span id="progress-label">Ready</span><span id="progress-value">0%</span></div>
+            <div class="track"><span id="progress-bar"></span></div>
+          </div>
+          <div class="stats">
+            <div class="stat"><strong id="recipient-count">0</strong><span>Recipients</span></div>
+            <div class="stat"><strong id="column-count">0</strong><span>Variables</span></div>
+            <div class="stat"><strong id="attachment-count">0</strong><span>Attachments</span></div>
+          </div>
+          <div class="empty" id="empty">Add a recipient CSV to preview the first personalized message and recipient rows.</div>
+          <div class="preview" id="preview" hidden>
+            <div class="preview-line"><span>To</span><span id="preview-to"></span></div>
+            <div class="preview-line"><span>Subject</span><span id="preview-subject"></span></div>
+            <div class="preview-body" id="preview-body"></div>
+          </div>
+          <div class="table-wrap" id="table-wrap" hidden><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+          <div class="result" id="result">
+            <div><strong id="result-title"></strong><span class="muted" id="result-meta"></span></div>
+            <a class="download" id="download" href="about:blank">Save CSV report</a>
+          </div>
+        </div>
+        <details><summary>Run logs</summary><pre id="logs">SMTP commands and delivery progress will appear here. Credentials are never shown.</pre></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let csvFile;
+      let rows = [];
+      let headers = [];
+      let attachmentFiles = [];
+      let running = false;
+
+      $("csv").addEventListener("change", (event) => selectCsv(event.target.files?.[0]));
+      $("remove-csv").addEventListener("click", () => { $("csv").value = ""; csvFile = undefined; rows = []; headers = []; renderCsv(); });
+      $("attachments").addEventListener("change", (event) => { attachmentFiles = [...(event.target.files || [])]; renderAttachments(); });
+      for (const id of ["subject", "text-body", "html-body"]) $(id).addEventListener("input", renderPreview);
+      for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, (event) => {
+        event.preventDefault(); event.stopPropagation();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+        $("drop").classList.add("dragging");
+      });
+      $("drop").addEventListener("dragleave", (event) => {
+        event.preventDefault(); event.stopPropagation();
+        if (!event.relatedTarget || !$("drop").contains(event.relatedTarget)) $("drop").classList.remove("dragging");
+      });
+      $("drop").addEventListener("drop", (event) => {
+        event.preventDefault(); event.stopPropagation(); $("drop").classList.remove("dragging");
+        selectCsv(event.dataTransfer?.files?.[0]);
+      });
+      $("text-tab").addEventListener("click", () => switchBody("text"));
+      $("html-tab").addEventListener("click", () => switchBody("html"));
+      $("send-test").addEventListener("click", () => start("test"));
+      $("send-campaign").addEventListener("click", () => start("campaign"));
+
+      async function selectCsv(file) {
+        if (!file) return;
+        if (!/\.csv$/i.test(file.name) && file.type !== "text/csv") return showError("Choose a CSV file.");
+        try {
+          const parsed = parseCsv(await file.text());
+          const emailKey = parsed.headers.find((header) => header.toLowerCase() === "email");
+          if (!emailKey) throw new Error('The CSV needs a column named "email".');
+          csvFile = file; headers = parsed.headers;
+          const seen = new Set();
+          rows = parsed.rows.filter((row) => {
+            const email = String(row[emailKey] || "").trim().toLowerCase();
+            if (!/^\S+@\S+\.\S+$/.test(email) || seen.has(email)) return false;
+            seen.add(email); row[emailKey] = email; return true;
+          });
+          if (!rows.length) throw new Error("The CSV does not contain any recipient rows.");
+          $("error").classList.remove("visible");
+          renderCsv();
+        } catch (error) { showError(error instanceof Error ? error.message : "The CSV could not be read."); }
+      }
+
+      function parseCsv(source) {
+        const matrix = []; let row = []; let field = ""; let quoted = false;
+        for (let index = 0; index < source.length; index += 1) {
+          const character = source[index];
+          if (quoted) {
+            if (character === '"' && source[index + 1] === '"') { field += '"'; index += 1; }
+            else if (character === '"') quoted = false;
+            else field += character;
+          } else if (character === '"') quoted = true;
+          else if (character === ",") { row.push(field); field = ""; }
+          else if (character === "\n") { row.push(field.replace(/\r$/, "")); if (row.some((item) => item.trim())) matrix.push(row); row = []; field = ""; }
+          else field += character;
+        }
+        if (quoted) throw new Error("The CSV contains an unclosed quoted field.");
+        row.push(field.replace(/\r$/, "")); if (row.some((item) => item.trim())) matrix.push(row);
+        if (matrix.length < 2) throw new Error("The CSV needs a header and at least one data row.");
+        const parsedHeaders = matrix[0].map((header) => header.replace(/^\uFEFF/, "").trim());
+        return { headers: parsedHeaders, rows: matrix.slice(1).map((values) => Object.fromEntries(parsedHeaders.map((header, index) => [header, values[index] || ""]))) };
+      }
+
+      function renderCsv() {
+        const selected = Boolean(csvFile);
+        $("drop").style.display = selected ? "none" : "grid";
+        $("file-summary").classList.toggle("visible", selected);
+        $("empty").style.display = selected ? "none" : "grid";
+        $("preview").hidden = !selected; $("table-wrap").hidden = !selected;
+        $("recipient-count").textContent = rows.length; $("column-count").textContent = Math.max(0, headers.length - 1);
+        if (!selected) { $("file-name").textContent = ""; $("table-head").innerHTML = ""; $("table-body").innerHTML = ""; return; }
+        $("file-name").textContent = csvFile.name; $("file-meta").textContent = `${rows.length} unique recipients · ${bytes(csvFile.size)}`;
+        const visible = headers.slice(0, 5);
+        $("table-head").innerHTML = `<tr>${visible.map((header) => `<th></th>`).join("")}</tr>`;
+        [...$("table-head").querySelectorAll("th")].forEach((cell, index) => { cell.textContent = visible[index]; });
+        $("table-body").innerHTML = "";
+        for (const row of rows.slice(0, 6)) {
+          const tr = document.createElement("tr");
+          for (const header of visible) { const td = document.createElement("td"); td.textContent = row[header] || "—"; tr.append(td); }
+          $("table-body").append(tr);
+        }
+        renderPreview();
+      }
+
+      function renderPreview() {
+        if (!rows.length) return;
+        const first = rows[0]; const emailKey = headers.find((header) => header.toLowerCase() === "email");
+        $("preview-to").textContent = first[emailKey] || "";
+        $("preview-subject").textContent = template($("subject").value, first) || "Add a subject";
+        const activeBody = $("html-field").classList.contains("active") ? $("html-body").value : $("text-body").value;
+        $("preview-body").textContent = template(activeBody, first) || "Add your message. Use {{column}} placeholders to personalize it.";
+      }
+
+      function template(value, row) {
+        return String(value || "").replace(/{{\s*([^{}]+?)\s*}}/g, (_match, key) => {
+          const found = Object.keys(row).find((candidate) => candidate.toLowerCase() === String(key).toLowerCase());
+          return found ? row[found] : "";
+        });
+      }
+
+      function switchBody(kind) {
+        const text = kind === "text";
+        $("text-tab").classList.toggle("active", text); $("html-tab").classList.toggle("active", !text);
+        $("text-tab").setAttribute("aria-selected", String(text)); $("html-tab").setAttribute("aria-selected", String(!text));
+        $("text-field").classList.toggle("active", text); $("html-field").classList.toggle("active", !text);
+        renderPreview();
+      }
+
+      function renderAttachments() {
+        $("attachment-count").textContent = attachmentFiles.length; $("attachment-list").innerHTML = "";
+        for (const file of attachmentFiles) { const item = document.createElement("span"); item.className = "attachment"; item.textContent = `${file.name} · ${bytes(file.size)}`; $("attachment-list").append(item); }
+      }
+
+      async function start(mode) {
+        const error = validate(mode); if (error) return showError(error);
+        running = true; setButtons(); $("error").classList.remove("visible"); $("result").classList.remove("visible"); $("logs").textContent = ""; setProgress(.01, "Preparing local files", true);
+        try {
+          const sourceFiles = [csvFile, ...attachmentFiles];
+          const files = await Promise.all(sourceFiles.map(async (file) => ({ name: file.name, size: file.size, type: file.type || "application/octet-stream", lastModified: file.lastModified, data: await file.arrayBuffer() })));
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { mode, csvFileName: csvFile.name, subject: $("subject").value, textBody: $("text-body").value, htmlBody: $("html-body").value, testRecipient: $("test-recipient").value.trim(), delayMs: Number($("delay").value), authorized: true }, files }, "*");
+        } catch (error) { showError(error instanceof Error ? error.message : "The local files could not be prepared."); finish(); }
+      }
+
+      function validate(mode) {
+        if (!csvFile) return "Choose a recipient CSV file.";
+        if (!$("subject").value.trim()) return "Add an email subject.";
+        if (!$("text-body").value.trim() && !$("html-body").value.trim()) return "Add a plain-text or HTML message.";
+        if (mode === "test" && !/^\S+@\S+\.\S+$/.test($("test-recipient").value.trim())) return "Add a valid test recipient.";
+        const delay = Number($("delay").value); if (!Number.isFinite(delay) || delay < 0 || delay > 3600000) return "Delay must be between 0 and 3,600,000 milliseconds.";
+        if (!$("authorized").checked) return "Confirm that you may contact these recipients and will honor opt-out requests.";
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") setProgress(.02, "Starting SMTP connection");
+        if (message.type === "progress") setProgress(message.value, message.label || "Sending");
+        if (message.type === "log" && typeof message.message === "string") $("logs").textContent += `${message.message}\n`;
+        if (message.type === "result") showResult(message.outputs?.[0], message.data);
+        if (message.type === "failed") { showError(message.message || "The campaign failed."); finish(); }
+        if (message.type === "complete") finish();
+      });
+
+      let displayedProgress = 0;
+      function setProgress(value, label, reset = false) { if (reset) displayedProgress = 0; displayedProgress = Math.max(displayedProgress, Math.max(0, Math.min(1, Number(value) || 0))); const percent = Math.round(displayedProgress * 100); $("progress-label").textContent = label; $("progress-value").textContent = `${percent}%`; $("progress-bar").style.width = `${percent}%`; }
+      function showResult(output, data) { if (!output) return; const sent = Number(data?.sent ?? output.metadata?.sent) || 0; const failed = Number(data?.failed ?? output.metadata?.failed) || 0; $("result-title").textContent = `${sent} sent · ${failed} failed`; $("result-meta").textContent = "SMTP server acceptance report"; $("download").href = output.downloadUrl; $("download").download = output.name; $("result").classList.add("visible"); }
+      function showError(message) { $("error").textContent = message; $("error").classList.add("visible"); }
+      function setButtons() { $("send-test").disabled = running; $("send-campaign").disabled = running; $("send-test").textContent = running ? "Sending…" : "Send test"; $("send-campaign").textContent = running ? "Sending…" : "Send campaign"; }
+      function finish() { running = false; setButtons(); }
+      function bytes(value) { const number = Number(value) || 0; return number < 1048576 ? `${(number / 1024).toFixed(1)} KB` : `${(number / 1048576).toFixed(1)} MB`; }
+      window.addEventListener("error", (event) => { showError(event.message || "The interface encountered an error."); finish(); });
+      window.addEventListener("unhandledrejection", (event) => { showError(event.reason?.message || String(event.reason)); finish(); });
+      setButtons(); renderCsv(); renderAttachments();
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

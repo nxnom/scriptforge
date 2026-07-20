@@ -147,6 +147,8 @@ The bundled App Icon Exporter reuses `sharp` to build one local ZIP containing i
 
 The bundled Video Downloader declares `yt-dlp` and uses the normal Needs install and opt-in Doctor path when it is absent. It supports one authorized video or a playlist range, selects a self-contained media stream so FFmpeg is not an undeclared dependency, packages multiple results into one local ZIP, and streams large outputs with byte-range support. The trusted runner validates the user's authorization acknowledgement even if browser UI validation is bypassed.
 
+The bundled SMTP Campaign Sender imports a recipient CSV, previews template substitutions, and sends personalized plain-text or HTML MIME messages with optional attachments through the user's own SMTP server. Connection settings and sender identity use manifest-driven configuration; the SMTP password or app password is encrypted locally and injected only into the trusted Node.js runner. The tool reports server acceptance rather than claiming inbox delivery or third-party open tracking.
+
 ## Portable Tool Archives
 
 An installed tool exports as one `.forge` file containing its complete directory. Import validates the archive envelope, relative paths, manifest, required entry files, size limits, and identifier collisions before atomically reconstructing the tool under `~/.scriptforge/tools`. Import never loads or executes the runner.

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "id": "smtp-campaign-sender",
+  "version": "1.0.0",
+  "name": "SMTP Campaign Sender",
+  "description": "Send personalized email campaigns from a local CSV through your own SMTP server.",
+  "categories": ["Email", "Productivity"],
+  "icon": "mail",
+  "script": "run.mjs",
+  "interface": {
+    "type": "html",
+    "entry": "ui.html"
+  },
+  "requiredExecutables": [],
+  "configuration": [
+    {
+      "key": "smtpHost",
+      "label": "SMTP host",
+      "type": "text",
+      "required": true,
+      "placeholder": "smtp.example.com"
+    },
+    {
+      "key": "smtpPort",
+      "label": "SMTP port",
+      "type": "number",
+      "required": true,
+      "minimum": 1,
+      "maximum": 65535,
+      "defaultValue": 587
+    },
+    {
+      "key": "smtpSecurity",
+      "label": "Connection security",
+      "type": "select",
+      "required": true,
+      "defaultValue": "starttls",
+      "options": [
+        { "value": "starttls", "label": "STARTTLS (usually port 587)" },
+        { "value": "tls", "label": "Implicit TLS (usually port 465)" },
+        { "value": "none", "label": "None (local or trusted servers only)" }
+      ]
+    },
+    {
+      "key": "smtpUsername",
+      "label": "SMTP username",
+      "type": "text",
+      "required": true,
+      "placeholder": "you@example.com"
+    },
+    {
+      "key": "smtpPassword",
+      "label": "SMTP password or app password",
+      "type": "secret",
+      "required": true,
+      "description": "Encrypted locally and provided only to the Node.js runner."
+    },
+    {
+      "key": "senderEmail",
+      "label": "From email",
+      "type": "text",
+      "required": true,
+      "placeholder": "you@example.com"
+    },
+    {
+      "key": "senderName",
+      "label": "From name",
+      "type": "text",
+      "required": false,
+      "placeholder": "Your name or company"
+    },
+    {
+      "key": "replyTo",
+      "label": "Reply-to email",
+      "type": "text",
+      "required": false,
+      "description": "Defaults to the From email when left blank."
+    }
+  ]
+}

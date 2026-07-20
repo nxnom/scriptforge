@@ -27,7 +27,7 @@ describe("local API", () => {
       installedToolsRoot: join(tmpdir(), `scriptforge-empty-tools-${randomUUID()}`),
     }).request("/api/tools");
     const body = await response.json();
-    expect(body.tools).toHaveLength(14);
+    expect(body.tools).toHaveLength(15);
     expect(body.tools[0]).toMatchObject({
       id: "image-resizer",
       version: "1.0.0",

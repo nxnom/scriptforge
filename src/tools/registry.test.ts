@@ -61,4 +61,15 @@ describe("bundled tool registry", () => {
       icon: "code-2",
     });
   });
+
+  it("includes the zero-install SMTP campaign sender with encrypted credentials", () => {
+    expect(findBundledTool("smtp-campaign-sender")).toMatchObject({
+      categories: ["Email", "Productivity"],
+      requiredExecutables: [],
+      icon: "mail",
+      configuration: expect.arrayContaining([
+        expect.objectContaining({ key: "smtpPassword", type: "secret", required: true }),
+      ]),
+    });
+  });
 });
