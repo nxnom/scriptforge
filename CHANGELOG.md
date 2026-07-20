@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- ScriptForge now uses the brand-colored Zap mark as its browser favicon.
+
 ## [0.1.4] - 2026-07-21
 
 ### Added
