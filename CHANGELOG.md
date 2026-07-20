@@ -6,11 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Fixed
-
-- Long Library category lists, including All categories, now scroll within the available viewport without showing an oversized native scrollbar.
-
-## [0.1.4] - 2026-07-20
+## [0.1.4] - 2026-07-21
 
 ### Added
 
@@ -19,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Manifest-driven numeric configuration fields now submit actual numbers instead of failing validation after user edits.
+- Long Library category lists, including All categories, now scroll within the available viewport without showing an oversized native scrollbar.
 
 ## [0.1.3] - 2026-07-20
 
