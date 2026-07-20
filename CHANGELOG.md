@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Forge authoring guidance now requires folder-based tools to pair manual paths with a custom, runner-backed folder browser.
+- Advertised drag-and-drop inputs must implement and verify real dropped-file handling.
+
+### Fixed
+
+- Image Resizer now accepts images dropped onto its picker instead of only changing the drop-zone styling.
 
 ## [0.1.2] - 2026-07-20
 

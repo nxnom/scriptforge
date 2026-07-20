@@ -28,6 +28,8 @@ Separate persistent configuration from per-run input. Credentials, API keys, acc
 
 When a tool operates on existing folders in place, folder selection is part of the product, not an instruction for the user to work around. Provide manual absolute-path entry plus a visible Add folder or Choose folder action that opens a custom folder-browser dialog. Use a read-only runner action over the normal host bridge to list directories and navigate; do not leave the user with only a pasted-path field or rely only on webkitdirectory, which cannot supply the absolute path needed by the runner. Follow the exact folder-browser behavior in the host bridge contract below.
 
+Every visible capability must work as described. In particular, never write “drag and drop,” “drop files,” or equivalent copy unless ui.html implements the complete drag event flow, reads dataTransfer.files, validates the dropped files, and updates the same selection state used by the file input. Styling dragover without accepting the dropped File is not an implementation. Follow and verify the exact drag-and-drop behavior in the host bridge contract below.
+
 Use this exact manifest contract; never infer field names or search for another schema:
 ${toolManifestGuide}
 

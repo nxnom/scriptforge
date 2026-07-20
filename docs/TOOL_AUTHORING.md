@@ -35,6 +35,7 @@ Unless the user explicitly requests a different style, generated tools use Scrip
 - Choose a tool-specific layout instead of defaulting to one centered form card. When inputs and results are both meaningful, stack them in the narrow tester and use a balanced side-by-side or dashboard composition on wide canvases. For a compact single control group, keep the controls readable while status, history, results, or details use the remaining width. Empty messages belong inside their future result region rather than leaving the page blank.
 - Remain usable at 360px without horizontal scrolling. Use fluid grids with `minmax(0, 1fr)`, wrapping controls, and a deliberate breakpoint around 700–800px. Avoid fixed page heights, large minimum heights, and large empty areas. Result collections may grow or scroll as needed.
 - Once files are selected, replace the empty drop zone in the same footprint with compact thumbnails or file rows and Change/Add and Remove actions. Do not retain a large empty “Choose files” area above a duplicate selected-file preview.
+- If a drop zone claims drag-and-drop support, implement `dragenter`, `dragover`, `dragleave`, and `drop`. Prevent browser navigation, stop propagation, show an active state, read `event.dataTransfer.files`, apply the same file count/type/size validation as the picker, and send accepted files through the same selection code. Drop-related copy or styling without functional file acceptance is not allowed.
 - Give the tool an intentional hierarchy of controls, current state, primary result, and secondary logs/details. Reveal results in the existing result region or a compact section using the grid, table, media preview, reading, or list appropriate to the data. Truncate long filenames and keep result actions easy to reach.
 - Show loading, progress, success, and failure without unnecessary layout shifts. Keep verbose logs collapsed unless needed.
 - Before presenting the candidate, inspect the CSS at representative 480px and 1200px iframe widths. Nothing may clip or scroll horizontally at 480px; at 1200px the workspace must use the canvas intentionally instead of leaving a narrow centered island and unused space.
@@ -126,6 +127,7 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Essential controls and the primary action fit in the initial tester viewport whenever practical.
 - Selecting files replaces the empty picker instead of creating a second, duplicate file-preview area.
 - Selected files cross the bridge as `ArrayBuffer` descriptors.
+- Every advertised drop zone is checked with a real or dispatched dropped `File`; its selected-file preview and primary action must update.
 - Folder-based tools offer manual absolute paths and a working custom folder browser rather than only a pasted-path field.
 - Inputs are validated again by the execution script; the UI is not trusted.
 - Progress and logs describe the real execution stages.

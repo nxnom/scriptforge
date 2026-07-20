@@ -31,4 +31,14 @@ describe("Forge MCP instructions", () => {
       "Folder browsing itself must never perform the tool's destructive or mutating action",
     );
   });
+
+  it("requires advertised drag and drop to accept real files", () => {
+    const instructions = createForgeMcpInstructions();
+
+    expect(instructions).toContain("never write “drag and drop,” “drop files,” or equivalent copy");
+    expect(instructions).toContain("reads dataTransfer.files");
+    expect(instructions).toContain("handle dragenter, dragover, dragleave, and drop");
+    expect(instructions).toContain("dispatch or manually perform a real file drop");
+    expect(instructions).toContain("Do not add “drop” copy or styling without functional drop handling");
+  });
 });

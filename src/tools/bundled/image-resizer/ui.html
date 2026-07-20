@@ -98,6 +98,8 @@
     </main>
     <script>
       const $ = (id) => document.getElementById(id);
+      const acceptedImageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
+      const maximumImageBytes = 20 * 1024 * 1024;
       let selectedFile;
       let originalUrl;
       const setFile = (file) => {
@@ -113,10 +115,30 @@
         const image = new Image(); image.onload = () => { $("width").value = image.naturalWidth; $("height").value = image.naturalHeight; $("original-meta").textContent = `${image.naturalWidth} × ${image.naturalHeight} · ${bytes(file.size)}`; }; image.src = originalUrl;
         clearResult();
       };
-      $("file").addEventListener("change", (event) => setFile(event.target.files[0]));
+      const selectFile = (file) => {
+        if (!file) return;
+        const hasAcceptedType = acceptedImageTypes.has(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name);
+        if (!hasAcceptedType) { showError("Choose a PNG, JPEG, or WebP image."); return; }
+        if (file.size > maximumImageBytes) { showError("Choose an image no larger than 20 MB."); return; }
+        $("bridge-error").classList.remove("visible");
+        setFile(file);
+      };
+      $("file").addEventListener("change", (event) => selectFile(event.target.files?.[0]));
       $("remove").addEventListener("click", () => { $("file").value = ""; setFile(); });
-      for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, () => $("drop").classList.add("dragging"));
-      for (const eventName of ["dragleave", "drop"]) $("drop").addEventListener(eventName, () => $("drop").classList.remove("dragging"));
+      for (const eventName of ["dragenter", "dragover"]) $("drop").addEventListener(eventName, (event) => {
+        event.preventDefault(); event.stopPropagation();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+        $("drop").classList.add("dragging");
+      });
+      $("drop").addEventListener("dragleave", (event) => {
+        event.preventDefault(); event.stopPropagation();
+        if (!event.relatedTarget || !$("drop").contains(event.relatedTarget)) $("drop").classList.remove("dragging");
+      });
+      $("drop").addEventListener("drop", (event) => {
+        event.preventDefault(); event.stopPropagation();
+        $("drop").classList.remove("dragging");
+        selectFile(event.dataTransfer?.files?.[0]);
+      });
       $("run").addEventListener("click", async () => {
         if (!selectedFile) return;
         clearResult(); $("bridge-error").classList.remove("visible"); $("logs").innerHTML = ""; $("run").disabled = true; $("run").textContent = "Resizing…"; setProgress(0.02, "Reading selected image");
