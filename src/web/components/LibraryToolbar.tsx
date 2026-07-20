@@ -106,7 +106,7 @@ function MobileFilterMenu({
   return (
     <Menu
       className="min-w-0 flex-1"
-      menuClassName="max-h-[min(70vh,32rem)] min-w-64 overflow-y-auto overscroll-contain"
+      menuClassName="max-h-[min(70vh,32rem)] min-w-64 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       placement="bottom-start"
     >
       <MenuTrigger>

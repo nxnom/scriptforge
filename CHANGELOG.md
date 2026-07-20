@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Long Library category lists now scroll within the available viewport instead of being cut off below the page.
+- Long Library category lists, including All categories, now scroll within the available viewport without showing an oversized native scrollbar.
 
 ## [0.1.4] - 2026-07-20
 

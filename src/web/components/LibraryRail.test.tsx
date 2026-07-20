@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LibraryRail } from "./LibraryRail";
 
@@ -17,13 +17,16 @@ describe("LibraryRail", () => {
       />,
     );
 
-    expect(screen.getByRole("navigation", { name: "Tool categories" })).toHaveClass(
+    const categoryList = screen.getByRole("navigation", { name: "Tool categories" });
+    expect(categoryList).toHaveClass(
       "min-h-0",
       "flex-1",
       "overflow-y-auto",
       "overscroll-contain",
+      "[scrollbar-width:none]",
+      "[&::-webkit-scrollbar]:hidden",
     );
-    expect(screen.getByRole("button", { name: /All categories/ })).toBeVisible();
+    expect(within(categoryList).getByRole("button", { name: /All categories/ })).toBeVisible();
     expect(screen.getByRole("button", { name: /Category 20/ })).toBeInTheDocument();
   });
 });

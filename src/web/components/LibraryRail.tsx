@@ -43,13 +43,13 @@ export function LibraryRail({
       </RailSection>
 
       <RailSection className="min-h-0 flex-1 overflow-hidden" title="Categories">
-        <RailButton active={category === null} label="All categories" onClick={() => onCategory(null)}>
-          <Tag size={14} />
-        </RailButton>
         <nav
           aria-label="Tool categories"
-          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-1"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
+          <RailButton active={category === null} label="All categories" onClick={() => onCategory(null)}>
+            <Tag size={14} />
+          </RailButton>
           {categories.map((item) => (
             <RailButton
               key={item.name}
