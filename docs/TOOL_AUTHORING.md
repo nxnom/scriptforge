@@ -45,7 +45,7 @@ Generated interfaces use ordinary CSS because their runtime HTML cannot depend o
 
 Before creating candidate files, Codex identifies every unresolved user-facing decision that would materially change the tool's behavior, automation, timing, inputs, outputs, destructive actions, data source, format, quality, or privacy. It presents a short plain-language question panel only when such decisions remain; a clear request begins immediately without a separate kickoff approval.
 
-Codex runs a realistic standalone runner check for the first candidate and repeats it when `tool.json` or `run.mjs` changes. A later `ui.html`-only revision reuses that runner evidence and proceeds directly to interface review; the exact revised interface must still pass Preview before Save.
+Codex runs a realistic standalone runner check for the first candidate and repeats it when `tool.json` or `run.mjs` changes. A later `ui.html`-only revision reuses that runner evidence and proceeds directly to interface review. Preview is optional and never blocks Save.
 
 - Ask all behavior-changing questions together and require answers where needed. Do not silently choose an easier or narrower behavior.
 - Treat words such as “live,” “automatically,” “watch,” “monitor,” “sync,” “continuous,” “recurring,” and “update” as core requirements.
@@ -130,4 +130,4 @@ Before opening the candidate preview, Codex runs `run.mjs` directly with a reali
 - Persistent values are declared in the manifest, secrets are not collected by `ui.html`, and the runner does not log or return them.
 - The manifest declares external executable dependencies needed for readiness checks and Doctor guidance; the runner is trusted and not sandboxed to that list.
 - The candidate presentation states what standalone check actually ran and what result was verified.
-- The exact reviewed candidate revision is the revision that is tested and saved.
+- The exact presented candidate revision is the revision that is saved; Preview testing is optional.

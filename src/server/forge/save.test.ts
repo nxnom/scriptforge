@@ -42,7 +42,7 @@ describe("Forge candidate save", () => {
     expect(spawn).not.toHaveBeenCalled();
   });
 
-  it("saves only the exact successfully tested revision and makes it runnable", async () => {
+  it("saves the exact presented revision without requiring a Preview run", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-save-"));
     roots.push(root);
     const stagingRoot = join(root, "staging");
@@ -71,22 +71,6 @@ describe("Forge candidate save", () => {
     const runtime = await service.getCandidateRuntime(sessionId, candidate.revision);
     const app = new Hono().route("/api/forge", createForgeApiRoutes(service, jobs, installedRoot, configuration));
 
-    const early = await app.request(`/api/forge/sessions/${sessionId}/candidate/save`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ revision: candidate.revision }),
-    });
-    expect(early.status).toBe(409);
-
-    const form = new FormData();
-    form.append("revision", candidate.revision);
-    form.append("input", "{}");
-    const blocked = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, {
-      method: "POST",
-      body: form,
-    });
-    expect(blocked.status).toBe(409);
-
     const configured = await app.request(`/api/forge/sessions/${sessionId}/candidate/configuration`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
@@ -98,10 +82,6 @@ describe("Forge candidate save", () => {
     });
     expect(configured.status).toBe(200);
     expect(await configured.text()).not.toContain("candidate-secret");
-
-    const run = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, { method: "POST", body: form });
-    const { jobId } = (await run.json()) as { jobId: string };
-    await expect.poll(() => jobs.getSnapshot(jobId)?.status).toBe("succeeded");
 
     const saved = await app.request(`/api/forge/sessions/${sessionId}/candidate/save`, {
       method: "POST",
@@ -130,16 +110,6 @@ describe("Forge candidate save", () => {
       summary: "Updated and ready to review.",
       testSummary: "Updated standalone check passed.",
     });
-    const updateForm = new FormData();
-    updateForm.append("revision", updatedCandidate.revision);
-    updateForm.append("input", "{}");
-    const updateRun = await app.request(`/api/forge/sessions/${sessionId}/candidate/jobs`, {
-      method: "POST",
-      body: updateForm,
-    });
-    const { jobId: updateJobId } = (await updateRun.json()) as { jobId: string };
-    await expect.poll(() => jobs.getSnapshot(updateJobId)?.status).toBe("succeeded");
-
     const updated = await app.request(`/api/forge/sessions/${sessionId}/candidate/save`, {
       method: "POST",
       headers: { "content-type": "application/json" },

@@ -75,9 +75,9 @@ Completed and verified:
 - Explicit Stop controls end only their owning Codex terminal; unsaved new-tool sessions remain resumable, while saved and update sessions delete their temporary workspace. Unrelated sessions remain active.
 - Confirm explicit Forge stops, return to the Library afterward, surface preserved unsaved sessions on Forge, and make Discard the separate confirmed deletion boundary for those drafts.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
-- Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
+- Exact presented-revision validation and atomic saving into the filesystem-backed tool library without a Preview prerequisite.
 - Save remains clickable for a presented candidate while the server preserves exact-revision test validation, keeps the Forge Codex session alive, hides the completed save action until a different candidate revision is presented, consistently labels later saves Save changes in Forge and tool detail, and leaves Stop as the only explicit session-ending action.
-- Resume reuses the preserved staging directory and exact Codex session ID with a fresh session-scoped MCP token; restored candidates require a new successful Preview run before Save.
+- Resume reuses the preserved staging directory and exact Codex session ID with a fresh session-scoped MCP token; restored candidates may be reviewed in Preview or saved directly.
 - The standard Start Forge dialog includes an optional searchable saved-session select, defaults to a fresh session, and provides an inline confirmation below the select when deleting stale entries without replacing or closing the dialog. Confirmed deletion optimistically removes the cached entry and rolls it back if the request fails.
 
 Acceptance checks:
@@ -85,7 +85,7 @@ Acceptance checks:
 - A user can describe a utility and collaborate with Codex in the embedded terminal.
 - Codex produces a candidate manifest, script, and plain HTML interface.
 - Nothing executes or enters the library without the relevant approval.
-- A tested candidate can be saved and launched from the library.
+- A presented candidate can be saved directly and launched from the library; Preview remains optional.
 - Codex is explicitly configured to use GPT-5.6.
 
 ## Goal 4 — Dependency Doctor

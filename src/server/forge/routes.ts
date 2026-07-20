@@ -163,7 +163,6 @@ export function createForgeApiRoutes(
             manifest: runtime.manifest,
             configurationScope: candidateConfigurationScope(c.req.param("sessionId")),
           });
-          service.trackCandidateJob(c.req.param("sessionId"), request.revision, result.jobId);
           return c.json({ ok: true as const, ...result }, 202);
         } catch (error) {
           return c.json(
@@ -187,10 +186,6 @@ export function createForgeApiRoutes(
           const revision = c.req.valid("json").revision;
           const runtime = await service.getCandidateRuntime(sessionId, revision);
           if (findBundledTool(runtime.manifest.id)) throw new Error("A bundled tool already uses that name.");
-          const jobId = service.getCandidateJob(sessionId, revision);
-          if (!jobId || jobs.getSnapshot(jobId)?.status !== "succeeded") {
-            throw new Error("Run this exact candidate successfully in Preview before saving it.");
-          }
           const files = {
             manifest: runtime.manifest,
             manifestSource: runtime.candidate.manifestSource,

@@ -24,7 +24,6 @@ export function ToolPage() {
   const [endedSessionId, setEndedSessionId] = useState<string>();
   const [panel, setPanel] = useState<ForgePanelDocument | null>(null);
   const [candidate, setCandidate] = useState<ForgeCandidateDocument | null>(null);
-  const [candidateTested, setCandidateTested] = useState(false);
   const [savedCandidateRevision, setSavedCandidateRevision] = useState<string>();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
@@ -55,18 +54,13 @@ export function ToolPage() {
       sessionId: visibleUpdateId ?? "none",
       candidateRevision: candidate?.revision ?? "none",
       savedCandidateRevision: savedCandidateRevision ?? "none",
-      candidateTested,
       candidateSaved: Boolean(candidate && candidate.revision === savedCandidateRevision),
       canSave: Boolean(
-        visibleUpdateId &&
-          candidate &&
-          candidateTested &&
-          candidate.revision !== savedCandidateRevision &&
-          !saveUpdate.loading,
+        visibleUpdateId && candidate && candidate.revision !== savedCandidateRevision && !saveUpdate.loading,
       ),
       saveLoading: saveUpdate.loading,
     });
-  }, [candidate, candidateTested, savedCandidateRevision, saveUpdate.loading, toolId, visibleUpdateId]);
+  }, [candidate, savedCandidateRevision, saveUpdate.loading, toolId, visibleUpdateId]);
   const runTool = useCallback(
     async (message: ToolRunMessage) => {
       if (!toolId) throw new Error("The selected tool is unavailable.");
@@ -111,7 +105,6 @@ export function ToolPage() {
     setUpdateSessionId(undefined);
     setPanel(null);
     setCandidate(null);
-    setCandidateTested(false);
     setSavedCandidateRevision(undefined);
     invalidate("forge/sessions/active");
   }, []);
@@ -131,7 +124,6 @@ export function ToolPage() {
             setEndedSessionId(undefined);
             setPanel(null);
             setCandidate(null);
-            setCandidateTested(false);
             setSavedCandidateRevision(undefined);
             setDoctorOpen(false);
             invalidate("forge/sessions/active");
@@ -167,7 +159,6 @@ export function ToolPage() {
       toolId,
       sessionId: visibleUpdateId ?? "none",
       candidateRevision: candidate?.revision ?? "none",
-      candidateTested,
       saveLoading: saveUpdate.loading,
     });
     if (!visibleUpdateId || !candidate) {
@@ -193,7 +184,6 @@ export function ToolPage() {
     if (!response.data?.ok) return toast.error(apiErrorMessage(response.error, "The tool could not be updated."));
     invalidate("tools");
     setSavedCandidateRevision(candidate.revision);
-    setCandidateTested(false);
     toast.success(`${response.data.tool.name} was updated.`);
   };
   if (!toolId) return null;
@@ -250,10 +240,8 @@ export function ToolPage() {
                 onPanel={setPanel}
                 onCandidate={(next) => {
                   setCandidate(next);
-                  setCandidateTested(false);
                   setPanel(null);
                 }}
-                onTestStatusChange={setCandidateTested}
                 installedReview={
                   <ToolReview
                     toolId={toolId}

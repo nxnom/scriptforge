@@ -15,6 +15,6 @@ describe("Forge MCP instructions", () => {
     expect(instructions).toContain("If only ui.html changed after a successful standalone runner check");
     expect(instructions).toContain("without rerunning run.mjs");
     expect(instructions).toContain("applicable runner or UI-only check");
-    expect(instructions).toContain("exact revised interface successfully in Preview before Save");
+    expect(instructions).toContain("Preview is available for the user's optional review");
   });
 });

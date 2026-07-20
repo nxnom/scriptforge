@@ -39,7 +39,6 @@ type ForgeSession = {
   openPanelVersion?: number;
   directory: string;
   candidate?: ForgeCandidateDocument;
-  candidateJobs: Map<string, string>;
   toolId?: string;
   scope: "create" | "update";
   stopRequested: boolean;
@@ -121,7 +120,6 @@ export class ForgeSessionService {
       mcpToken,
       panelVersion: 0,
       directory,
-      candidateJobs: new Map(),
       toolId: updateTarget?.id,
       scope: updateTarget ? "update" : "create",
       stopRequested: false,
@@ -215,7 +213,6 @@ export class ForgeSessionService {
       panelVersion: 0,
       directory,
       candidate,
-      candidateJobs: new Map(),
       toolId: persisted.toolId ?? undefined,
       scope: persisted.scope,
       stopRequested: false,
@@ -304,16 +301,6 @@ export class ForgeSessionService {
       manifest: toolManifestSchema.parse(JSON.parse(current.manifestSource)),
       candidate: current,
     };
-  }
-
-  trackCandidateJob(sessionId: string, revision: string, jobId: string) {
-    const session = this.activeSession(sessionId);
-    if (session.candidate?.revision !== revision) throw new Error("That candidate revision is no longer current.");
-    session.candidateJobs.set(revision, jobId);
-  }
-
-  getCandidateJob(sessionId: string, revision: string) {
-    return this.activeSession(sessionId).candidateJobs.get(revision);
   }
 
   sendFeedback(sessionId: string, panelVersion: number, text: string, dismiss = true) {
