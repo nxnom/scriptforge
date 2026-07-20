@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { CandidateReview } from "./CandidateReview";
+
+afterEach(cleanup);
 
 describe("CandidateReview", () => {
   it("keeps the active tester compact without duplicate review controls", () => {
@@ -18,12 +20,23 @@ describe("CandidateReview", () => {
     expect(screen.queryByText("Tiny Tool")).not.toBeInTheDocument();
     expect(screen.queryByText(/Standalone check passed/)).not.toBeInTheDocument();
     expect(screen.getByText(/Host bridge log/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Reload preview" })).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Script" }));
     expect(preview).toBeInTheDocument();
     expect(preview).toHaveClass("hidden");
+    expect(screen.queryByRole("button", { name: "Reload preview" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Preview" }));
     expect(screen.getByTitle("Tiny Tool interface preview")).toBe(preview);
+  });
+
+  it("reloads the sandboxed preview iframe", () => {
+    render(<CandidateReview candidate={candidate()} sessionId="session-1" onTestStatusChange={vi.fn()} />);
+    const preview = screen.getByTitle("Tiny Tool interface preview");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload preview" }));
+
+    expect(screen.getByTitle("Tiny Tool interface preview")).not.toBe(preview);
   });
 });
 

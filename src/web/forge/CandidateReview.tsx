@@ -1,6 +1,6 @@
 import { Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { Code2, Eye, FileJson, Settings2 } from "lucide-react";
+import { Code2, Eye, FileJson, RotateCw, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { toolDocumentPolicy, toolIframeAllow, toolIframeSandbox } from "../../shared/tool-iframe-policy";
@@ -21,6 +21,7 @@ export function CandidateReview({
   onTestStatusChange: (ready: boolean) => void;
 }) {
   const [tab, setTab] = useState<CandidateTab>("preview");
+  const [previewKey, setPreviewKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/jobs").POST());
   const configuration = useRead(
@@ -71,6 +72,18 @@ export function CandidateReview({
               Details
             </TabButton>
           </div>
+          {tab === "preview" && (
+            <Tooltip content="Reload preview" triggerAsChild>
+              <Button
+                aria-label="Reload preview"
+                variant="icon"
+                size="xs"
+                onClick={() => setPreviewKey((current) => current + 1)}
+              >
+                <RotateCw size={12} />
+              </Button>
+            </Tooltip>
+          )}
           {configuration.data?.ok && configuration.data.fields.length > 0 && (
             <Tooltip content="Tool configuration" triggerAsChild>
               <Button
@@ -86,6 +99,7 @@ export function CandidateReview({
         </nav>
         <div className="relative min-h-0 flex-1 overflow-hidden bg-[#151515]">
           <iframe
+            key={previewKey}
             ref={iframeRef}
             title={`${candidate.name} interface preview`}
             className={`absolute inset-0 size-full border-0 bg-white ${tab === "preview" ? "block" : "hidden"}`}
