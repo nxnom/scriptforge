@@ -147,7 +147,7 @@ function fieldSchema(field: ConfigurationFieldStatus): z.ZodType {
     let schema = z.number({ message: `${field.label} must be a number.` });
     if (field.minimum !== undefined) schema = schema.min(field.minimum);
     if (field.maximum !== undefined) schema = schema.max(field.maximum);
-    return schema;
+    return z.preprocess((value) => (typeof value === "string" && value.trim() !== "" ? Number(value) : value), schema);
   }
   if (field.type === "select") {
     const values = new Set(field.options.map((option) => option.value));

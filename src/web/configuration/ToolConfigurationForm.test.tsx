@@ -15,11 +15,12 @@ describe("ToolConfigurationForm", () => {
 
     fireEvent.change(screen.getByLabelText(/Username/), { target: { value: "maya" } });
     fireEvent.change(screen.getByLabelText(/Access token/), { target: { value: "private-token" } });
+    fireEvent.change(screen.getByLabelText(/Port/), { target: { value: "1025" } });
     fireEvent.click(screen.getByRole("button", { name: "Save configuration" }));
 
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith({
-        values: { username: "maya", accessToken: "private-token", notifications: true },
+        values: { username: "maya", accessToken: "private-token", notifications: true, port: 1025 },
         clearSecrets: [],
       }),
     );
@@ -51,6 +52,17 @@ function fields(): ConfigurationFieldStatus[] {
       defaultValue: true,
       configured: true,
       value: true,
+    },
+    {
+      key: "port",
+      label: "Port",
+      type: "number",
+      required: true,
+      minimum: 1,
+      maximum: 65535,
+      defaultValue: 587,
+      configured: true,
+      value: 587,
     },
   ];
 }

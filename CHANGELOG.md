@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Built-in SMTP Campaign Sender for personalized CSV campaigns sent directly through a user-configured SMTP server, with encrypted credentials, attachments, throttling, test sends, and downloadable acceptance reports.
 
+### Fixed
+
+- Manifest-driven numeric configuration fields now submit actual numbers instead of failing validation after user edits.
+
 ## [0.1.3] - 2026-07-20
 
 ### Changed
