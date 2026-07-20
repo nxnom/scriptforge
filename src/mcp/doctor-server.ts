@@ -10,7 +10,7 @@ When you have the safest appropriate installation steps, call scriptforge_propos
 If ScriptForge reports that verification failed or the user rejects the proposal, diagnose and propose a corrected command list. Unsupported systems must receive useful manual guidance; never guess a dangerous command.`;
 
 export function createDoctorMcpServer(publish: (proposal: Omit<DoctorProposal, "createdAt">) => Promise<void>) {
-  const server = new McpServer({ name: "scriptforge-doctor", version: "0.1.1" }, { instructions: doctorInstructions });
+  const server = new McpServer({ name: "scriptforge-doctor", version: "0.1.2" }, { instructions: doctorInstructions });
   server.registerTool(
     "scriptforge_propose_install",
     {
