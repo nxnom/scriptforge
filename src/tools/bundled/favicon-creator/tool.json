@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "favicon-creator",
+  "version": "1.0.0",
+  "name": "Favicon Creator",
+  "description": "Create a complete light- and dark-aware favicon pack for browsers, PWAs, Apple, Android, and Windows.",
+  "categories": ["Images", "Developer"],
+  "icon": "globe-2",
+  "script": "run.mjs",
+  "interface": {
+    "type": "html",
+    "entry": "ui.html"
+  },
+  "requiredExecutables": [],
+  "configuration": []
+}

@@ -38,6 +38,14 @@ describe("bundled tool registry", () => {
     });
   });
 
+  it("includes the zero-install favicon creator", () => {
+    expect(findBundledTool("favicon-creator")).toMatchObject({
+      categories: ["Images", "Developer"],
+      requiredExecutables: [],
+      icon: "globe-2",
+    });
+  });
+
   it("declares Silicon for the code screenshot studio", () => {
     expect(findBundledTool("code-screenshot-studio")).toMatchObject({
       categories: ["Developer", "Images"],

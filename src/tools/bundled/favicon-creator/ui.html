@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Favicon Creator</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #171717; color: #f3f3f3; --primary: #5468ff; --border: #383838; --muted: #a5a5a5; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; background: #171717; }
+      button, input, select { font: inherit; }
+      button { color: inherit; }
+      h1, h2, h3, p { margin: 0; }
+      .app { display: grid; min-height: 100vh; grid-template-columns: minmax(290px, .78fr) minmax(430px, 1.22fr); gap: 14px; padding: 16px; }
+      .panel { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 15px; background: #232323; }
+      .controls { display: flex; flex-direction: column; gap: 14px; padding: 17px; }
+      .intro { display: grid; gap: 5px; }
+      h1 { font-size: 20px; letter-spacing: -.025em; }
+      h2 { font-size: 13px; }
+      h3 { font-size: 11px; }
+      .muted { color: var(--muted); font-size: 11px; line-height: 1.45; }
+      .artwork-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .artwork { min-width: 0; }
+      .picker { position: relative; display: grid; min-height: 128px; place-items: center; overflow: hidden; border: 1px dashed #505050; border-radius: 13px; background: #1d1d1d; cursor: pointer; text-align: center; }
+      .picker:hover, .picker.dragging { border-color: var(--primary); background: #25283c; }
+      .picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+      .picker-copy { display: grid; gap: 5px; padding: 14px; }
+      .picker-copy strong { font-size: 12px; }
+      .picker img { display: none; width: 100%; aspect-ratio: 1; object-fit: contain; }
+      .picker.selected { border-style: solid; }
+      .picker.selected .picker-copy { display: none; }
+      .picker.selected img { display: block; }
+      .picker-label { position: absolute; top: 8px; left: 8px; z-index: 1; border-radius: 999px; padding: 4px 7px; background: #111d; color: #ddd; font-size: 9px; }
+      .file-name { display: none; margin: 6px 2px 0; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+      .file-name.visible { display: block; }
+      .dark-artwork { display: none; }
+      .dark-artwork.visible { display: block; }
+      .dark-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 11px; border: 1px solid #414141; border-radius: 10px; background: #1e1e1e; }
+      .dark-option strong { display: block; font-size: 11px; }
+      .toggle { position: relative; width: 34px; height: 20px; flex: none; }
+      .toggle input { position: absolute; opacity: 0; }
+      .toggle span { position: absolute; inset: 0; border-radius: 99px; background: #505050; cursor: pointer; transition: .15s; }
+      .toggle span::after { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; content: ""; transition: .15s; }
+      .toggle input:checked + span { background: var(--primary); }
+      .toggle input:checked + span::after { transform: translateX(14px); }
+      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      label.field { display: grid; gap: 6px; color: #c9c9c9; font-size: 10px; font-weight: 650; }
+      label.wide { grid-column: 1 / -1; }
+      input[type="text"], select, input[type="color"] { width: 100%; min-height: 37px; border: 1px solid #484848; border-radius: 9px; outline: none; background: #1d1d1d; color: #eee; }
+      input[type="text"], select { padding: 7px 9px; }
+      input[type="color"] { padding: 4px; }
+      input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
+      .color-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .progress { display: none; gap: 7px; }
+      .progress.visible { display: grid; }
+      .progress-copy { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
+      .track { height: 5px; overflow: hidden; border-radius: 99px; background: #3a3a3a; }
+      .track span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s; }
+      .error { display: none; padding: 9px 10px; border: 1px solid #71403d; border-radius: 9px; background: #392422; color: #f2aaa4; font-size: 11px; }
+      .error.visible { display: block; }
+      .run { min-height: 40px; border: 1px solid var(--primary); border-radius: 9px; background: var(--primary); color: white; font-weight: 750; cursor: pointer; }
+      .run:hover:not(:disabled) { background: #6375ff; }
+      .run:disabled { cursor: not-allowed; opacity: .45; }
+      .output { display: flex; min-height: 0; flex-direction: column; }
+      .output-head { padding: 15px 17px; border-bottom: 1px solid var(--border); }
+      .output-head p { margin-top: 4px; }
+      .preview-stage { display: grid; min-height: 218px; grid-template-columns: 1fr 1fr; gap: 11px; padding: 15px; }
+      .browser { --theme: #5468ff; display: flex; min-width: 0; flex-direction: column; overflow: hidden; border: 1px solid #3c3c3c; border-top: 2px solid var(--theme); border-radius: 12px; background: #f4f4f4; color: #262626; }
+      .browser.dark { background: #141414; color: #ededed; }
+      .browser-bar { display: flex; height: 42px; align-items: end; gap: 8px; padding: 8px 10px 0; background: #dedede; }
+      .browser.dark .browser-bar { background: #202020; }
+      .browser.dark .browser-bar { border-color: #fff2; }
+      .dots { align-self: center; padding-bottom: 6px; color: #999; font-size: 9px; letter-spacing: 2px; }
+      .tab { display: flex; min-width: 0; max-width: 190px; flex: 1; align-items: center; gap: 7px; border-radius: 8px 8px 0 0; padding: 8px 10px; background: #f4f4f4; box-shadow: inset 0 2px var(--theme); font-size: 10px; font-weight: 650; }
+      .browser.dark .tab { background: #141414; }
+      .tab img { width: 16px; height: 16px; flex: none; border-radius: 3px; background: var(--icon-bg, transparent); object-fit: contain; }
+      .tab-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tab-close { margin-left: auto; color: #888; font-size: 12px; font-weight: 400; }
+      .new-tab { align-self: center; padding-bottom: 5px; color: #888; font-size: 16px; line-height: 1; }
+      .address-row { padding: 8px 10px; border-bottom: 1px solid #0002; background: #f4f4f4; }
+      .browser.dark .address-row { border-color: #fff2; background: #141414; }
+      .address { overflow: hidden; border-radius: 6px; padding: 5px 8px; background: #0000000d; color: #777; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+      .browser.dark .address { background: #ffffff0d; color: #999; }
+      .page { display: grid; flex: 1; place-items: center; padding: 15px; background: var(--page-bg, transparent); text-align: center; transition: background-color .15s; }
+      .page-copy { border: 1px solid #8883; border-radius: 9px; padding: 9px 12px; background: #f7f7f7dd; box-shadow: 0 5px 14px #0001; }
+      .browser.dark .page-copy { background: #181818dd; }
+      .page strong { display: block; font-size: 11px; }
+      .page span { display: block; margin-top: 3px; color: #888; font-size: 9px; }
+      .packs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 0 15px 15px; }
+      .pack { display: grid; min-height: 76px; grid-template-columns: 34px 1fr; align-content: center; gap: 10px; padding: 11px; border: 1px solid #3d3d3d; border-radius: 11px; background: #1e1e1e; }
+      .pack-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: #2c3048; color: #bcc4ff; font-size: 15px; font-weight: 800; line-height: 1; }
+      .pack-copy { min-width: 0; align-self: center; }
+      .pack-copy strong { display: block; font-size: 11px; }
+      .pack-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+      .note { margin: 0 15px 15px; padding: 9px 11px; border: 1px solid #404040; border-radius: 9px; background: #1d1d1d; color: #aaa; font-size: 10px; line-height: 1.45; }
+      .result { display: none; align-items: center; justify-content: space-between; gap: 12px; margin: auto 15px 15px; padding: 13px; border: 1px solid #46548f; border-radius: 11px; background: #242a45; }
+      .result.visible { display: flex; }
+      .result strong { display: block; font-size: 12px; }
+      .download { flex: none; border-radius: 8px; padding: 8px 12px; background: var(--primary); color: white; font-size: 11px; font-weight: 750; text-decoration: none; }
+      details { border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+      summary { padding: 10px 15px; cursor: pointer; }
+      pre { max-height: 110px; margin: 0; overflow: auto; padding: 0 15px 13px; white-space: pre-wrap; }
+      @media (max-width: 780px) { .app { grid-template-columns: 1fr; } .preview-stage { min-height: 200px; } }
+      @media (max-width: 520px) { .app { padding: 11px; } .preview-stage, .artwork-grid, .packs { grid-template-columns: 1fr; } .fields { grid-template-columns: 1fr; } label.wide { grid-column: auto; } .color-row { grid-template-columns: repeat(3, 1fr); } }
+      @media (max-width: 360px) { .color-row { grid-template-columns: 1fr; } .result { align-items: stretch; flex-direction: column; } .download { text-align: center; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel controls">
+        <header class="intro"><h1>Favicon Creator</h1><p class="muted">One polished ZIP for browsers, home screens, PWAs, and Windows tiles.</p></header>
+        <div class="artwork-grid">
+          <div class="artwork">
+            <label class="picker" id="light-drop"><span class="picker-label">Light / default</span><span class="picker-copy"><strong>Choose artwork</strong><span class="muted">PNG, JPEG, or WebP<br>256 px minimum</span></span><img id="light-preview" alt="Light favicon artwork preview"><input id="light-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+            <p class="file-name" id="light-name"></p>
+          </div>
+          <div class="artwork dark-artwork" id="dark-artwork">
+            <label class="picker" id="dark-drop"><span class="picker-label">Dark</span><span class="picker-copy"><strong>Choose dark artwork</strong><span class="muted">Shown on dark browser chrome</span></span><img id="dark-preview" alt="Dark favicon artwork preview"><input id="dark-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+            <p class="file-name" id="dark-name"></p>
+          </div>
+        </div>
+        <div class="dark-option"><span><strong>Separate dark-mode artwork</strong><span class="muted">Optional · adaptive favicon.svg switches automatically</span></span><label class="toggle"><input id="has-dark" type="checkbox" aria-label="Use separate dark-mode artwork"><span></span></label></div>
+        <div class="fields">
+          <label class="field wide">App or site name<input id="app-name" type="text" maxlength="60" value="My App"></label>
+          <label class="field">Short name<input id="short-name" type="text" maxlength="24" value="My App"></label>
+          <label class="field">Artwork fit<select id="fit"><option value="cover">Fill square — crop edges</option><option value="contain">Fit inside — add background</option></select></label>
+        </div>
+        <div class="color-row">
+          <label class="field">Light background<input id="light-background" type="color" value="#ffffff"></label>
+          <label class="field">Dark background<input id="dark-background" type="color" value="#171717"></label>
+          <label class="field">Theme color<input id="theme-color" type="color" value="#5468ff"></label>
+        </div>
+        <div class="progress" id="progress"><div class="progress-copy"><span id="progress-label">Starting…</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
+        <div class="error" id="error" role="alert"></div>
+        <button class="run" id="run" type="button" disabled>Create favicon ZIP</button>
+      </section>
+      <section class="panel output">
+        <header class="output-head"><h2>Live theme preview</h2><p class="muted">The adaptive SVG follows each visitor’s browser color scheme.</p></header>
+        <div class="preview-stage">
+          <div class="browser" id="light-browser"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="light-stage" alt="Light theme favicon preview"><span class="tab-title" id="light-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page" id="light-page"><div class="page-copy"><strong>Light background</strong><span>Theme color accents the active tab.</span></div></div></div>
+          <div class="browser dark" id="dark-browser"><div class="browser-bar"><span class="dots">●●●</span><span class="tab"><img id="dark-stage" alt="Dark theme favicon preview"><span class="tab-title" id="dark-title">My App</span><span class="tab-close">×</span></span><span class="new-tab">+</span></div><div class="address-row"><div class="address">example.com</div></div><div class="page" id="dark-page"><div class="page-copy"><strong>Dark background</strong><span>Theme color accents the active tab.</span></div></div></div>
+        </div>
+        <div class="packs">
+          <div class="pack"><span class="pack-icon">W</span><span class="pack-copy"><strong>Web browsers</strong><span>SVG, multi-size ICO, and PNG fallbacks</span></span></div>
+          <div class="pack"><span class="pack-icon">A</span><span class="pack-copy"><strong>Apple & Safari</strong><span>Touch icons and pinned-tab mask</span></span></div>
+          <div class="pack"><span class="pack-icon">P</span><span class="pack-copy"><strong>Android & PWA</strong><span>Regular, maskable, and web manifest</span></span></div>
+          <div class="pack"><span class="pack-icon">⊞</span><span class="pack-copy"><strong>Windows tiles</strong><span>Small, wide, medium, and large assets</span></span></div>
+        </div>
+        <p class="note">The ZIP includes a ready-to-copy HTML head snippet and setup notes. The pinned-tab SVG uses a generated monochrome silhouette; review it in Safari when exact vector edges matter.</p>
+        <div class="result" id="result"><span><strong id="result-name">favicon-pack.zip</strong><span class="muted" id="result-meta"></span></span><a class="download" id="download" href="about:blank">Save ZIP</a></div>
+        <details><summary>Run logs</summary><pre id="logs">Logs will appear when the export runs.</pre></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const files = { light: undefined, dark: undefined };
+      const urls = { light: undefined, dark: undefined };
+      let running = false;
+
+      function choose(theme, file) {
+        if (!file) return;
+        files[theme] = file;
+        if (urls[theme]) URL.revokeObjectURL(urls[theme]);
+        urls[theme] = URL.createObjectURL(file);
+        $(`${theme}-preview`).src = urls[theme];
+        $(`${theme}-drop`).classList.add("selected");
+        $(`${theme}-name`).textContent = `${file.name} · ${bytes(file.size)}`;
+        $(`${theme}-name`).classList.add("visible");
+        $("result").classList.remove("visible");
+        $("error").classList.remove("visible");
+        update();
+      }
+
+      function update() {
+        const hasDark = $("has-dark").checked;
+        $("dark-artwork").classList.toggle("visible", hasDark);
+        $("light-stage").src = urls.light || emptyPreview("#ffffff");
+        $("dark-stage").src = (hasDark && urls.dark) || urls.light || emptyPreview("#171717");
+        const lightBackground = $("light-background").value;
+        const darkBackground = $("dark-background").value;
+        const themeColor = $("theme-color").value;
+        $("light-stage").style.setProperty("--icon-bg", lightBackground);
+        $("dark-stage").style.setProperty("--icon-bg", darkBackground);
+        $("light-page").style.setProperty("--page-bg", lightBackground);
+        $("dark-page").style.setProperty("--page-bg", darkBackground);
+        $("light-browser").style.setProperty("--theme", themeColor);
+        $("dark-browser").style.setProperty("--theme", themeColor);
+        $("light-title").textContent = $("app-name").value.trim() || "My App";
+        $("dark-title").textContent = $("app-name").value.trim() || "My App";
+        $("run").disabled = running || !files.light || (hasDark && !files.dark);
+      }
+
+      for (const theme of ["light", "dark"]) {
+        $(`${theme}-file`).addEventListener("change", (event) => choose(theme, event.target.files[0]));
+        for (const name of ["dragenter", "dragover"]) $(`${theme}-drop`).addEventListener(name, (event) => { event.preventDefault(); $(`${theme}-drop`).classList.add("dragging"); });
+        for (const name of ["dragleave", "drop"]) $(`${theme}-drop`).addEventListener(name, (event) => { event.preventDefault(); $(`${theme}-drop`).classList.remove("dragging"); });
+        $(`${theme}-drop`).addEventListener("drop", (event) => choose(theme, event.dataTransfer.files[0]));
+      }
+      for (const id of ["has-dark", "app-name", "light-background", "dark-background", "theme-color", "fit"]) $(id).addEventListener("input", update);
+
+      $("run").addEventListener("click", async () => {
+        const hasDark = $("has-dark").checked;
+        if (!files.light) return showError("Choose light or default artwork first.");
+        if (hasDark && !files.dark) return showError("Choose dark artwork or turn off the dark variant.");
+        running = true; update(); $("run").textContent = "Creating…"; $("error").classList.remove("visible"); $("result").classList.remove("visible"); $("logs").textContent = ""; setProgress(.02, "Reading artwork");
+        try {
+          const selected = hasDark ? [files.light, files.dark] : [files.light];
+          const descriptors = await Promise.all(selected.map(async (file) => ({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified, data: await file.arrayBuffer() })));
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { hasDark, appName: $("app-name").value, shortName: $("short-name").value, fit: $("fit").value, lightBackground: $("light-background").value, darkBackground: $("dark-background").value, themeColor: $("theme-color").value }, files: descriptors }, "*");
+        } catch (error) { showError(error instanceof Error ? error.message : "The artwork could not be read."); finish(); }
+      });
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") setProgress(.04, "Starting local export");
+        if (message.type === "progress") setProgress(message.value, message.label || "Creating icons");
+        if (message.type === "log") $("logs").textContent += `${message.message}\n`;
+        if (message.type === "result") showResult(message.outputs?.[0]);
+        if (message.type === "failed") { showError(message.message); finish(); }
+        if (message.type === "complete") finish();
+      });
+
+      function setProgress(value, label) { const percent = Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100); $("progress").classList.add("visible"); $("progress-bar").style.width = `${percent}%`; $("progress-value").textContent = `${percent}%`; $("progress-label").textContent = label; }
+      function showResult(output) { if (!output) return; $("result-name").textContent = output.name; $("result-meta").textContent = `${output.metadata?.files || 0} files · ${bytes(output.metadata?.bytes || 0)}`; $("download").href = output.downloadUrl; $("download").download = output.name; $("result").classList.add("visible"); }
+      function showError(message) { $("error").textContent = message; $("error").classList.add("visible"); }
+      function finish() { running = false; $("run").textContent = "Create favicon ZIP"; update(); }
+      function bytes(value) { return value < 1048576 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1048576).toFixed(1)} MB`; }
+      function emptyPreview(color) { return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${color}"/><path d="M22 19h24v8H30v7h13v8H30v13h-8z" fill="#5468ff"/></svg>`)}`; }
+      window.addEventListener("error", (event) => { showError(event.message || "The interface encountered an error."); finish(); });
+      window.addEventListener("unhandledrejection", (event) => { showError(event.reason?.message || String(event.reason)); finish(); });
+      update();
+      parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>

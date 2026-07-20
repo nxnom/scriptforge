@@ -164,6 +164,7 @@ Status: Pending
 - Ship an offline PDF Toolkit for mixed PDFs and images, page reorder, rotation, split, image page layout, and clearly labeled scan flattening/compression without a system executable.
 - Ship a Silicon-backed Code Screenshot Studio with a focused paste-to-PNG interface and the normal Dependency Doctor path when Silicon is missing.
 - Ship a zero-install App Icon Exporter that packages Apple and Android assets into one ZIP and treats Icon Composer's layered `.icon` format honestly.
+- Ship a zero-install Favicon Creator that packages adaptive light/dark browser icons, Apple touch assets, Android/PWA icons, and Windows tiles into one ZIP.
 - Ship an authorized-content Video Downloader backed by declared `yt-dlp`, with single-video and playlist ranges, honest no-FFmpeg quality choices, and memory-safe streamed results.
 - Complete README setup, architecture, evidence, limitations, and license sections.
 - Record a public demo shorter than three minutes.

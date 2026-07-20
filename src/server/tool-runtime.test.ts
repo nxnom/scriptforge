@@ -289,6 +289,72 @@ describe("tool runtime host", () => {
     await expect(sharp(iphoneIcon).metadata()).resolves.toMatchObject({ width: 180, height: 180, format: "png" });
   });
 
+  it("exports a light- and dark-aware cross-platform favicon ZIP", async () => {
+    const light = await sharp({
+      create: { width: 512, height: 512, channels: 4, background: { r: 84, g: 104, b: 255, alpha: 1 } },
+    })
+      .png()
+      .toBuffer();
+    const dark = await sharp({
+      create: { width: 512, height: 512, channels: 4, background: { r: 244, g: 190, b: 73, alpha: 1 } },
+    })
+      .png()
+      .toBuffer();
+    const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+    const { jobId } = await service.start({
+      toolId: "favicon-creator",
+      input: {
+        hasDark: true,
+        appName: "ScriptForge Demo",
+        shortName: "Forge",
+        fit: "contain",
+        lightBackground: "#ffffff",
+        darkBackground: "#171717",
+        themeColor: "#5468ff",
+      },
+      files: [
+        new File([filePart(light)], "light.png", { type: "image/png" }),
+        new File([filePart(dark)], "dark.png", { type: "image/png" }),
+      ],
+    });
+
+    await expect
+      .poll(() => service.getSnapshot(jobId)?.status)
+      .toSatisfy((status) => status === "succeeded" || status === "failed");
+    const failure = service.getSnapshot(jobId)?.events.find((event) => event.type === "failed");
+    if (failure?.type === "failed") throw new Error(failure.message);
+    const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");
+    if (result?.type !== "result") throw new Error("Favicon ZIP result was not emitted.");
+    expect(result.outputs[0]).toMatchObject({
+      name: "favicon-pack.zip",
+      mimeType: "application/zip",
+      metadata: { darkVariant: true },
+    });
+    const stored = await service.readOutput(jobId, result.outputs[0]?.id ?? "");
+    if (!stored) throw new Error("Favicon ZIP was not stored.");
+    const entries = readStoredZipEntries(stored.data);
+
+    expect(entries.get("favicon.ico")?.subarray(0, 6)).toEqual(Buffer.from([0, 0, 1, 0, 3, 0]));
+    expect(entries.get("favicon.svg")?.toString()).toContain("prefers-color-scheme:dark");
+    expect(entries.has("dark/favicon-32x32.png")).toBe(true);
+    expect(entries.has("apple-touch-icon.png")).toBe(true);
+    expect(entries.has("safari-pinned-tab.svg")).toBe(true);
+    expect(entries.has("android-chrome-maskable-512x512.png")).toBe(true);
+    expect(entries.has("windows/mstile-310x150.png")).toBe(true);
+    expect(entries.has("site.webmanifest")).toBe(true);
+    expect(entries.has("browserconfig.xml")).toBe(true);
+    expect(entries.has("HEAD-SNIPPET.html")).toBe(true);
+
+    const touchIcon = entries.get("apple-touch-icon.png");
+    if (!touchIcon) throw new Error("Apple touch icon is missing.");
+    await expect(sharp(touchIcon).metadata()).resolves.toMatchObject({ width: 180, height: 180, format: "png" });
+    expect(JSON.parse(entries.get("site.webmanifest")?.toString() ?? "{}")).toMatchObject({
+      name: "ScriptForge Demo",
+      short_name: "Forge",
+      theme_color: "#5468ff",
+    });
+  });
+
   it("renders code through the declared Silicon executable", async () => {
     const binaryDirectory = join(jobsRoot, "bin");
     const siliconPath = join(binaryDirectory, "silicon");

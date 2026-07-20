@@ -8,6 +8,7 @@ import {
   FileText,
   FileType,
   FolderTree,
+  Globe2,
   Image,
   KeyRound,
   ScanSearch,
@@ -31,6 +32,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   "scan-search": ScanSearch,
   "code-2": Code2,
   "app-window": AppWindow,
+  "globe-2": Globe2,
   download: Download,
 };
 

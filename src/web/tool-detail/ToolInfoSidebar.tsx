@@ -5,6 +5,7 @@ import {
   CircleAlert,
   Code2,
   Download,
+  Globe2,
   HardDrive,
   Image,
   PackageCheck,
@@ -19,6 +20,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   image: Image,
   "code-2": Code2,
   "app-window": AppWindow,
+  "globe-2": Globe2,
   download: Download,
 };
 
