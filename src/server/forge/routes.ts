@@ -39,6 +39,7 @@ const feedbackSchema = z.object({
   panelVersion: z.number().int().positive(),
 });
 const candidateRevisionSchema = z.object({ revision: z.string().regex(/^[a-f0-9]{64}$/) });
+const stopQuerySchema = z.object({ discard: z.enum(["true", "false"]).optional() });
 
 export function createForgeApiRoutes(
   service: ForgeSessionService,
@@ -314,12 +315,22 @@ export function createForgeApiRoutes(
         }
       },
     )
-    .delete("/sessions/:sessionId", async (c) => {
-      const stopped = await service.stop(c.req.param("sessionId"));
-      return stopped
-        ? c.json({ ok: true as const })
-        : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
-    });
+    .delete(
+      "/sessions/:sessionId",
+      validator("query", (value, c) => {
+        const parsed = stopQuerySchema.safeParse(value);
+        return parsed.success ? parsed.data : c.json({ ok: false as const, error: "Invalid Stop request." }, 400);
+      }),
+      async (c) => {
+        const sessionId = c.req.param("sessionId");
+        const discard = c.req.valid("query").discard === "true";
+        const stopped = await service.stop(sessionId, discard);
+        if (stopped && discard) await configuration?.delete(candidateConfigurationScope(sessionId));
+        return stopped
+          ? c.json({ ok: true as const })
+          : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
+      },
+    );
 }
 
 function errorMessage(error: unknown, fallback: string) {

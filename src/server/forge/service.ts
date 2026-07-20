@@ -43,6 +43,7 @@ type ForgeSession = {
   toolId?: string;
   scope: "create" | "update";
   stopRequested: boolean;
+  discardRequested: boolean;
 };
 
 export type ForgeUpdateTarget = {
@@ -124,6 +125,7 @@ export class ForgeSessionService {
       toolId: updateTarget?.id,
       scope: updateTarget ? "update" : "create",
       stopRequested: false,
+      discardRequested: false,
     };
     this.sessions.set(session.id, session);
     pty.onData((data) => this.emit(session, { type: "output", data }));
@@ -217,6 +219,7 @@ export class ForgeSessionService {
       toolId: persisted.toolId ?? undefined,
       scope: persisted.scope,
       stopRequested: false,
+      discardRequested: false,
     };
     this.sessions.set(session.id, session);
     pty.onData((data) => this.emit(session, { type: "output", data }));
@@ -327,14 +330,21 @@ export class ForgeSessionService {
     }, 50).unref();
   }
 
-  async stop(sessionId: string) {
+  async stop(sessionId: string, discard = false) {
     const session = this.find(sessionId);
     if (!session || session.exited) return false;
     session.stopRequested = true;
-    const persisted = await this.store.get(sessionId);
-    if (persisted) await this.store.save({ ...persisted, status: "stopped", updatedAt: Date.now() });
+    session.discardRequested = discard;
+    if (!discard) {
+      const persisted = await this.store.get(sessionId);
+      if (persisted) await this.store.save({ ...persisted, status: "stopped", updatedAt: Date.now() });
+    }
     session.pty.kill();
     session.exited = true;
+    if (discard) {
+      await this.store.delete(sessionId);
+      this.sessions.delete(sessionId);
+    }
     return true;
   }
 
@@ -377,6 +387,7 @@ export class ForgeSessionService {
   }
 
   private async persistExit(session: ForgeSession) {
+    if (session.discardRequested) return;
     const persisted = await this.store.get(session.id).catch(() => undefined);
     if (!persisted) return;
     const codexSessionId = persisted.codexSessionId ?? (await this.store.resolveCodexSessionId(session.id));

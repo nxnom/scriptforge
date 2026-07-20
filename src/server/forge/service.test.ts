@@ -333,6 +333,23 @@ describe("Forge terminal sessions", () => {
     await expect(service.discard(sessionId)).resolves.toBe(false);
   });
 
+  it("stops and removes a temporary workspace when discard is requested", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      root,
+      () => fakePty().value,
+      async () => undefined,
+    );
+    const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
+    await writeCandidate(join(root, sessionId));
+
+    await expect(service.stop(sessionId, true)).resolves.toBe(true);
+    await expect(readFile(join(root, sessionId, "tool.json"))).rejects.toThrow();
+    await expect(service.getResumableSessions()).resolves.toEqual([]);
+  });
+
   it("connects the session-scoped MCP panel and returns feedback through the PTY", async () => {
     const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
     roots.push(root);

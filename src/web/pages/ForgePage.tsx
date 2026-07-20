@@ -127,7 +127,10 @@ export function ForgePage() {
   }, []);
   const stopSession = async () => {
     if (!visibleSessionId) return;
-    const response = await stopForge.trigger({ params: { sessionId: visibleSessionId } });
+    const response = await stopForge.trigger({
+      params: { sessionId: visibleSessionId },
+      query: { discard: targetToolId ? "true" : "false" },
+    });
     if (!response.data?.ok) {
       toast.error(forgeError(response.error));
       return;
@@ -139,8 +142,9 @@ export function ForgePage() {
   const confirmStopSession = () => {
     ConfirmDialog.show({
       title: "Stop this Forge session?",
-      content:
-        "The interactive Codex terminal will close. Its conversation and staged files will remain available to resume later.",
+      content: targetToolId
+        ? "The temporary Forge workspace will be deleted. Your saved tool stays in the Library, but changes made since the last Save changes will be discarded."
+        : "The interactive Codex terminal will close. Its conversation and staged files will remain available to resume later.",
       confirmButtonLabel: "Stop session",
       cancelButtonLabel: "Keep working",
       dismissOnOutsideClick: false,

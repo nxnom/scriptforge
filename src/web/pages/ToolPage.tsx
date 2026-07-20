@@ -123,13 +123,17 @@ export function ToolPage() {
     if (!visibleUpdateId) return;
     ConfirmDialog.show({
       title: "Stop this update session?",
-      content: "The interactive Codex session will end. Any update you already saved will stay installed.",
+      content:
+        "The temporary update workspace will be deleted. Saved changes stay installed, but later unsaved edits will be discarded.",
       confirmButtonLabel: "Stop session",
       cancelButtonLabel: "Keep working",
       dismissOnOutsideClick: false,
       onConfirm: async ({ preventDefault, dismiss }) => {
         preventDefault();
-        const response = await stopUpdate.trigger({ params: { sessionId: visibleUpdateId } });
+        const response = await stopUpdate.trigger({
+          params: { sessionId: visibleUpdateId },
+          query: { discard: "true" },
+        });
         if (!response.data?.ok)
           return toast.error(apiErrorMessage(response.error, "The update session could not stop."));
         endUpdate(visibleUpdateId);

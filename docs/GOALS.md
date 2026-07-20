@@ -72,13 +72,13 @@ Completed and verified:
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a live `ui.html` preview and read-only script/details review beside the terminal.
 - Exact-revision candidate execution through the tester bridge, including tools with no file input or downloadable output.
-- Explicit Stop controls end only their owning Codex terminal and preserve it as resumable; unrelated new-tool and per-tool update sessions remain active.
-- Confirm explicit Forge stops, return to the Library afterward, surface preserved sessions on Forge, and make Discard the separate confirmed deletion boundary.
+- Explicit Stop controls end only their owning Codex terminal; unsaved new-tool sessions remain resumable, while saved and update sessions delete their temporary workspace. Unrelated sessions remain active.
+- Confirm explicit Forge stops, return to the Library afterward, surface preserved unsaved sessions on Forge, and make Discard the separate confirmed deletion boundary for those drafts.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 - Save keeps the Forge Codex session alive, changes the approval action to Save changes, and leaves Stop as the only explicit session-ending action.
 - Resume reuses the preserved staging directory and exact Codex session ID with a fresh session-scoped MCP token; restored candidates require a new successful Preview run before Save.
-- The standard Start Forge dialog includes an optional searchable saved-session select, defaults to a fresh session, and provides confirmed deletion for stale entries directly inside the option list.
+- The standard Start Forge dialog includes an optional searchable saved-session select, defaults to a fresh session, and provides an inline confirmation below the select when deleting stale entries without replacing or closing the dialog.
 
 Acceptance checks:
 
