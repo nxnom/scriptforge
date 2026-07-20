@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { invalidate, useRead, useWrite } from "../api";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
+import { forgeError } from "../forge/forgeError";
 
 export function ForgeLaunchButton({
   idleLabel = "Forge a tool",
@@ -17,6 +18,7 @@ export function ForgeLaunchButton({
   const navigate = useNavigate();
   const activeSession = useRead((api) => api("forge/sessions/active").GET(), { staleTime: 1_000 });
   const startForge = useWrite((api) => api("forge/sessions").POST());
+  const resumeForge = useWrite((api) => api("forge/sessions/:sessionId/resume").POST());
 
   const openDialog = useCallback(() => {
     Dialog.show({
@@ -24,8 +26,10 @@ export function ForgeLaunchButton({
       content: ({ dismiss }) => (
         <ForgePreflightDialog
           dismiss={dismiss}
-          onContinue={async (preferences) => {
-            const response = await startForge.trigger({ body: preferences });
+          onContinue={async (preferences, resumeSessionId) => {
+            const response = resumeSessionId
+              ? await resumeForge.trigger({ params: { sessionId: resumeSessionId }, body: preferences })
+              : await startForge.trigger({ body: preferences });
             const data = response.data;
             if (!data?.ok) throw new Error(forgeError(response.error));
             invalidate("forge/sessions/active");
@@ -35,7 +39,7 @@ export function ForgeLaunchButton({
         />
       ),
     });
-  }, [navigate, startForge.trigger]);
+  }, [navigate, resumeForge.trigger, startForge.trigger]);
 
   return (
     <Button
@@ -47,10 +51,4 @@ export function ForgeLaunchButton({
       <span className="max-[480px]:hidden">{activeSession.data?.sessionId ? activeLabel : idleLabel}</span>
     </Button>
   );
-}
-
-function forgeError(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
-  return "The local Codex terminal could not start.";
 }

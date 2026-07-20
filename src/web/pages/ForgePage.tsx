@@ -44,15 +44,16 @@ export function ForgePage() {
     setCandidateTested(false);
     setSavedToolId(undefined);
   }, []);
-
   const openPreflight = useCallback(() => {
     Dialog.show({
       className: "w-[min(620px,calc(100vw-24px))] max-w-none overflow-visible border border-[#393939] bg-[#242424] p-5",
       content: ({ dismiss }) => (
         <ForgePreflightDialog
           dismiss={dismiss}
-          onContinue={async (next) => {
-            const response = await startForge.trigger({ body: next });
+          onContinue={async (next, resumeSessionId) => {
+            const response = resumeSessionId
+              ? await resumeForge.trigger({ params: { sessionId: resumeSessionId }, body: next })
+              : await startForge.trigger({ body: next });
             const data = response.data;
             if (!data?.ok) throw new Error(forgeError(response.error));
             beginSession(data.sessionId, next);
@@ -60,8 +61,7 @@ export function ForgePage() {
         />
       ),
     });
-  }, [beginSession, startForge.trigger]);
-
+  }, [beginSession, resumeForge.trigger, startForge.trigger]);
   const openResume = useCallback(
     (draft: ForgeDraft) => {
       Dialog.show({

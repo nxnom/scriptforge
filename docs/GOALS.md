@@ -78,6 +78,7 @@ Completed and verified:
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 - Save keeps the Forge Codex session alive, changes the action to Update, and leaves Stop as the only explicit session-ending action.
 - Resume reuses the preserved staging directory and exact Codex session ID with a fresh session-scoped MCP token; restored candidates require a new successful Preview run before Save.
+- The standard Start Forge dialog includes an optional searchable saved-session select, defaults to a fresh session, and provides confirmed deletion for stale entries directly inside the option list.
 
 Acceptance checks:
 

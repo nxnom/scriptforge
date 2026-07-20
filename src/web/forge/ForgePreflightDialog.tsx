@@ -13,7 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Copy, Hammer } from "lucide-react";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
 import { useRead } from "../api";
+import { ForgeSessionSelect } from "./ForgeSessionSelect";
 import {
   effortOptions,
   type ForgePreferences,
@@ -25,7 +27,7 @@ import {
 
 type Props = {
   dismiss: () => void;
-  onContinue: (preferences: ForgePreferences) => Promise<void>;
+  onContinue: (preferences: ForgePreferences, resumeSessionId?: string) => Promise<void>;
   mode?: "forge" | "update" | "resume";
   toolName?: string;
 };
@@ -34,17 +36,20 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
   const [startError, setStartError] = useState<string>();
   const [starting, setStarting] = useState(false);
   const status = useRead((api) => api("codex/status").GET(), { staleTime: 5_000 });
-  const methods = useForm<ForgePreferences>({
-    resolver: zodResolver(forgePreferencesSchema),
-    defaultValues: loadForgePreferences(),
+  const startSchema = forgePreferencesSchema.extend({ resumeSessionId: z.string().optional() });
+  type StartValues = z.infer<typeof startSchema>;
+  const methods = useForm<StartValues>({
+    resolver: zodResolver(startSchema),
+    defaultValues: { ...loadForgePreferences(), resumeSessionId: "" },
   });
   const ready = Boolean(status.data?.installed && status.data.authenticated);
+  const selectedSessionId = methods.watch("resumeSessionId") || undefined;
 
-  const submit = methods.handleSubmit(async (preferences) => {
+  const submit = methods.handleSubmit(async ({ resumeSessionId, ...preferences }) => {
     setStartError(undefined);
     setStarting(true);
     try {
-      await onContinue(preferences);
+      await onContinue(preferences, resumeSessionId || undefined);
       saveForgePreferences(preferences);
       dismiss();
     } catch (error) {
@@ -66,16 +71,18 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
                 ? `Update ${toolName ?? "tool"} with Codex`
                 : mode === "resume"
                   ? `Resume ${toolName ?? "Forge session"}`
-                  : "Start a new forge"}
+                  : "Start or resume Forge"}
             </h2>
             <p className="mt-1 mb-0 text-xs leading-5 text-[#929292]">
-              Choose the Codex model and reasoning effort for this {mode === "update" ? "update" : "tool-building"}{" "}
-              session.
+              {mode === "forge"
+                ? "Continue a saved conversation or start a fresh tool-building session."
+                : `Choose the Codex model and reasoning effort for this ${mode === "update" ? "update" : "tool-building"} session.`}
             </p>
           </div>
         </header>
 
         <CodexReadiness status={status} />
+        {mode === "forge" && <ForgeSessionSelect disabled={!ready} />}
         {startError && (
           <Alert
             variant="error"
@@ -140,7 +147,11 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
             loading={status.loading || starting}
             loadingText={starting ? "Starting Codex…" : "Checking Codex…"}
           >
-            {mode === "update" ? "Start update session" : mode === "resume" ? "Resume session" : "Continue to Forge"}
+            {mode === "update"
+              ? "Start update session"
+              : mode === "resume" || selectedSessionId
+                ? "Resume session"
+                : "Start fresh session"}
           </LoadingButton>
         </footer>
       </form>
