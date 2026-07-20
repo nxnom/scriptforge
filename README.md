@@ -2,11 +2,13 @@
 
 ScriptForge is a local app store where small utility apps do not exist until you ask Codex to forge them.
 
+[![npm version](https://img.shields.io/npm/v/scriptforge.svg)](https://www.npmjs.com/package/scriptforge)
+
 **OpenAI Build Week track:** Apps for your life
 
 ## Status
 
-The local application shell, bundled image-resizer workflow, full MCP-guided Forge-to-library flow, encrypted tool configuration, portable archives, and opt-in dependency Doctor are working. Submission assets are being completed milestone by milestone.
+ScriptForge is published on npm. The local application shell, bundled image-resizer workflow, full MCP-guided Forge-to-library flow, encrypted tool configuration, portable archives, and opt-in dependency Doctor are working. Submission assets are being completed milestone by milestone.
 
 ## Key Features
 
@@ -14,7 +16,7 @@ The local application shell, bundled image-resizer workflow, full MCP-guided For
 - GeckoUI application shell based on the checked-in Pencil design
 - Hono-to-Spoosh inferred REST types with caching, in-flight deduplication, and automatic invalidation
 - Preferred `127.0.0.1:4545` address with automatic port fallback
-- Sandboxed plain-HTML tool interfaces connected to a controlled host bridge
+- Trusted same-origin plain-HTML tool interfaces connected to the ScriptForge host bridge
 - Bundled Sharp image resizer with progress, structured logs, before/after previews, and local result download
 - Offline PDF Toolkit for mixed PDFs and images, with thumbnail reordering, rotation, merge, split, image page sizing/fit controls, and an explicit scan-flattening compression mode; PDF.js is bundled into the served interface and `pdf-lib` powers editable operations
 - Zero-install App Icon Exporter that turns one local image into a ZIP containing iPhone, iPad, macOS, watchOS, Android legacy/adaptive, and Play Store assets plus honest Icon Composer-ready Liquid Glass source artwork
@@ -44,11 +46,23 @@ The local application shell, bundled image-resizer workflow, full MCP-guided For
 ## Prerequisites
 
 - Node.js 20 or newer
-- pnpm 10 for development
+- pnpm 10 only when developing from source
 
 Codex CLI is not required for the starter library. Forge checks for it and shows manual installation and login guidance without changing the machine automatically. The Video Downloader separately requires `yt-dlp`, and the FFmpeg Media Toolkit requires `ffmpeg`; ScriptForge keeps either tool visible as Needs install and offers the opt-in Doctor flow when its executable is missing.
 
-## Setup
+## Quick Start
+
+Run the latest published release directly from npm:
+
+```bash
+npx scriptforge
+```
+
+ScriptForge starts a local server on `127.0.0.1`, prefers port `4545`, selects another available port when needed, and opens the Library in the default browser. Use `npx scriptforge --no-open` to start without opening a browser.
+
+[View ScriptForge on npm](https://www.npmjs.com/package/scriptforge) · [Browse the source on GitHub](https://github.com/nxnom/scriptforge)
+
+## Develop from Source
 
 ```bash
 pnpm install
@@ -107,7 +121,7 @@ The bundled image tools accept local PNG, JPEG, or WebP files, so no separate sa
 - **GPT-5.6 model:** The Forge preflight defaults to `gpt-5.6-sol` in `src/web/forge/preferences.ts`; `src/server/forge/service.ts` passes the selected model explicitly to every Codex CLI session.
 - **GPT-5.6-powered features:** GPT-5.6 asks structured questions only when decisions remain unresolved, builds and exercises the standalone runner with realistic input, repairs failures, and presents checked staged candidates for code and optional UI review beside the live terminal. UI-only revisions reuse unchanged runner evidence and may be saved immediately. When requested, the separate Doctor session diagnoses missing executables and proposes current-machine installation steps without executing them itself.
 - **Codex acceleration:** Codex helped define the trust model, inspect the Pencil design, configure the typed Hono/Spoosh boundary, implement the local shell and generic tool runtime, diagnose the iframe bridge and PTY integration, and write verification tests.
-- **Key decisions:** Filesystem manifests replace a database; the server remains localhost-only; categories come from manifests with a hard three-category limit; and `#5468ff` is shared by the React/GeckoUI shell and generated-tool guidance. Forge sessions are server-owned and scoped, with small durable session records linking preserved staging directories to exact Codex conversation IDs. Stop preserves unsaved new-tool work but removes the temporary workspace after a tool is saved or during an installed-tool update; explicit deletion removes other resumable drafts. Exact-revision testing plus explicit Save remain the installation boundary. Tool interfaces are trusted same-origin apps without iframe sandbox or CSP restrictions, and runners have normal Node.js permissions, enabling internet-connected and in-place filesystem workflows. Missing dependencies keep tools visible but block execution until resolved through the opt-in Doctor flow. `.forge` remains a dependency-free, auditable archive, while persistent configuration stays outside exported tool packages and secret values remain encrypted locally.
+- **Key decisions:** Filesystem manifests replace a database; the server remains localhost-only; categories come from manifests with a hard three-category limit; and `#5468ff` is shared by the React/GeckoUI shell and generated-tool guidance. Forge sessions are server-owned and scoped, with small durable session records linking preserved staging directories to exact Codex conversation IDs. Stop preserves unsaved new-tool work but removes the temporary workspace after a tool is saved or during an installed-tool update; explicit deletion removes other resumable drafts. Exact presented-revision validation plus explicit Save remain the installation boundary, while Preview is optional. Tool interfaces are trusted same-origin apps without iframe sandbox or CSP restrictions, and runners have normal Node.js permissions, enabling internet-connected and in-place filesystem workflows. Missing dependencies keep tools visible but block execution until resolved through the opt-in Doctor flow. `.forge` remains a dependency-free, auditable archive, while persistent configuration stays outside exported tool packages and secret values remain encrypted locally.
 - **Network dependency policy:** Tool interfaces may use remote APIs, CDNs, modules, fonts, and media. Important dependencies should be pinned when practical, network failures must be presented in the interface, and redistributed code or assets still require compatible licenses and attribution.
 - **Doctor context routing:** ScriptForge injects the selected tool and missing-executable report into Doctor's developer instructions. The visible interactive user turn is only `Diagnose`, so internal requirement JSON does not clutter or masquerade as a user-authored terminal message.
 - **Iframe trust model:** Candidate and installed previews are unsandboxed, same-origin, and network-enabled. They may use ScriptForge APIs and ordinary browser capabilities; their trusted runners may use local files, processes, and networks with the current user's permissions. Reviewing a tool before Save and importing only trusted `.forge` archives are therefore essential.
@@ -119,7 +133,7 @@ The bundled image tools accept local PNG, JPEG, or WebP files, so no separate sa
 - **FFmpeg media operations:** One declared `ffmpeg` executable powers fixed, shell-free templates for video conversion/compression/resizing, media trimming, audio extraction/conversion/replacement/removal, palette-optimized GIFs, and capped frame ZIPs. Format, quality, dimensions, times, frame rates, and frame counts are allowlisted or bounded before execution.
 - **Responsible media downloads:** The downloader requires an explicit authorization confirmation, passes URLs to `yt-dlp` without a shell, uses capped single-file formats that do not secretly require FFmpeg, and streams video/ZIP responses with byte-range support instead of buffering large results in application memory.
 - **Verification:** Biome checks, TypeScript typecheck, automated host/API/MCP/UI tests, production builds, live local HTTP, Codex-readiness checks, npm package dry runs, and manual core-flow checks. Tests cover manifest validation, library filtering, concurrent and restart-resumable Forge/update sessions, exact Codex conversation selection, explicit draft discard, preference propagation, exact-revision Save/Update, dependency Doctor approvals, unrestricted candidate and installed iframe policy, archive round trips and path validation, encrypted configuration and redaction, tool-card behavior, PDF editing/compression, executable-backed media tools, and streamed result delivery.
-- **Clean-package smoke test (July 20, 2026):** Built the publishable tarball, installed it with npm in an isolated temporary project, confirmed npm reported zero vulnerabilities, launched it through `npx --no-install scriptforge --no-open`, loaded the packaged React shell and seven bundled manifests, and completed a real image-resizer job over HTTP plus WebSocket. The job emitted `queued`, `running`, and `succeeded`, and its downloaded result decoded as the requested 8 × 6 PNG.
+- **Clean-package smoke test (July 20, 2026):** Built the publishable tarball, installed it with npm in an isolated temporary project, confirmed npm reported zero vulnerabilities, launched it through `npx --no-install scriptforge --no-open`, loaded the packaged React shell and seven bundled manifests, and completed a real image-resizer job over HTTP plus WebSocket. The job emitted `queued`, `running`, and `succeeded`, and its downloaded result decoded as the requested 8 × 6 PNG. After publication, `npx --yes scriptforge@0.1.0 --no-open` was also verified directly against the public npm release, including automatic fallback from occupied port `4545` to an available local port.
 - **Favicon verification:** A standalone runner check uses realistic 512 px light/dark inputs. Host integration opens the ZIP, verifies representative browser, Apple, PWA/Android, and Windows assets, validates the ICO header and adaptive dark-mode SVG, parses the web manifest, and decodes the Apple touch PNG.
 - **FFmpeg verification:** A real standalone matrix exercises all ten media operations against generated two-second video/audio fixtures. Host integration uses a deterministic fake executable to verify declared FFmpeg argument templates, progress events, converted output metadata, capped frame extraction, and streamed ZIP contents.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`.
