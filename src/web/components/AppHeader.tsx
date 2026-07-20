@@ -1,4 +1,5 @@
-import { Search, Zap } from "lucide-react";
+import { Tooltip } from "@geckoui/geckoui";
+import { GitBranch, Search, Zap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { ForgeLaunchButton } from "./ForgeLaunchButton";
@@ -54,7 +55,20 @@ export function AppHeader() {
             </label>
           ) : null}
         </div>
-        <ForgeLaunchButton idleLabel="New tool" />
+        <div className="flex items-center gap-2">
+          <Tooltip content="View ScriptForge on GitHub" triggerAsChild>
+            <a
+              href="https://github.com/nxnom/scriptforge"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="View ScriptForge on GitHub"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#343434] px-3 text-[12px] text-[#b5b5b5] no-underline transition-colors hover:bg-[#262626] hover:text-white focus-visible:outline-2 focus-visible:outline-[#5468ff] focus-visible:outline-offset-2 max-[560px]:size-9 max-[560px]:justify-center max-[560px]:px-0"
+            >
+              <GitBranch size={15} /> <span className="max-[560px]:hidden">GitHub</span>
+            </a>
+          </Tooltip>
+          <ForgeLaunchButton idleLabel="New tool" />
+        </div>
       </div>
     </header>
   );
