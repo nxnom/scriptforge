@@ -355,6 +355,87 @@ describe("tool runtime host", () => {
     });
   });
 
+  it("runs fixed FFmpeg conversion templates and packages capped frame output", async () => {
+    const binaryDirectory = join(jobsRoot, "ffmpeg-bin");
+    const ffmpegPath = join(binaryDirectory, "ffmpeg");
+    const argumentsPath = join(jobsRoot, "ffmpeg-arguments.jsonl");
+    await mkdir(binaryDirectory, { recursive: true });
+    await writeFile(
+      ffmpegPath,
+      `#!/usr/bin/env node
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.SF_FFMPEG_ARGUMENTS, JSON.stringify(args) + "\\n");
+if (args.includes("--version") || args.includes("-version")) {
+  process.stdout.write("ffmpeg version 7.1.1\\n");
+  process.exit(0);
+}
+const output = args.at(-1);
+fs.mkdirSync(path.dirname(output), { recursive: true });
+if (output.includes("%04d")) {
+  fs.writeFileSync(output.replace("%04d", "0001"), Buffer.from("frame-one"));
+  fs.writeFileSync(output.replace("%04d", "0002"), Buffer.from("frame-two"));
+} else fs.writeFileSync(output, Buffer.from("converted-media"));
+process.stdout.write("out_time=00:00:00.500000\\nprogress=continue\\nout_time=00:00:01.000000\\nprogress=end\\n");`,
+    );
+    await chmod(ffmpegPath, 0o755);
+    const originalPath = process.env.PATH;
+    const originalArgumentsPath = process.env.SF_FFMPEG_ARGUMENTS;
+    process.env.PATH = `${binaryDirectory}:${originalPath ?? ""}`;
+    process.env.SF_FFMPEG_ARGUMENTS = argumentsPath;
+    try {
+      const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+      const source = new File([filePart(Buffer.from("source-media"))], "demo.mov", { type: "video/quicktime" });
+      const conversion = await service.start({
+        toolId: "media-toolkit",
+        input: { operation: "video-convert", videoFormat: "mp4", quality: "balanced", duration: 1 },
+        files: [source],
+      });
+      await expect.poll(() => service.getSnapshot(conversion.jobId)?.status).toBe("succeeded");
+      const conversionResult = service.getSnapshot(conversion.jobId)?.events.find((event) => event.type === "result");
+      if (conversionResult?.type !== "result") throw new Error("FFmpeg conversion result was not emitted.");
+      expect(conversionResult.outputs[0]).toMatchObject({
+        name: "demo-converted.mp4",
+        mimeType: "video/mp4",
+        metadata: { operation: "video-convert" },
+      });
+
+      const frames = await service.start({
+        toolId: "media-toolkit",
+        input: { operation: "frames", fps: 2, frameLimit: 2, duration: 1 },
+        files: [source],
+      });
+      await expect.poll(() => service.getSnapshot(frames.jobId)?.status).toBe("succeeded");
+      const frameResult = service.getSnapshot(frames.jobId)?.events.find((event) => event.type === "result");
+      if (frameResult?.type !== "result") throw new Error("FFmpeg frame ZIP result was not emitted.");
+      expect(frameResult.outputs[0]).toMatchObject({
+        name: "demo-frames.zip",
+        mimeType: "application/zip",
+        metadata: { files: 2, operation: "frames" },
+      });
+      const archive = await service.readOutput(frames.jobId, frameResult.outputs[0]?.id ?? "");
+      if (!archive) throw new Error("FFmpeg frame ZIP was not stored.");
+      expect([...readStoredZipEntries(archive.data).keys()]).toEqual(["frame-0001.png", "frame-0002.png"]);
+
+      const argumentSets = (await readFile(argumentsPath, "utf8"))
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line))
+        .filter((args) => args.includes("-progress"));
+      expect(argumentSets[0]).toEqual(
+        expect.arrayContaining(["-c:v", "libx264", "-c:a", "aac", "-progress", "pipe:1"]),
+      );
+      expect(argumentSets[1]).toEqual(
+        expect.arrayContaining(["-vf", "fps=2,scale='min(1280,iw)':-2:flags=lanczos", "-frames:v", "2"]),
+      );
+    } finally {
+      process.env.PATH = originalPath;
+      if (originalArgumentsPath === undefined) delete process.env.SF_FFMPEG_ARGUMENTS;
+      else process.env.SF_FFMPEG_ARGUMENTS = originalArgumentsPath;
+    }
+  });
+
   it("renders code through the declared Silicon executable", async () => {
     const binaryDirectory = join(jobsRoot, "bin");
     const siliconPath = join(binaryDirectory, "silicon");

@@ -2,6 +2,7 @@ import {
   AppWindow,
   AudioWaveform,
   Box,
+  Clapperboard,
   Code2,
   Download,
   Files,
@@ -33,6 +34,7 @@ const icons: Record<string, ComponentType<{ size?: number }>> = {
   "code-2": Code2,
   "app-window": AppWindow,
   "globe-2": Globe2,
+  clapperboard: Clapperboard,
   download: Download,
 };
 

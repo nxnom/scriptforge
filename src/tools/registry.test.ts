@@ -46,6 +46,14 @@ describe("bundled tool registry", () => {
     });
   });
 
+  it("includes the FFmpeg media toolkit", () => {
+    expect(findBundledTool("media-toolkit")).toMatchObject({
+      categories: ["Video", "Audio"],
+      requiredExecutables: [{ name: "ffmpeg" }],
+      icon: "clapperboard",
+    });
+  });
+
   it("declares Silicon for the code screenshot studio", () => {
     expect(findBundledTool("code-screenshot-studio")).toMatchObject({
       categories: ["Developer", "Images"],

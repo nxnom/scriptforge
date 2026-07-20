@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FFmpeg Media Toolkit</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #151515; color: #f2f2f2; --surface: #202020; --soft: #292929; --border: #393939; --muted: #9e9e9e; --primary: #5468ff; }
+      * { box-sizing: border-box; }
+      html, body { min-width: 0; min-height: 100%; }
+      body { margin: 0; background: #151515; }
+      button, input, select { font: inherit; }
+      button { color: inherit; cursor: pointer; }
+      h1, h2, h3, p { margin: 0; }
+      .app { display: grid; min-height: 100vh; grid-template-columns: minmax(300px, .78fr) minmax(400px, 1.22fr); gap: 12px; padding: 14px; }
+      .panel { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+      .controls { display: flex; flex-direction: column; gap: 13px; padding: 16px; }
+      .intro { display: grid; gap: 4px; }
+      h1 { font-size: 20px; letter-spacing: -.025em; }
+      h2 { font-size: 13px; }
+      .muted { color: var(--muted); font-size: 11px; line-height: 1.45; }
+      .picker { position: relative; display: grid; min-height: 132px; place-items: center; overflow: hidden; border: 1px dashed #505050; border-radius: 12px; background: #1a1a1a; cursor: pointer; text-align: center; }
+      .picker:hover, .picker.dragging { border-color: var(--primary); background: #23263a; }
+      .picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+      .picker-copy { display: grid; gap: 5px; padding: 18px; }
+      .picker-copy strong { font-size: 12px; }
+      .picker.selected .picker-copy { display: none; }
+      .source-preview { display: none; width: 100%; max-height: 220px; background: #101010; object-fit: contain; }
+      .picker.selected .source-preview.active { display: block; }
+      .file-meta { display: none; align-items: center; justify-content: space-between; gap: 10px; margin-top: -7px; color: var(--muted); font-size: 9px; }
+      .file-meta.visible { display: flex; }
+      .file-meta strong { min-width: 0; overflow: hidden; color: #d6d6d6; text-overflow: ellipsis; white-space: nowrap; }
+      .link { border: 0; padding: 0; background: none; color: #b9c0ff; font-size: 10px; }
+      .field { display: grid; min-width: 0; gap: 6px; color: #cfcfcf; font-size: 10px; font-weight: 700; }
+      select, input[type="number"] { width: 100%; min-width: 0; height: 38px; border: 1px solid #484848; border-radius: 9px; outline: none; background: #191919; color: #f2f2f2; }
+      select { padding: 0 10px; }
+      input[type="number"] { padding: 0 10px; }
+      select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px #5468ff25; }
+      .settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .setting { display: none; }
+      .setting.visible { display: grid; }
+      .segment { display: grid; gap: 9px; padding: 11px; border: 1px solid #3d3d3d; border-radius: 10px; background: #1b1b1b; }
+      .segment-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .segment-head strong { font-size: 10px; }
+      .time-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .secondary-picker { display: none; min-height: 76px; }
+      .secondary-picker.visible { display: grid; }
+      .secondary-picker .picker-copy { padding: 12px; }
+      .error { display: none; padding: 9px 10px; border: 1px solid #71403d; border-radius: 9px; background: #392422; color: #f2aaa4; font-size: 11px; }
+      .error.visible { display: block; }
+      .run { min-height: 41px; border: 1px solid var(--primary); border-radius: 9px; background: var(--primary); color: white; font-weight: 800; }
+      .run:hover:not(:disabled) { background: #6375ff; }
+      .run:disabled { cursor: not-allowed; opacity: .45; }
+      .workspace { display: flex; min-width: 0; flex-direction: column; }
+      .workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .local-badge { border: 1px solid #43508d; border-radius: 999px; padding: 4px 8px; background: #252a45; color: #bcc4ff; font-size: 9px; font-weight: 750; }
+      .workspace-body { display: grid; gap: 12px; padding: 15px; }
+      .pipeline { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 13px; border: 1px solid #3c3c3c; border-radius: 11px; background: #1b1b1b; }
+      .pipeline-node { min-width: 0; }
+      .pipeline-node span { display: block; color: var(--muted); font-size: 9px; }
+      .pipeline-node strong { display: block; overflow: hidden; margin-top: 3px; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .arrow { color: #7f8cff; font-size: 18px; }
+      .capabilities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .capability { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 9px; padding: 10px; border: 1px solid #3b3b3b; border-radius: 10px; background: #1d1d1d; }
+      .capability-icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: #2d314c; color: #c3c9ff; font-size: 12px; font-weight: 800; }
+      .capability strong { display: block; font-size: 10px; }
+      .capability span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+      .progress-card { display: grid; gap: 8px; padding: 12px; border: 1px solid #3d3d3d; border-radius: 11px; background: #1b1b1b; }
+      .progress-copy { display: flex; justify-content: space-between; gap: 8px; color: #d5d5d5; font-size: 10px; }
+      .track { height: 5px; overflow: hidden; border-radius: 999px; background: #3b3b3b; }
+      .track span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .2s; }
+      .empty { display: grid; min-height: 150px; place-items: center; border: 1px dashed #3d3d3d; border-radius: 11px; padding: 22px; color: #858585; text-align: center; }
+      .empty strong { display: block; margin-bottom: 4px; color: #d0d0d0; font-size: 12px; }
+      .result { display: none; gap: 10px; }
+      .result.visible { display: grid; }
+      .result-media { display: none; width: 100%; max-height: 330px; border: 1px solid #363636; border-radius: 11px; background: #101010; }
+      .result-media.visible { display: block; }
+      .result-image { object-fit: contain; }
+      .result-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 12px; border: 1px solid #475490; border-radius: 10px; background: #242a45; }
+      .result-copy { min-width: 0; }
+      .result-copy strong { display: block; overflow: hidden; margin-bottom: 3px; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .download { border-radius: 8px; padding: 8px 11px; background: var(--primary); color: white; font-size: 10px; font-weight: 800; text-decoration: none; }
+      details { margin-top: auto; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+      summary { padding: 10px 16px; cursor: pointer; }
+      pre { max-height: 130px; margin: 0; overflow: auto; padding: 0 16px 13px; white-space: pre-wrap; word-break: break-word; }
+      @media (max-width: 760px) { .app { grid-template-columns: 1fr; } }
+      @media (max-width: 440px) { .app { padding: 10px; } .controls, .workspace-body { padding: 13px; } .settings, .capabilities { grid-template-columns: 1fr; } .result-card { grid-template-columns: 1fr; } .download { text-align: center; } }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel controls">
+        <header class="intro"><h1>FFmpeg Media Toolkit</h1><p class="muted">Convert and reshape local video or audio without uploading it.</p></header>
+        <label class="picker" id="source-drop"><span class="picker-copy"><strong>Choose video or audio</strong><span class="muted">Drop a local media file here</span></span><!-- biome-ignore lint/a11y/useMediaCaption: arbitrary local preview media has no caption-track URL. --><video class="source-preview" id="source-video" muted playsinline></video><audio class="source-preview" id="source-audio" controls></audio><input id="source-file" type="file" accept="video/*,audio/*"></label>
+        <div class="file-meta" id="file-meta"><strong id="file-name"></strong><span id="file-details"></span><button class="link" id="replace" type="button">Replace</button></div>
+        <label class="field">Operation<select id="operation"><optgroup label="Video"><option value="video-convert">Convert video format</option><option value="video-compress">Compress video</option><option value="resize-video">Resize video</option><option value="mute-video">Remove audio from video</option><option value="replace-audio">Replace or add audio track</option></optgroup><optgroup label="Video & audio"><option value="trim-media">Trim a segment</option></optgroup><optgroup label="Audio"><option value="extract-audio">Extract audio from video</option><option value="audio-convert">Convert audio format</option></optgroup><optgroup label="Images"><option value="make-gif">Create animated GIF</option><option value="frames">Extract frames to ZIP</option></optgroup></select></label>
+        <div class="settings">
+          <label class="field setting" data-setting="video-format">Video format<select id="video-format"><option value="mp4">MP4 — broad compatibility</option><option value="webm">WebM — modern web</option><option value="mov">MOV — Apple workflows</option><option value="mkv">MKV — flexible container</option></select></label>
+          <label class="field setting" data-setting="audio-format">Audio format<select id="audio-format"><option value="mp3">MP3</option><option value="m4a">M4A / AAC</option><option value="wav">WAV — lossless PCM</option><option value="ogg">Ogg Vorbis</option></select></label>
+          <label class="field setting" data-setting="quality">Quality<select id="quality"><option value="high">High quality</option><option value="balanced" selected>Balanced</option><option value="small">Small file</option></select></label>
+          <label class="field setting" data-setting="height">Output height<select id="height"><option value="2160">2160p</option><option value="1080">1080p</option><option value="720" selected>720p</option><option value="480">480p</option><option value="360">360p</option></select></label>
+          <label class="field setting" data-setting="gif-width">GIF width<select id="gif-width"><option value="960">960 px</option><option value="640" selected>640 px</option><option value="480">480 px</option><option value="320">320 px</option></select></label>
+          <label class="field setting" data-setting="fps">Frames per second<select id="fps"><option value="1">1 fps</option><option value="2">2 fps</option><option value="5">5 fps</option><option value="10">10 fps</option><option value="12" selected>12 fps</option><option value="15">15 fps</option><option value="24">24 fps</option></select></label>
+          <label class="field setting" data-setting="frame-limit">Maximum frames<input id="frame-limit" type="number" min="1" max="300" value="120"></label>
+        </div>
+        <label class="picker secondary-picker" id="audio-drop"><span class="picker-copy"><strong>Choose replacement audio</strong><span class="muted" id="audio-name">MP3, M4A, WAV, OGG, or other FFmpeg audio</span></span><input id="audio-file" type="file" accept="audio/*"></label>
+        <div class="segment">
+          <div class="segment-head"><strong id="segment-title">Optional segment</strong><span class="muted">Seconds</span></div>
+          <div class="time-fields"><label class="field">Start<input id="start" type="number" min="0" step="0.01" placeholder="0"></label><label class="field">End<input id="end" type="number" min="0.01" step="0.01" placeholder="Full length"></label></div>
+        </div>
+        <div class="error" id="error" role="alert"></div>
+        <button class="run" id="run" type="button" disabled>Convert video</button>
+      </section>
+      <section class="panel workspace">
+        <header class="workspace-head"><h2>Local FFmpeg job</h2><span class="local-badge">Runs on this device</span></header>
+        <div class="workspace-body">
+          <div class="pipeline"><span class="pipeline-node"><span>Input</span><strong id="pipeline-input">Choose media</strong></span><span class="arrow">→</span><span class="pipeline-node"><span>Action</span><strong id="pipeline-action">Convert video</strong></span></div>
+          <div class="capabilities">
+            <div class="capability"><span class="capability-icon">V</span><span><strong>Video</strong><span>Convert, compress, resize, trim</span></span></div>
+            <div class="capability"><span class="capability-icon">A</span><span><strong>Audio</strong><span>Extract, convert, replace, remove</span></span></div>
+            <div class="capability"><span class="capability-icon">GIF</span><span><strong>Animation</strong><span>Palette-optimized animated GIF</span></span></div>
+            <div class="capability"><span class="capability-icon">▦</span><span><strong>Frames</strong><span>Capped PNG sequence in one ZIP</span></span></div>
+          </div>
+          <div class="progress-card"><div class="progress-copy"><span id="progress-label">Ready</span><span id="progress-value">0%</span></div><div class="track"><span id="progress-bar"></span></div></div>
+          <div class="empty" id="empty"><span><strong>Your result will appear here</strong>Compatible video, audio, and GIF outputs can be previewed before saving.</span></div>
+          <div class="result" id="result"><!-- biome-ignore lint/a11y/useMediaCaption: arbitrary generated media has no caption-track URL. --><video class="result-media" id="result-video" controls playsinline></video><audio class="result-media" id="result-audio" controls></audio><img class="result-media result-image" id="result-image" alt="Generated media preview"><div class="result-card"><span class="result-copy"><strong id="result-name"></strong><span class="muted" id="result-meta"></span></span><a class="download" id="download" href="about:blank">Save file</a></div></div>
+        </div>
+        <details><summary>Run logs</summary><pre id="logs">Logs will appear after the job starts.</pre></details>
+      </section>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const operationInfo = {
+        "video-convert": { label: "Convert video", settings: ["video-format", "quality"] },
+        "video-compress": { label: "Compress video", settings: ["quality"] },
+        "resize-video": { label: "Resize video", settings: ["height", "quality"] },
+        "mute-video": { label: "Remove audio", settings: ["quality"] },
+        "replace-audio": { label: "Replace audio track", settings: ["quality"], second: true },
+        "trim-media": { label: "Trim media", settings: ["quality"], trim: true },
+        "extract-audio": { label: "Extract audio", settings: ["audio-format", "quality"] },
+        "audio-convert": { label: "Convert audio", settings: ["audio-format", "quality"] },
+        "make-gif": { label: "Create GIF", settings: ["gif-width", "fps"] },
+        frames: { label: "Extract frames", settings: ["fps", "frame-limit"] },
+      };
+      let sourceFile;
+      let audioFile;
+      let sourceUrl;
+      let duration;
+      let running = false;
+
+      function selectSource(file) {
+        if (!file) return;
+        sourceFile = file;
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        sourceUrl = URL.createObjectURL(file);
+        for (const media of [$("source-video"), $("source-audio")]) { media.pause(); media.classList.remove("active"); media.removeAttribute("src"); }
+        const media = file.type.startsWith("audio/") ? $("source-audio") : $("source-video");
+        media.src = sourceUrl; media.classList.add("active");
+        media.onloadedmetadata = () => { duration = Number.isFinite(media.duration) ? media.duration : undefined; updateMeta(); };
+        $("source-drop").classList.add("selected"); $("file-meta").classList.add("visible"); $("file-name").textContent = file.name; $("result").classList.remove("visible"); $("error").classList.remove("visible"); updateMeta(); update();
+      }
+      function selectAudio(file) { if (!file) return; audioFile = file; $("audio-name").textContent = `${file.name} · ${bytes(file.size)}`; $("audio-drop").classList.add("selected"); update(); }
+      function updateMeta() { if (!sourceFile) return; $("file-details").textContent = `${duration ? `${clock(duration)} · ` : ""}${bytes(sourceFile.size)}`; $("pipeline-input").textContent = sourceFile.name; }
+      function update() {
+        const info = operationInfo[$("operation").value];
+        for (const field of document.querySelectorAll(".setting")) field.classList.toggle("visible", info.settings.includes(field.dataset.setting));
+        $("audio-drop").classList.toggle("visible", Boolean(info.second));
+        $("segment-title").textContent = info.trim ? "Segment to keep" : "Optional segment";
+        $("pipeline-action").textContent = info.label;
+        $("run").textContent = running ? "Processing…" : info.label;
+        $("run").disabled = running || !sourceFile || (info.second && !audioFile);
+      }
+      $("operation").addEventListener("change", update);
+      $("source-file").addEventListener("change", (event) => selectSource(event.target.files[0]));
+      $("audio-file").addEventListener("change", (event) => selectAudio(event.target.files[0]));
+      $("replace").addEventListener("click", () => $("source-file").click());
+      wireDrop("source-drop", selectSource); wireDrop("audio-drop", selectAudio);
+
+      $("run").addEventListener("click", async () => {
+        const error = validate(); if (error) return showError(error);
+        running = true; update(); $("error").classList.remove("visible"); $("result").classList.remove("visible"); $("empty").style.display = "grid"; $("logs").textContent = ""; resetResultMedia(); setProgress(.01, "Reading local media", true);
+        try {
+          const selected = $("operation").value === "replace-audio" ? [sourceFile, audioFile] : [sourceFile];
+          const files = await Promise.all(selected.map(async (file) => ({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified, data: await file.arrayBuffer() })));
+          parent.postMessage({ source: "scriptforge-tool", type: "run", input: { operation: $("operation").value, videoFormat: $("video-format").value, audioFormat: $("audio-format").value, quality: $("quality").value, height: $("height").value, gifWidth: $("gif-width").value, fps: $("fps").value, frameLimit: $("frame-limit").value, start: $("start").value, end: $("end").value, duration }, files }, "*");
+        } catch (error) { showError(error instanceof Error ? error.message : "The selected media could not be read."); finish(); }
+      });
+      function validate() {
+        if (!sourceFile) return "Choose a source video or audio file.";
+        if ($("operation").value === "replace-audio" && !audioFile) return "Choose a replacement audio track.";
+        const start = Number($("start").value || 0); const end = Number($("end").value || 0);
+        if (start < 0 || !Number.isFinite(start)) return "Start time must be zero or greater.";
+        if ($("end").value && (!Number.isFinite(end) || end <= start)) return "End time must be after the start time.";
+        if (duration && end > duration + .01) return "End time is beyond the selected media duration.";
+        const limit = Number($("frame-limit").value); if (!Number.isInteger(limit) || limit < 1 || limit > 300) return "Maximum frames must be from 1 to 300.";
+      }
+      window.addEventListener("message", (event) => {
+        if (event.source !== parent || event.data?.source !== "scriptforge-host") return;
+        const message = event.data;
+        if (message.type === "accepted") setProgress(.03, "Starting FFmpeg");
+        if (message.type === "progress") setProgress(message.value, message.label || "Processing");
+        if (message.type === "log" && typeof message.message === "string") $("logs").textContent += `${message.message}\n`;
+        if (message.type === "result") showResult(message.outputs?.[0]);
+        if (message.type === "failed") { showError(message.message || "FFmpeg could not complete the job."); finish(); }
+        if (message.type === "complete") finish();
+      });
+      function showResult(output) {
+        if (!output) return; $("empty").style.display = "none"; $("result-name").textContent = output.name; $("result-meta").textContent = `${output.metadata?.files > 1 ? `${output.metadata.files} files · ` : ""}${bytes(output.metadata?.bytes || 0)}`; $("download").href = output.downloadUrl; $("download").download = output.name; $("download").textContent = output.mimeType === "application/zip" ? "Save ZIP" : "Save file"; resetResultMedia();
+        const media = output.mimeType?.startsWith("video/") ? $("result-video") : output.mimeType?.startsWith("audio/") ? $("result-audio") : output.mimeType === "image/gif" ? $("result-image") : undefined;
+        if (media) { media.src = output.previewUrl; media.classList.add("visible"); }
+        $("result").classList.add("visible");
+      }
+      function resetResultMedia() { for (const media of [$("result-video"), $("result-audio"), $("result-image")]) { if (typeof media.pause === "function") media.pause(); media.classList.remove("visible"); media.removeAttribute("src"); } }
+      let displayedProgress = 0;
+      function setProgress(value, label, reset = false) { if (reset) displayedProgress = 0; displayedProgress = Math.max(displayedProgress, Math.max(0, Math.min(1, Number(value) || 0))); const percent = Math.round(displayedProgress * 100); $("progress-label").textContent = label; $("progress-value").textContent = `${percent}%`; $("progress-bar").style.width = `${percent}%`; }
+      function wireDrop(id, select) { const target = $(id); for (const name of ["dragenter", "dragover"]) target.addEventListener(name, (event) => { event.preventDefault(); target.classList.add("dragging"); }); for (const name of ["dragleave", "drop"]) target.addEventListener(name, (event) => { event.preventDefault(); target.classList.remove("dragging"); }); target.addEventListener("drop", (event) => select(event.dataTransfer.files[0])); }
+      function showError(message) { $("error").textContent = message; $("error").classList.add("visible"); }
+      function finish() { running = false; update(); }
+      function bytes(value) { const number = Number(value) || 0; if (number < 1048576) return `${(number / 1024).toFixed(1)} KB`; if (number < 1073741824) return `${(number / 1048576).toFixed(1)} MB`; return `${(number / 1073741824).toFixed(2)} GB`; }
+      function clock(value) { const total = Math.round(value); const hours = Math.floor(total / 3600); const minutes = Math.floor((total % 3600) / 60); const seconds = total % 60; return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}` : `${minutes}:${String(seconds).padStart(2, "0")}`; }
+      window.addEventListener("error", (event) => { showError(event.message || "The interface encountered an error."); finish(); });
+      window.addEventListener("unhandledrejection", (event) => { showError(event.reason?.message || String(event.reason)); finish(); });
+      update(); parent.postMessage({ source: "scriptforge-tool", type: "ready" }, "*");
+    </script>
+  </body>
+</html>
