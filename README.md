@@ -18,25 +18,11 @@ The public video demonstration will be linked here before the Build Week submiss
 
 ## Key Features
 
-- Run the local library with one `npx scriptforge` command.
-- Forge a new utility through a real interactive Codex CLI session embedded in the browser.
-- Review a generated interface, manifest, and execution script before saving it.
-- Resume interrupted Forge sessions and update previously saved tools.
-- Run tools with progress, structured logs, cancellation, and useful result previews.
-- Detect missing executables and optionally ask the Dependency Doctor for installation guidance.
-- Import and export user tools as validated `.forge` archives.
-- Keep persistent tool configuration local, with secret values encrypted at rest.
-- Start with seven bundled tools for images, PDFs, app icons, favicons, code screenshots, FFmpeg media operations, and authorized video downloads.
-
-## How It Works
-
-ScriptForge packages a Node.js CLI, localhost-only Hono server, React interface, and built assets as one npm package. REST operations use typed Hono and Spoosh calls; WebSockets carry terminal streams and real-time job events.
-
-Forge launches Codex CLI with the selected GPT-5.6 model in a dedicated staging directory. A session-scoped MCP server helps Codex ask structured questions, exercise the generated runner, and present a candidate. The user remains responsible for the explicit Save action that adds the candidate to the filesystem-backed library.
-
-Generated and installed tools are trusted local applications. Review tools before saving or importing them: their runners use the current user's normal filesystem, process, and network permissions.
-
-See [Architecture](./docs/ARCHITECTURE.md) for the complete runtime and trust model.
+- Launch seven ready-to-use image, PDF, icon, favicon, code screenshot, and media tools with one `npx scriptforge` command.
+- Forge new utilities through a real interactive Codex CLI session powered by GPT-5.6.
+- Review generated interfaces and scripts, save them locally, resume interrupted work, and update installed tools.
+- Run tools with previews, progress, structured logs, cancellation, and optional Dependency Doctor guidance.
+- Keep ownership local with encrypted configuration and portable, validated `.forge` archives.
 
 ## Prerequisites
 
@@ -99,6 +85,16 @@ pnpm test
 pnpm build
 pnpm pack --dry-run
 ```
+
+## How It Works
+
+ScriptForge packages a Node.js CLI, localhost-only Hono server, React interface, and built assets as one npm package. REST operations use typed Hono and Spoosh calls; WebSockets carry terminal streams and real-time job events.
+
+Forge launches Codex CLI with the selected GPT-5.6 model in a dedicated staging directory. A session-scoped MCP server helps Codex ask structured questions, exercise the generated runner, and present a candidate. The user remains responsible for the explicit Save action that adds the candidate to the filesystem-backed library.
+
+Generated and installed tools are trusted local applications. Review tools before saving or importing them: their runners use the current user's normal filesystem, process, and network permissions.
+
+See [Architecture](./docs/ARCHITECTURE.md) for the complete runtime and trust model.
 
 ## Build Week Evidence
 
