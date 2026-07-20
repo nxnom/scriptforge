@@ -26,7 +26,7 @@ import {
 type Props = {
   dismiss: () => void;
   onContinue: (preferences: ForgePreferences) => Promise<void>;
-  mode?: "forge" | "update";
+  mode?: "forge" | "update" | "resume";
   toolName?: string;
 };
 
@@ -62,7 +62,11 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
           </span>
           <div>
             <h2 className="m-0 font-[Geist_Variable] text-lg">
-              {mode === "update" ? `Update ${toolName ?? "tool"} with Codex` : "Start a new forge"}
+              {mode === "update"
+                ? `Update ${toolName ?? "tool"} with Codex`
+                : mode === "resume"
+                  ? `Resume ${toolName ?? "Forge session"}`
+                  : "Start a new forge"}
             </h2>
             <p className="mt-1 mb-0 text-xs leading-5 text-[#929292]">
               Choose the Codex model and reasoning effort for this {mode === "update" ? "update" : "tool-building"}{" "}
@@ -76,7 +80,13 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
           <Alert
             variant="error"
             condensed
-            title={mode === "update" ? "Update could not start" : "Forge could not start"}
+            title={
+              mode === "update"
+                ? "Update could not start"
+                : mode === "resume"
+                  ? "Forge could not resume"
+                  : "Forge could not start"
+            }
             description={startError}
           />
         )}
@@ -130,7 +140,7 @@ export function ForgePreflightDialog({ dismiss, onContinue, mode = "forge", tool
             loading={status.loading || starting}
             loadingText={starting ? "Starting Codex…" : "Checking Codex…"}
           >
-            {mode === "update" ? "Start update session" : "Continue to Forge"}
+            {mode === "update" ? "Start update session" : mode === "resume" ? "Resume session" : "Continue to Forge"}
           </LoadingButton>
         </footer>
       </form>

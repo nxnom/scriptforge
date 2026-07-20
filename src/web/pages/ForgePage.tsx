@@ -1,14 +1,17 @@
 import { Button, ConfirmDialog, Dialog, LoadingButton, toast } from "@geckoui/geckoui";
-import { Bot, Hammer, Pencil, Save, ShieldCheck, Square, TerminalSquare } from "lucide-react";
+import { Hammer, Pencil, Save, Square } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { invalidate, useRead, useWrite } from "../api";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
 import { CandidateReview } from "../forge/CandidateReview";
+import type { ForgeDraft } from "../forge/ForgeDraftList";
+import { ForgeIdle } from "../forge/ForgeIdle";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
 import { ForgeSidePanel } from "../forge/ForgeSidePanel";
 import { ForgeTerminal } from "../forge/ForgeTerminal";
+import { forgeError } from "../forge/forgeError";
 import { type ForgePreferences, loadForgePreferences } from "../forge/preferences";
 
 export function ForgePage() {
@@ -23,12 +26,24 @@ export function ForgePage() {
   const [candidateTested, setCandidateTested] = useState(false);
   const [savedToolId, setSavedToolId] = useState<string>();
   const activeSession = useRead((api) => api("forge/sessions/active").GET());
+  const drafts = useRead((api) => api("forge/sessions").GET(), { staleTime: 0 });
   const startForge = useWrite((api) => api("forge/sessions").POST());
+  const resumeForge = useWrite((api) => api("forge/sessions/:sessionId/resume").POST());
+  const discardForge = useWrite((api) => api("forge/sessions/:sessionId/draft").DELETE());
   const stopForge = useWrite((api) => api("forge/sessions/:sessionId").DELETE());
   const saveCandidate = useWrite((api) => api("forge/sessions/:sessionId/candidate/save").POST());
   const restoredSessionId = activeSession.data?.sessionId ?? undefined;
   const visibleSessionId = sessionId ?? (restoredSessionId !== endedSessionId ? restoredSessionId : undefined);
   const targetToolId = savedToolId ?? activeSession.data?.toolId ?? undefined;
+  const beginSession = useCallback((id: string, next: ForgePreferences) => {
+    setPreferences(next);
+    setSessionId(id);
+    setEndedSessionId(undefined);
+    setPanel(null);
+    setCandidate(null);
+    setCandidateTested(false);
+    setSavedToolId(undefined);
+  }, []);
 
   const openPreflight = useCallback(() => {
     Dialog.show({
@@ -40,18 +55,58 @@ export function ForgePage() {
             const response = await startForge.trigger({ body: next });
             const data = response.data;
             if (!data?.ok) throw new Error(forgeError(response.error));
-            setPreferences(next);
-            setSessionId(data.sessionId);
-            setEndedSessionId(undefined);
-            setPanel(null);
-            setCandidate(null);
-            setCandidateTested(false);
-            setSavedToolId(undefined);
+            beginSession(data.sessionId, next);
           }}
         />
       ),
     });
-  }, [startForge.trigger]);
+  }, [beginSession, startForge.trigger]);
+
+  const openResume = useCallback(
+    (draft: ForgeDraft) => {
+      Dialog.show({
+        className:
+          "w-[min(620px,calc(100vw-24px))] max-w-none overflow-visible border border-[#393939] bg-[#242424] p-5",
+        content: ({ dismiss }) => (
+          <ForgePreflightDialog
+            dismiss={dismiss}
+            mode="resume"
+            toolName={draft.name}
+            onContinue={async (next) => {
+              const response = await resumeForge.trigger({ params: { sessionId: draft.sessionId }, body: next });
+              if (!response.data?.ok) throw new Error(forgeError(response.error));
+              beginSession(response.data.sessionId, next);
+              invalidate("forge/sessions");
+              invalidate("forge/sessions/active");
+            }}
+          />
+        ),
+      });
+    },
+    [beginSession, resumeForge.trigger],
+  );
+
+  const confirmDiscard = useCallback(
+    (draft: ForgeDraft) => {
+      ConfirmDialog.show({
+        title: `Discard ${draft.name}?`,
+        content:
+          "This permanently removes the staged tool files and saved Forge session. Installed tools are not affected.",
+        confirmButtonLabel: "Discard session",
+        cancelButtonLabel: "Keep session",
+        dismissOnOutsideClick: false,
+        onConfirm: async ({ preventDefault, dismiss }) => {
+          preventDefault();
+          const response = await discardForge.trigger({ params: { sessionId: draft.sessionId } });
+          if (!response.data?.ok) return toast.error(forgeError(response.error));
+          invalidate("forge/sessions");
+          toast.success(`${draft.name} was discarded.`);
+          dismiss();
+        },
+      });
+    },
+    [discardForge.trigger],
+  );
 
   const endSession = useCallback((endedId: string) => {
     setEndedSessionId(endedId);
@@ -60,6 +115,7 @@ export function ForgePage() {
     setCandidate(null);
     setCandidateTested(false);
     setSavedToolId(undefined);
+    invalidate("forge/sessions");
   }, []);
   const showPanel = useCallback((next: ForgePanelDocument | null) => {
     setPanel(next);
@@ -83,7 +139,8 @@ export function ForgePage() {
   const confirmStopSession = () => {
     ConfirmDialog.show({
       title: "Stop this Forge session?",
-      content: "The interactive Codex session will end. Save a tested candidate first if you want to keep it.",
+      content:
+        "The interactive Codex terminal will close. Its conversation and staged files will remain available to resume later.",
       confirmButtonLabel: "Stop session",
       cancelButtonLabel: "Keep working",
       dismissOnOutsideClick: false,
@@ -177,39 +234,17 @@ export function ForgePage() {
               )}
             </div>
           ) : (
-            <div className="grid min-h-0 flex-1 place-items-center overflow-hidden rounded-2xl border border-[#343434] bg-[#202020] p-8 text-center">
-              <div className="grid max-w-md justify-items-center gap-4">
-                <span className="grid size-12 place-items-center rounded-2xl bg-[#2d2d2d]">
-                  <TerminalSquare size={22} />
-                </span>
-                <div>
-                  <h2 className="m-0 font-[Geist_Variable] text-lg">Configure Codex to begin</h2>
-                  <p className="mt-2 mb-0 text-xs leading-5 text-[#8f8f8f]">
-                    ScriptForge checks your local Codex installation before opening an interactive session.
-                  </p>
-                </div>
-                <div className="flex flex-wrap justify-center gap-2 text-[10px] text-[#aaa]">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#383838] px-2.5 py-1.5">
-                    <Bot size={12} /> {preferences.model}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#383838] px-2.5 py-1.5">
-                    <ShieldCheck size={12} /> {preferences.effort} effort
-                  </span>
-                </div>
-                <Button size="sm" onClick={openPreflight}>
-                  <Hammer size={14} /> Start new session
-                </Button>
-              </div>
-            </div>
+            <ForgeIdle
+              preferences={preferences}
+              drafts={(drafts.data?.sessions ?? []) as ForgeDraft[]}
+              draftsLoading={drafts.loading}
+              onStart={openPreflight}
+              onResume={openResume}
+              onDiscard={confirmDiscard}
+            />
           )}
         </div>
       </div>
     </section>
   );
-}
-
-function forgeError(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
-  return "The local Codex terminal could not start.";
 }

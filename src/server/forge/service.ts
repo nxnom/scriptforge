@@ -8,6 +8,7 @@ import { toolManifestSchema } from "../../tools/manifest";
 import { type CodexStatusChecker, CodexStatusService } from "../codex/status";
 import { ensureCodexTrusted } from "../codex/trust";
 import { readForgeCandidate } from "./candidate";
+import { createPersistedSession, ForgeSessionStore, withCandidateRequest } from "./session-store";
 import type {
   ForgeCandidateDocument,
   ForgeCandidateRequest,
@@ -41,6 +42,7 @@ type ForgeSession = {
   candidateJobs: Map<string, string>;
   toolId?: string;
   scope: "create" | "update";
+  stopRequested: boolean;
 };
 
 export type ForgeUpdateTarget = {
@@ -59,6 +61,7 @@ export class ForgeSessionService {
     private readonly trust: TrustDirectory = ensureCodexTrusted,
     private readonly mcpRuntime?: ForgeMcpRuntime,
     private readonly categories: CategoryProvider = async () => [],
+    private readonly store = new ForgeSessionStore(stagingRoot),
   ) {}
 
   async start(preferences: ForgePreferences, updateTarget?: ForgeUpdateTarget) {
@@ -90,6 +93,13 @@ export class ForgeSessionService {
     }
     await this.trust(directory);
     const existingCategories = await this.categories().catch(() => []);
+    const persisted = createPersistedSession(
+      id,
+      updateTarget ? "update" : "create",
+      updateTarget?.id,
+      updateTarget?.name,
+    );
+    await this.store.save(persisted);
     const pty = this.spawn(
       codexCommand(),
       codexArgs(preferences, directory, this.mcpRuntime, id, mcpToken, existingCategories, updateTarget),
@@ -113,12 +123,14 @@ export class ForgeSessionService {
       candidateJobs: new Map(),
       toolId: updateTarget?.id,
       scope: updateTarget ? "update" : "create",
+      stopRequested: false,
     };
     this.sessions.set(session.id, session);
     pty.onData((data) => this.emit(session, { type: "output", data }));
     pty.onExit(({ exitCode, signal }) => {
       session.exited = true;
       this.emit(session, { type: "exit", exitCode, signal });
+      void this.persistExit(session);
     });
     return { sessionId: id };
   }
@@ -142,12 +154,98 @@ export class ForgeSessionService {
     };
   }
 
+  async getResumableSessions() {
+    return this.store.list(new Set(this.activeSessions().map((session) => session.id)));
+  }
+
+  async resume(sessionId: string, preferences: ForgePreferences) {
+    const readiness = await this.codexStatus.check();
+    if (!readiness.installed) throw new Error("Install the Codex CLI before resuming Forge.");
+    if (!readiness.authenticated) throw new Error("Run codex login before resuming Forge.");
+    const persisted = await this.store.get(sessionId);
+    if (!persisted) throw new Error("That saved Forge session does not exist.");
+    const conflicting = this.activeSessions().find((session) =>
+      persisted.scope === "update"
+        ? session.scope === "update" && session.toolId === persisted.toolId
+        : session.scope === "create",
+    );
+    if (conflicting) throw new Error("Another Forge session is already active for that workspace.");
+    const codexSessionId = await this.store.resolveCodexSessionId(sessionId);
+    if (!codexSessionId) throw new Error("The matching Codex conversation could not be found.");
+
+    const directory = join(this.stagingRoot, sessionId);
+    await this.trust(directory);
+    const mcpToken = randomUUID();
+    const existingCategories = await this.categories().catch(() => []);
+    const updateTarget = persisted.toolId
+      ? { id: persisted.toolId, name: persisted.toolName ?? persisted.toolId, directory }
+      : undefined;
+    const pty = this.spawn(
+      codexCommand(),
+      codexArgs(
+        preferences,
+        directory,
+        this.mcpRuntime,
+        sessionId,
+        mcpToken,
+        existingCategories,
+        updateTarget,
+        codexSessionId,
+      ),
+      {
+        name: "xterm-256color",
+        cols: 100,
+        rows: 30,
+        cwd: directory,
+        env: { ...(process.env as Record<string, string>), TERM: "xterm-256color" },
+      },
+    );
+    const candidate = persisted.candidateRequest
+      ? await readForgeCandidate(directory, persisted.candidateRequest).catch(() => undefined)
+      : undefined;
+    const session: ForgeSession = {
+      id: sessionId,
+      pty,
+      history: candidate ? [{ type: "candidate", candidate }] : [],
+      listeners: new Set(),
+      exited: false,
+      mcpToken,
+      panelVersion: 0,
+      directory,
+      candidate,
+      candidateJobs: new Map(),
+      toolId: persisted.toolId ?? undefined,
+      scope: persisted.scope,
+      stopRequested: false,
+    };
+    this.sessions.set(session.id, session);
+    pty.onData((data) => this.emit(session, { type: "output", data }));
+    pty.onExit(({ exitCode, signal }) => {
+      session.exited = true;
+      this.emit(session, { type: "exit", exitCode, signal });
+      void this.persistExit(session);
+    });
+    await this.store.save({ ...persisted, codexSessionId, status: "running", updatedAt: Date.now() });
+    return { sessionId };
+  }
+
   getTargetToolId(sessionId: string) {
     return this.activeSession(sessionId).toolId;
   }
 
   markSaved(sessionId: string, toolId: string) {
-    this.activeSession(sessionId).toolId = toolId;
+    const session = this.activeSession(sessionId);
+    session.toolId = toolId;
+    void this.store.get(sessionId).then((persisted) =>
+      persisted
+        ? this.store.save({
+            ...persisted,
+            toolId,
+            toolName: session.candidate?.name ?? persisted.toolName,
+            updatedAt: Date.now(),
+          })
+        : undefined,
+    );
   }
 
   subscribe(sessionId: string, listener: Listener) {
@@ -181,6 +279,8 @@ export class ForgeSessionService {
     if (token !== session.mcpToken) throw new Error("Invalid Forge MCP token.");
     const candidate = await readForgeCandidate(session.directory, request);
     session.candidate = candidate;
+    const persisted = await this.store.get(sessionId);
+    if (persisted) await this.store.save(withCandidateRequest(persisted, request));
     this.emit(session, { type: "candidate", candidate });
     return candidate;
   }
@@ -227,11 +327,24 @@ export class ForgeSessionService {
     }, 50).unref();
   }
 
-  stop(sessionId: string) {
+  async stop(sessionId: string) {
     const session = this.find(sessionId);
     if (!session || session.exited) return false;
+    session.stopRequested = true;
+    const persisted = await this.store.get(sessionId);
+    if (persisted) await this.store.save({ ...persisted, status: "stopped", updatedAt: Date.now() });
     session.pty.kill();
     session.exited = true;
+    return true;
+  }
+
+  async discard(sessionId: string) {
+    const active = this.find(sessionId);
+    if (active && !active.exited) throw new Error("Stop this Forge session before discarding it.");
+    const persisted = await this.store.get(sessionId);
+    if (!persisted) return false;
+    await this.store.delete(sessionId);
+    this.sessions.delete(sessionId);
     return true;
   }
 
@@ -262,6 +375,20 @@ export class ForgeSessionService {
   private removePanelHistory(session: ForgeSession) {
     session.history = session.history.filter((event) => event.type !== "panel");
   }
+
+  private async persistExit(session: ForgeSession) {
+    const persisted = await this.store.get(session.id).catch(() => undefined);
+    if (!persisted) return;
+    const codexSessionId = persisted.codexSessionId ?? (await this.store.resolveCodexSessionId(session.id));
+    await this.store
+      .save({
+        ...persisted,
+        codexSessionId,
+        status: session.stopRequested ? "stopped" : "interrupted",
+        updatedAt: Date.now(),
+      })
+      .catch(() => undefined);
+  }
 }
 
 function codexCommand() {
@@ -276,8 +403,17 @@ function codexArgs(
   token: string,
   existingCategories: string[],
   updateTarget?: ForgeUpdateTarget,
+  resumeSessionId?: string,
 ) {
-  const args = ["-c", `model_reasoning_effort=${preferences.effort}`, "-m", preferences.model, "--cd", directory];
+  const args = [
+    ...(resumeSessionId ? ["resume", resumeSessionId] : []),
+    "-c",
+    `model_reasoning_effort=${preferences.effort}`,
+    "-m",
+    preferences.model,
+    "--cd",
+    directory,
+  ];
   if (preferences.dangerouslyBypassApprovalsAndSandbox) {
     args.push("--dangerously-bypass-approvals-and-sandbox");
   }

@@ -86,7 +86,7 @@ Tool runner
 
 The main application uses GeckoUI with Tailwind utility classes directly in React components. Generated tool interfaces intentionally use neither React nor GeckoUI: they are lightweight, self-contained HTML/CSS/JS authored for the tool.
 
-Each Forge workspace displays its own real interactive Codex TUI through xterm.js. ScriptForge permits one new-tool session plus one update session per installed tool, so independent tools can be edited concurrently without replacing another PTY. Each Stop action ends only its owning session. The GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, installs or atomically updates the copy under `~/.scriptforge/tools`, and keeps the owning Codex PTY alive until Stop is clicked.
+Each Forge workspace displays its own real interactive Codex TUI through xterm.js. ScriptForge permits one new-tool session plus one update session per installed tool, so independent tools can be edited concurrently without replacing another PTY. Each Stop action ends only its owning terminal and records the work as resumable. Server interruption does the same automatically. The Forge start screen lists preserved sessions with Resume and confirmed Discard actions. Resume launches `codex resume` with the exact Codex session ID and original staging directory while issuing a fresh session-scoped MCP token. Candidate presentation metadata may be restored, but Preview success is intentionally not trusted across restarts and must be established again before Save. The GeckoUI side panel is contextual rather than permanently visible: it opens for human questions and approvals or to display a generated tester interface. The tester view renders `ui.html` and offers a read-only viewer for the execution script, not the HTML source. Script changes invalidate prior test results. Save becomes available only after the exact current revision succeeds in the tester, installs or atomically updates the copy under `~/.scriptforge/tools`, and keeps the owning Codex PTY alive until Stop is clicked.
 
 Installed tool detail pages use the same compact Preview, Script, and Details tabs. Preview renders the unrestricted `ui.html`; Script shows read-only `run.mjs`; Details shows read-only `tool.json`. Source views include line numbers and lightweight syntax highlighting. The HTML source is not exposed. Script and manifest inspection remain available even when missing dependencies block Preview and execution.
 
@@ -95,7 +95,7 @@ Installed tool detail pages use the same compact Preview, Script, and Details ta
 ```text
 ~/.scriptforge/
 ├── tools/       # installed tools
-├── staging/     # Forge candidates
+├── staging/     # Forge candidates and hidden resumable-session metadata
 ├── jobs/        # temporary inputs and outputs
 ├── config/      # per-tool persistent configuration; secret entries are encrypted
 ├── secure/      # generated local encryption key
@@ -106,7 +106,7 @@ There is no database. Tool manifests and directories are the source of truth.
 
 Tools may declare persistent configuration fields in `tool.json`. ScriptForge renders them in a trusted GeckoUI form rather than inside generated HTML. Ordinary values and AES-256-GCM encrypted secret entries share a per-tool configuration file outside the tool directory. A generated 256-bit local key is stored separately, and authenticated encryption binds every secret to its tool and field identifier. Saved secrets are never returned to the browser, included in an archive, or exposed to the generated iframe. The server decrypts them only while constructing a runner request and redacts known values from emitted events and errors.
 
-Forge candidates persist across application restarts. On startup, ScriptForge removes temporary job inputs and outputs older than 24 hours.
+Forge candidates and their Codex conversation links persist across application restarts. Session metadata stays outside each candidate package so candidates still contain only their manifest, runner, and interface. On startup, ScriptForge removes temporary job inputs and outputs older than 24 hours.
 
 The server binds only to `127.0.0.1`, prefers port `4545`, and selects another available port when necessary.
 

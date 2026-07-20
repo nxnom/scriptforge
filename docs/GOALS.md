@@ -66,17 +66,18 @@ Completed and verified:
 - Browser-persisted model and reasoning-effort selection.
 - `node-pty` launch in a dedicated staging directory with the selected GPT-5.6 model, preserving the user's Codex permission configuration by default and offering an explicit, warned preflight opt-in to bypass approval and sandbox prompts.
 - Real interactive xterm.js terminal input, output, and resizing over WebSocket.
-- Server-owned in-memory Forge sessions that reconnect and replay output after browser refresh, scoped to one new-tool session plus one update session per installed tool.
+- Server-owned active Forge sessions that reconnect and replay output after browser refresh, plus durable stopped/interrupted records that resume the exact Codex conversation after an application restart.
 - Session-scoped ScriptForge stdio MCP server with Forge-specific Codex instructions.
 - Contextual plain-language question panels with validated Markdown, Mermaid, HTML, and input blocks; clear requests begin immediately without a mandatory kickoff approval.
 - Kickoff-authorized standalone runner checks with required test evidence before candidate presentation.
 - Staging-file candidate discovery with a live `ui.html` preview and read-only script/details review beside the terminal.
 - Exact-revision candidate execution through the tester bridge, including tools with no file input or downloadable output.
-- Explicit Stop controls end only their owning Codex terminal; unrelated new-tool and per-tool update sessions remain active.
-- Confirm explicit Forge stops, return to the Library after stopping, and keep candidate Save beside the session control once Preview testing succeeds.
+- Explicit Stop controls end only their owning Codex terminal and preserve it as resumable; unrelated new-tool and per-tool update sessions remain active.
+- Confirm explicit Forge stops, return to the Library afterward, surface preserved sessions on Forge, and make Discard the separate confirmed deletion boundary.
 - Preserve the live tester iframe and its user state while switching between Preview, Script, and Details.
 - Exact-revision test tracking and atomic saving into the filesystem-backed tool library.
 - Save keeps the Forge Codex session alive, changes the action to Update, and leaves Stop as the only explicit session-ending action.
+- Resume reuses the preserved staging directory and exact Codex session ID with a fresh session-scoped MCP token; restored candidates require a new successful Preview run before Save.
 
 Acceptance checks:
 

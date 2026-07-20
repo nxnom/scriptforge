@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { IPty, spawn as spawnPty } from "node-pty";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ForgeSessionService } from "./service";
+import { ForgeSessionStore } from "./session-store";
 
 const roots: string[] = [];
 
@@ -186,10 +187,10 @@ describe("Forge terminal sessions", () => {
     );
     const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
 
-    expect(service.stop(sessionId)).toBe(true);
+    expect(await service.stop(sessionId)).toBe(true);
     expect(pty.kill).toHaveBeenCalledOnce();
     expect(service.getActiveSession()).toEqual({ sessionId: null, toolId: null, sessions: [] });
-    expect(service.stop(sessionId)).toBe(false);
+    expect(await service.stop(sessionId)).toBe(false);
   });
 
   it("keeps one create session and one update session per tool active concurrently", async () => {
@@ -241,11 +242,95 @@ describe("Forge terminal sessions", () => {
       service.start({ model: "gpt-5.6-sol", effort: "medium" }, { id: "alpha", name: "Alpha", directory: alpha }),
     ).rejects.toThrow("update session for Alpha is already active");
 
-    expect(service.stop(updateAlpha.sessionId)).toBe(true);
+    expect(await service.stop(updateAlpha.sessionId)).toBe(true);
     expect(alphaPty.kill).toHaveBeenCalledOnce();
     expect(createPty.kill).not.toHaveBeenCalled();
     expect(betaPty.kill).not.toHaveBeenCalled();
     expect(service.getActiveSession().sessions).toHaveLength(2);
+  });
+
+  it("persists a stopped draft and resumes the exact Codex conversation after restart", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const codexRoot = join(root, "codex-sessions");
+    const store = new ForgeSessionStore(root, join(root, ".sessions"), codexRoot);
+    const firstPty = fakePty();
+    const status = {
+      check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }),
+    };
+    const firstService = new ForgeSessionService(
+      status,
+      root,
+      () => firstPty.value,
+      async () => undefined,
+      undefined,
+      async () => [],
+      store,
+    );
+    const { sessionId } = await firstService.start({ model: "gpt-5.6-sol", effort: "medium" });
+    await writeCandidate(join(root, sessionId));
+    const codexSessionId = "019f7df3-9b93-7411-a9a1-44b1dc4a8be8";
+    await mkdir(codexRoot, { recursive: true });
+    await writeFile(
+      join(codexRoot, "rollout.jsonl"),
+      `${JSON.stringify({
+        type: "session_meta",
+        payload: {
+          session_id: codexSessionId,
+          cwd: join(root, sessionId),
+          timestamp: new Date().toISOString(),
+        },
+      })}\n`,
+    );
+
+    expect(await firstService.stop(sessionId)).toBe(true);
+    await expect(firstService.getResumableSessions()).resolves.toEqual([
+      expect.objectContaining({
+        sessionId,
+        name: "Tiny Tool",
+        status: "stopped",
+        resumable: true,
+      }),
+    ]);
+
+    const resumedPty = fakePty();
+    const calls: Parameters<typeof spawnPty>[] = [];
+    const resumedService = new ForgeSessionService(
+      status,
+      root,
+      (...args) => {
+        calls.push(args);
+        return resumedPty.value;
+      },
+      async () => undefined,
+      undefined,
+      async () => [],
+      store,
+    );
+
+    await expect(resumedService.resume(sessionId, { model: "gpt-5.6-sol", effort: "high" })).resolves.toEqual({
+      sessionId,
+    });
+    expect(calls[0]?.[1]).toEqual(expect.arrayContaining(["resume", codexSessionId, "--cd", join(root, sessionId)]));
+    expect(resumedService.getActiveSession().sessionId).toBe(sessionId);
+  });
+
+  it("discards only an inactive saved Forge session", async () => {
+    const root = await mkdtemp(join(tmpdir(), "scriptforge-staging-"));
+    roots.push(root);
+    const service = new ForgeSessionService(
+      { check: async () => ({ installed: true, authenticated: true, version: "test", authMethod: "ChatGPT" }) },
+      root,
+      () => fakePty().value,
+      async () => undefined,
+    );
+    const { sessionId } = await service.start({ model: "gpt-5.6-sol", effort: "medium" });
+    await writeCandidate(join(root, sessionId));
+    await expect(service.discard(sessionId)).rejects.toThrow("Stop this Forge session");
+    await service.stop(sessionId);
+    await expect(service.discard(sessionId)).resolves.toBe(true);
+    await expect(readFile(join(root, sessionId, "tool.json"))).rejects.toThrow();
+    await expect(service.discard(sessionId)).resolves.toBe(false);
   });
 
   it("connects the session-scoped MCP panel and returns feedback through the PTY", async () => {

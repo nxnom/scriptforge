@@ -48,6 +48,37 @@ export function createForgeApiRoutes(
 ) {
   return new Hono()
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
+    .get("/sessions", async (c) => c.json({ ok: true as const, sessions: await service.getResumableSessions() }))
+    .post(
+      "/sessions/:sessionId/resume",
+      validator("json", (value, c) => {
+        const parsed = preferencesSchema.omit({ toolId: true }).safeParse(value);
+        return parsed.success
+          ? parsed.data
+          : c.json({ ok: false as const, error: "Choose a valid model and effort." }, 400);
+      }),
+      async (c) => {
+        try {
+          return c.json(
+            { ok: true as const, ...(await service.resume(c.req.param("sessionId"), c.req.valid("json"))) },
+            200,
+          );
+        } catch (error) {
+          return c.json({ ok: false as const, error: errorMessage(error, "Forge could not resume.") }, 409);
+        }
+      },
+    )
+    .delete("/sessions/:sessionId/draft", async (c) => {
+      try {
+        const sessionId = c.req.param("sessionId");
+        const discarded = await service.discard(sessionId);
+        if (!discarded) return c.json({ ok: false as const, error: "That saved Forge session does not exist." }, 404);
+        await configuration?.delete(candidateConfigurationScope(sessionId));
+        return c.json({ ok: true as const });
+      } catch (error) {
+        return c.json({ ok: false as const, error: errorMessage(error, "Forge session could not be discarded.") }, 409);
+      }
+    })
     .get(
       "/sessions/:sessionId/candidate/configuration",
       validator("query", (value, c) => {
@@ -268,7 +299,7 @@ export function createForgeApiRoutes(
           try {
             if (target) await configuration?.copy(target.manifest.id, candidateConfigurationScope(started.sessionId));
           } catch (error) {
-            service.stop(started.sessionId);
+            await service.stop(started.sessionId);
             throw error;
           }
           return c.json({ ok: true as const, ...started }, 201);
@@ -283,8 +314,8 @@ export function createForgeApiRoutes(
         }
       },
     )
-    .delete("/sessions/:sessionId", (c) => {
-      const stopped = service.stop(c.req.param("sessionId"));
+    .delete("/sessions/:sessionId", async (c) => {
+      const stopped = await service.stop(c.req.param("sessionId"));
       return stopped
         ? c.json({ ok: true as const })
         : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
