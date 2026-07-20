@@ -42,30 +42,39 @@ export function LibraryRail({
         ))}
       </RailSection>
 
-      <RailSection title="Categories">
+      <RailSection className="min-h-0 flex-1 overflow-hidden" title="Categories">
         <RailButton active={category === null} label="All categories" onClick={() => onCategory(null)}>
           <Tag size={14} />
         </RailButton>
-        {categories.map((item) => (
-          <RailButton
-            key={item.name}
-            active={category === item.name}
-            label={item.name}
-            count={item.count}
-            onClick={() => onCategory(item.name)}
-          >
-            <span className="size-2 rounded-full bg-[#5468ff]" />
-          </RailButton>
-        ))}
+        <nav
+          aria-label="Tool categories"
+          className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pr-1"
+        >
+          {categories.map((item) => (
+            <RailButton
+              key={item.name}
+              active={category === item.name}
+              label={item.name}
+              count={item.count}
+              onClick={() => onCategory(item.name)}
+            >
+              <span className="size-2 rounded-full bg-[#5468ff]" />
+            </RailButton>
+          ))}
+        </nav>
       </RailSection>
     </aside>
   );
 }
 
-function RailSection({ title, children }: React.PropsWithChildren<{ title: string }>) {
+function RailSection({
+  title,
+  className = "",
+  children,
+}: React.PropsWithChildren<{ title: string; className?: string }>) {
   return (
-    <section className="flex flex-col gap-1 rounded-2xl border border-[#333] bg-[#242424] p-3">
-      <h2 className="m-0 px-2 pt-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#707070]">
+    <section className={`flex flex-col gap-1 rounded-2xl border border-[#333] bg-[#242424] p-3 ${className}`}>
+      <h2 className="m-0 shrink-0 px-2 pt-0.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#707070]">
         {title}
       </h2>
       {children}
@@ -82,7 +91,7 @@ function RailButton({
 }: React.PropsWithChildren<{ active: boolean; label: string; count?: number; onClick: () => void }>) {
   return (
     <button
-      className={`flex w-full items-center gap-2.5 rounded-[9px] border-0 px-2.5 py-2 text-left text-[12px] ${active ? "bg-[#252945] text-[#eef0ff]" : "bg-transparent text-[#a0a0a0] hover:bg-[#2c2c2c] hover:text-[#ececec]"}`}
+      className={`flex w-full shrink-0 items-center gap-2.5 rounded-[9px] border-0 px-2.5 py-2 text-left text-[12px] ${active ? "bg-[#252945] text-[#eef0ff]" : "bg-transparent text-[#a0a0a0] hover:bg-[#2c2c2c] hover:text-[#ececec]"}`}
       type="button"
       aria-pressed={active}
       onClick={onClick}

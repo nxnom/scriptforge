@@ -104,7 +104,11 @@ function MobileFilterMenu({
 }) {
   const selected = filters.find((item) => item.value === filter);
   return (
-    <Menu className="min-w-0 flex-1" menuClassName="min-w-64" placement="bottom-start">
+    <Menu
+      className="min-w-0 flex-1"
+      menuClassName="max-h-[min(70vh,32rem)] min-w-64 overflow-y-auto overscroll-contain"
+      placement="bottom-start"
+    >
       <MenuTrigger>
         {({ toggleMenu, open }) => (
           <Button
