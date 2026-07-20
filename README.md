@@ -36,7 +36,7 @@ The local application shell, bundled image-resizer workflow, full MCP-guided For
 - The Start Forge dialog defaults to a fresh session but can select, resume, or inline-confirm deletion of stopped/interrupted sessions; deletion removes the cached option immediately with automatic rollback on failure, and resumed work continues the exact Codex conversation in its preserved staging directory
 - Missing-executable and version detection that keeps tools installed while blocking only their execution
 - Opt-in Codex Doctor embedded beside the tool interface; it proposes OS-specific commands, waits for a separate Install click, streams installer-only terminal output, and verifies requirements afterward
-- Dependency-free `.forge` export/import archives that preserve complete tool directories, validate and import immediately after selection, and never execute imported code
+- Dependency-free `.forge` export/import archives that preserve complete tool directories, validate and import immediately after selection, and never execute imported code; deleting an installed tool removes its Library card immediately with automatic rollback on failure
 - Manifest-driven tool configuration with locally encrypted secrets that never enter generated HTML or `.forge` exports
 - Confirmed deletion for Forge-saved and imported tools, with bundled starter tools protected in both the UI and API
 - Whole-card library navigation with secondary user-tool menus and compact tooltip-labeled detail actions

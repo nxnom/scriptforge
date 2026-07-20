@@ -4,16 +4,14 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolActions } from "./ToolActions";
 
-const mocks = vi.hoisted(() => ({ trigger: vi.fn(), invalidate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trigger: vi.fn() }));
 
 vi.mock("../api", () => ({
   useWrite: () => ({ trigger: mocks.trigger }),
-  invalidate: mocks.invalidate,
 }));
 
 beforeEach(() => {
   mocks.trigger.mockReset();
-  mocks.invalidate.mockReset();
 });
 
 afterEach(() => {
@@ -40,9 +38,25 @@ describe("ToolActions", () => {
     const preventDefault = vi.fn();
     await options?.onConfirm?.({ ...options, dismiss, preventDefault });
 
-    await waitFor(() => expect(mocks.trigger).toHaveBeenCalledWith({ params: { toolId: "video-tool" } }));
+    await waitFor(() =>
+      expect(mocks.trigger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: { toolId: "video-tool" },
+          optimistic: expect.any(Function),
+        }),
+      ),
+    );
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(dismiss).toHaveBeenCalledOnce();
-    expect(mocks.invalidate).toHaveBeenCalledWith("tools");
+
+    const optimistic = mocks.trigger.mock.calls[0]?.[0].optimistic;
+    const set = vi.fn();
+    const cache = vi.fn(() => ({ set }));
+    optimistic(cache);
+    expect(cache).toHaveBeenCalledWith("tools");
+    const update = set.mock.calls[0]?.[0];
+    expect(update({ tools: [{ id: "video-tool" }, { id: "keep-this-tool" }] })).toEqual({
+      tools: [{ id: "keep-this-tool" }],
+    });
   });
 });

@@ -132,7 +132,7 @@ Acceptance checks:
 - Invalid paths, duplicate paths, malformed manifests, oversized archives, and bundled-ID collisions are rejected.
 - An imported tool with a missing executable appears as Needs install.
 - Only execution is blocked until Doctor or the user supplies the dependency.
-- Deletion removes an installed tool atomically, and bundled deletion is rejected by both the UI and server.
+- Deletion removes an installed tool atomically, optimistically removes its cached Library entry with rollback on failure, and rejects bundled deletion in both the UI and server.
 
 ## Goal 4.6 — Encrypted Tool Configuration
 

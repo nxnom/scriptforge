@@ -1,7 +1,7 @@
 import { Button, ConfirmDialog, Menu, MenuItem, MenuTrigger, Tooltip, toast } from "@geckoui/geckoui";
 import { Download, Ellipsis, Settings2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { invalidate, useWrite } from "../api";
+import { useWrite } from "../api";
 
 export function ToolActions({
   toolId,
@@ -27,9 +27,15 @@ export function ToolActions({
       dismissOnOutsideClick: false,
       onConfirm: async ({ preventDefault, dismiss }) => {
         preventDefault();
-        const response = await deleteTool.trigger({ params: { toolId } });
+        const response = await deleteTool.trigger({
+          params: { toolId },
+          optimistic: (cache) =>
+            cache("tools").set((current) => ({
+              ...current,
+              tools: current.tools.filter((tool) => tool.id !== toolId),
+            })),
+        });
         if (!response.data?.ok) return toast.error(apiError(response.error));
-        invalidate("tools");
         dismiss();
         toast.success(`${toolName} deleted.`);
         navigate("/");
