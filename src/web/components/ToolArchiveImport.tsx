@@ -2,42 +2,30 @@ import { LoadingButton, RHFError, RHFFilePicker, toast } from "@geckoui/geckoui"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { form as spooshForm } from "@spoosh/core";
 import { FileArchive, PackageOpen } from "lucide-react";
+import { useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { invalidate, useWrite } from "../api";
 
 const importSchema = z.object({
-  files: z.array(z.instanceof(File)).max(1, "Import one .forge file at a time."),
+  files: z.array(z.instanceof(File)),
 });
 type ImportForm = z.infer<typeof importSchema>;
+type ImportProgress = { current: number; total: number; fileName: string };
 
 export function ToolArchiveImport() {
   const importTool = useWrite((api) => api("tools/import").POST());
+  const importingRef = useRef(false);
+  const [progress, setProgress] = useState<ImportProgress>();
   const form = useForm<ImportForm>({
     resolver: zodResolver(importSchema),
     defaultValues: { files: [] },
   });
-  const importFile = async (file: File) => {
-    try {
-      const response = await importTool.trigger({ body: spooshForm({ file }) });
-      if (!response.data?.ok) throw response.error;
-      invalidate("tools");
-      toast.success(
-        response.data.tool.status === "ready"
-          ? `${response.data.tool.name} imported.`
-          : `${response.data.tool.name} imported and needs a dependency.`,
-      );
-      form.resetField("files");
-    } catch (error) {
-      form.resetField("files");
-      toast.error(apiError(error));
-    }
-  };
   const submit = form.handleSubmit(async ({ files }) => {
-    const file = files[0];
-    if (file) await importFile(file);
+    await importFiles(files);
   });
-  const importSelection = async (files: File[]) => {
+  const importFiles = async (files: File[]) => {
+    if (importingRef.current) return;
     if (files.length === 0) {
       form.clearErrors("files");
       return;
@@ -48,8 +36,28 @@ export function ToolArchiveImport() {
       return;
     }
     form.clearErrors("files");
-    const file = parsed.data.files[0];
-    if (file) await importFile(file);
+    importingRef.current = true;
+    const imported: Array<{ name: string; status: "ready" | "needs-install" | "needs-config" }> = [];
+    try {
+      for (const [index, file] of parsed.data.files.entries()) {
+        setProgress({ current: index + 1, total: parsed.data.files.length, fileName: file.name });
+        try {
+          const response = await importTool.trigger({ body: spooshForm({ file }) });
+          if (!response.data?.ok) throw response.error;
+          imported.push(response.data.tool);
+        } catch (error) {
+          toast.error(`${file.name}: ${apiError(error)}`);
+        }
+      }
+      if (imported.length > 0) {
+        invalidate("tools");
+        showImportSuccess(imported, parsed.data.files.length);
+      }
+    } finally {
+      importingRef.current = false;
+      setProgress(undefined);
+      form.resetField("files");
+    }
   };
 
   return (
@@ -58,7 +66,7 @@ export function ToolArchiveImport() {
         <RHFFilePicker
           name="files"
           accept=".forge,application/x-scriptforge-tool"
-          onChange={importSelection}
+          onChange={(_, newFiles) => importFiles(newFiles)}
           render={({ dropzoneRef, dragging, loading, files, openFilePicker }) => (
             <div
               ref={dropzoneRef}
@@ -75,12 +83,10 @@ export function ToolArchiveImport() {
                 </span>
                 <div className="min-w-0">
                   <h2 className="m-0 truncate font-[Geist_Variable] text-xl font-semibold max-[620px]:text-lg">
-                    {files[0]?.name ?? (dragging ? "Drop your .forge file here" : "Add a tool from a .forge file")}
+                    {importTitle(files, dragging, progress)}
                   </h2>
                   <p className="mt-1 mb-0 text-[12px] text-[#e0e4ff] max-[620px]:line-clamp-2">
-                    {files[0]
-                      ? `${formatBytes(files[0].size)} · Validating and importing…`
-                      : "ScriptForge validates the package and saves it locally. Nothing runs during import."}
+                    {importDescription(files, progress)}
                   </p>
                 </div>
               </div>
@@ -88,12 +94,12 @@ export function ToolArchiveImport() {
                 className="relative shrink-0 border-white! bg-white! text-[#252945]! hover:bg-[#eef0ff]! max-[520px]:w-full"
                 size="sm"
                 type="button"
-                loading={files.length > 0 || importTool.loading || loading}
-                loadingText="Importing…"
-                disabled={files.length > 0 || importTool.loading}
-                onClick={() => openFilePicker({ multiple: false })}
+                loading={Boolean(progress) || importTool.loading || loading}
+                loadingText={progress ? `Importing ${progress.current} of ${progress.total}…` : "Importing…"}
+                disabled={Boolean(progress) || importTool.loading}
+                onClick={() => openFilePicker({ multiple: true })}
               >
-                Choose file
+                Choose files
               </LoadingButton>
             </div>
           )}
@@ -101,6 +107,36 @@ export function ToolArchiveImport() {
         <RHFError name="files" />
       </form>
     </FormProvider>
+  );
+}
+
+function importTitle(files: File[], dragging: boolean, progress?: ImportProgress) {
+  if (progress) return `Importing ${progress.current} of ${progress.total}`;
+  if (files.length > 1) return `${files.length} tools selected`;
+  if (files.length === 1) return files[0]?.name;
+  return dragging ? "Drop your .forge files here" : "Add tools from .forge files";
+}
+
+function importDescription(files: File[], progress?: ImportProgress) {
+  if (progress) return `${progress.fileName} · Validating and importing…`;
+  if (files.length === 1) return `${formatBytes(files[0]?.size ?? 0)} · Waiting to import…`;
+  if (files.length > 1) return `${formatBytes(files.reduce((total, file) => total + file.size, 0))} total`;
+  return "Choose or drop one or more archives. ScriptForge validates each package and never runs it during import.";
+}
+
+function showImportSuccess(
+  imported: Array<{ name: string; status: "ready" | "needs-install" | "needs-config" }>,
+  total: number,
+) {
+  if (total === 1) {
+    const tool = imported[0];
+    if (!tool) return;
+    toast.success(tool.status === "ready" ? `${tool.name} imported.` : `${tool.name} imported and needs setup.`);
+    return;
+  }
+  const setupCount = imported.filter((tool) => tool.status !== "ready").length;
+  toast.success(
+    `${imported.length} of ${total} tools imported${setupCount > 0 ? `; ${setupCount} ${setupCount === 1 ? "needs" : "need"} setup` : ""}.`,
   );
 }
 

@@ -33,7 +33,7 @@ describe("ToolArchiveImport", () => {
     expect(mocks.trigger).not.toHaveBeenCalled();
   });
 
-  it("imports a selected .forge file immediately through the typed action", async () => {
+  it("imports a dropped .forge file immediately through the typed action", async () => {
     mocks.trigger.mockResolvedValue({
       data: { ok: true, tool: { id: "video-tool", name: "Video Tool", status: "needs-install" } },
     });
@@ -42,8 +42,8 @@ describe("ToolArchiveImport", () => {
         <ToolArchiveImport />
       </MemoryRouter>,
     );
-    expect(screen.getByText("Add a tool from a .forge file")).toBeVisible();
-    expect(screen.getByText(/Nothing runs during import/)).toBeVisible();
+    expect(screen.getByText("Add tools from .forge files")).toBeVisible();
+    expect(screen.getByText(/Choose or drop one or more archives/)).toBeVisible();
     expect(screen.queryByText("Import a shared .forge tool")).not.toBeInTheDocument();
     const file = new File(["archive"], "video-tool.forge", { type: "application/x-scriptforge-tool" });
     fireEvent.drop(screen.getByTestId("archive-dropzone"), {
@@ -53,6 +53,58 @@ describe("ToolArchiveImport", () => {
     await waitFor(() => expect(mocks.trigger).toHaveBeenCalledOnce());
     expect(screen.queryByRole("button", { name: "Import tool" })).not.toBeInTheDocument();
     expect(mocks.invalidate).toHaveBeenCalledWith("tools");
-    await waitFor(() => expect(screen.getByText("Add a tool from a .forge file")).toBeVisible());
+    await waitFor(() => expect(screen.getByText("Add tools from .forge files")).toBeVisible());
+  });
+
+  it("imports every archive from one multi-file drop", async () => {
+    mocks.trigger
+      .mockResolvedValueOnce({
+        data: { ok: true, tool: { id: "colors", name: "Color Mixer", status: "ready" } },
+      })
+      .mockResolvedValueOnce({
+        data: { ok: true, tool: { id: "dates", name: "Date Calculator", status: "needs-config" } },
+      });
+    render(
+      <MemoryRouter>
+        <ToolArchiveImport />
+      </MemoryRouter>,
+    );
+    const colorTool = new File(["colors"], "colors.forge", { type: "application/x-scriptforge-tool" });
+    const dateTool = new File(["dates"], "dates.forge", { type: "application/x-scriptforge-tool" });
+
+    fireEvent.drop(screen.getByTestId("archive-dropzone"), {
+      dataTransfer: {
+        items: [{ getAsFile: () => colorTool }, { getAsFile: () => dateTool }],
+        files: [colorTool, dateTool],
+      },
+    });
+
+    await waitFor(() => expect(mocks.trigger).toHaveBeenCalledTimes(2));
+    expect(mocks.invalidate).toHaveBeenCalledOnce();
+    expect(mocks.invalidate).toHaveBeenCalledWith("tools");
+    await waitFor(() => expect(screen.getByText("Add tools from .forge files")).toBeVisible());
+  });
+
+  it("continues importing the remaining archives after one fails", async () => {
+    mocks.trigger.mockResolvedValueOnce({ error: { error: "That archive is invalid." } }).mockResolvedValueOnce({
+      data: { ok: true, tool: { id: "dates", name: "Date Calculator", status: "ready" } },
+    });
+    render(
+      <MemoryRouter>
+        <ToolArchiveImport />
+      </MemoryRouter>,
+    );
+    const brokenTool = new File(["broken"], "broken.forge", { type: "application/x-scriptforge-tool" });
+    const dateTool = new File(["dates"], "dates.forge", { type: "application/x-scriptforge-tool" });
+
+    fireEvent.drop(screen.getByTestId("archive-dropzone"), {
+      dataTransfer: {
+        items: [{ getAsFile: () => brokenTool }, { getAsFile: () => dateTool }],
+        files: [brokenTool, dateTool],
+      },
+    });
+
+    await waitFor(() => expect(mocks.trigger).toHaveBeenCalledTimes(2));
+    expect(mocks.invalidate).toHaveBeenCalledWith("tools");
   });
 });
