@@ -14,7 +14,7 @@ The result is one local workspace for everyday image, document, media, and file 
 
 ## Demo
 
-https://github.com/user-attachments/assets/2a3026f5-1a6f-4b06-8dae-03775d24c78e
+https://github.com/user-attachments/assets/8c3468fc-a6f3-4cf6-885d-5d3f938ac1c4
 
 [Watch the public demo on YouTube](https://youtu.be/D193zR5aHMo)
 
