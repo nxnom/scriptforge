@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-07-22
+
 ### Added
 
 - Tool previews in new-tool Forge and installed-tool edit sessions can collapse and restore the terminal, giving both installed and candidate interfaces the full workspace when needed.
 - Library grid cards now identify tools with an active edit session or Dependency Doctor session.
+- The connected Forge terminal now offers a compact help menu with complete, copyable example prompts for creating useful local tools and exploring alternate UI layouts and color palettes.
+- Library Import now accepts multiple `.forge` archives from one file-picker selection or drag-and-drop, shows batch progress, continues after individual failures, and reports per-file errors without executing imported code.
 
 ### Changed
 
@@ -23,16 +27,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Installed-tool edit sessions now replace the terminal with blocking question and approval plans, matching the new-tool Forge workspace.
 - Interactive visual-direction choosers now follow their measured content height without showing a redundant internal scrollbar.
-
-## [0.1.7] - 2026-07-22
-
-### Added
-
-- The connected Forge terminal now offers a compact help menu with complete, copyable example prompts for creating useful local tools and exploring alternate UI layouts and color palettes.
-- Library Import now accepts multiple `.forge` archives from one file-picker selection or drag-and-drop, shows batch progress, continues after individual failures, and reports per-file errors without executing imported code.
-
-### Fixed
-
 - Question-only Forge plan panels now include Request changes alongside Approve, with revision feedback returned to the active Codex session.
 
 ## [0.1.6] - 2026-07-21

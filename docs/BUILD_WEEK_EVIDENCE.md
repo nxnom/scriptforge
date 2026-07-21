@@ -59,6 +59,8 @@ The clean-package smoke test on July 20, 2026:
 6. Observed `queued`, `running`, and `succeeded` events and decoded the requested 8 × 6 PNG output.
 7. Repeated public-package startup verification with `npx --yes scriptforge@0.1.0 --no-open`, including automatic fallback from occupied port `4545`.
 
+The `0.1.7` release candidate was packed and installed into a new temporary npm prefix on July 22, 2026. The installed `scriptforge` executable started successfully with `--no-open`, selected an available fallback port, returned API health with version `0.1.7`, served the production React shell, and discovered all eight bundled tool manifests. The temporary package and installation directory were removed after verification.
+
 Additional focused checks include:
 
 - Favicon ZIP inspection for browser, Apple, PWA/Android, and Windows assets; ICO header validation; adaptive SVG theme validation; manifest parsing; and PNG decoding.
