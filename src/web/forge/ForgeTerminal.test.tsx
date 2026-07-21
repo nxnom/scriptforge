@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ForgeTerminal } from "./ForgeTerminal";
 
@@ -40,6 +40,10 @@ describe("ForgeTerminal", () => {
       return 1;
     });
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
   });
 
   afterEach(() => {
@@ -68,6 +72,29 @@ describe("ForgeTerminal", () => {
     expect(firstCandidate).not.toHaveBeenCalled();
     expect(latestCandidate).toHaveBeenCalledWith({ revision: "next" });
   });
+
+  it("copies a full example prompt without writing it to the terminal", async () => {
+    const props = {
+      sessionId: "session-1",
+      onSessionEnd: vi.fn(),
+      onPanel: vi.fn(),
+      onCandidate: vi.fn(),
+    };
+    render(<ForgeTerminal {...props} />);
+
+    act(() => FakeWebSocket.instances[0]?.emit("open"));
+    fireEvent.click(screen.getByRole("button", { name: "Example prompts" }));
+    expect(screen.getByText(/Forge a color mixer where I can choose two colors/)).toBeVisible();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy Color mixer prompt" }));
+
+    const messages = FakeWebSocket.instances[0]?.sent.map((message) => JSON.parse(message));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("three distinct UI designs with different layouts, visual styles, and color palettes"),
+    );
+    expect(messages?.some((message) => message.type === "input")).toBe(false);
+    expect(screen.getByRole("button", { name: "Example prompts" })).toBeVisible();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
 });
 
 class FakeWebSocket {
@@ -75,6 +102,7 @@ class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
   readyState = FakeWebSocket.OPEN;
   readonly listeners = new Map<string, Array<(event: MessageEvent) => void>>();
+  readonly sent: string[] = [];
 
   constructor(readonly url: string) {
     FakeWebSocket.instances.push(this);
@@ -90,6 +118,8 @@ class FakeWebSocket {
     for (const listener of this.listeners.get(type) ?? []) listener(event as MessageEvent);
   }
 
-  send() {}
+  send(message: string) {
+    this.sent.push(message);
+  }
   close() {}
 }

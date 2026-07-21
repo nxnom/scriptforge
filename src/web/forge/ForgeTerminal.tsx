@@ -3,6 +3,7 @@ import { Terminal } from "@xterm/xterm";
 import { Circle, TerminalSquare } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
+import { ForgePromptExamples } from "./ForgePromptExamples";
 
 type ConnectionState = "connecting" | "connected" | "exited" | "error";
 
@@ -146,9 +147,13 @@ export function ForgeTerminal({ sessionId, onSessionEnd, onPanel, onCandidate }:
         <span className="inline-flex items-center gap-2 font-medium text-[#c9c9c9]">
           <TerminalSquare size={14} /> Interactive Codex
         </span>
-        <span className="inline-flex items-center gap-1.5 text-[#8f8f8f]">
-          <Circle className={connectionColor(connection)} fill="currentColor" size={7} /> {connectionLabel(connection)}
-        </span>
+        <div className="inline-flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[#8f8f8f]">
+            <Circle className={connectionColor(connection)} fill="currentColor" size={7} />
+            {connectionLabel(connection)}
+          </span>
+          {connection === "connected" && <ForgePromptExamples />}
+        </div>
       </div>
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <div ref={containerRef} className="absolute inset-0 overflow-hidden p-3" />
