@@ -61,6 +61,8 @@ npx scriptforge --no-open
 
 [View the npm package](https://www.npmjs.com/package/scriptforge) · [Browse the source](https://github.com/nxnom/scriptforge)
 
+To try the Import workflow, download the [example `.forge` tools and follow their installation guide](https://github.com/nxnom/scriptforge/tree/main/examples).
+
 ## Develop from Source
 
 ```bash
