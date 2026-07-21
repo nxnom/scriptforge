@@ -58,13 +58,31 @@ describe("ToolCard", () => {
     expect(screen.queryByText("Ready")).not.toBeInTheDocument();
     expect(screen.getByText("Built-in")).toHaveClass("bg-[#292c3c]", "text-[#aeb7ff]");
   });
+
+  it("shows active edit and Doctor sessions on grid cards", () => {
+    renderCard(tool(), "grid", ["editing", "doctor"]);
+
+    expect(screen.getByText("Editing")).toBeVisible();
+    expect(screen.getByText("Doctor running")).toBeVisible();
+  });
+
+  it("keeps session indicators out of the compact list layout", () => {
+    renderCard(tool(), "list", ["editing", "doctor"]);
+
+    expect(screen.queryByText("Editing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Doctor running")).not.toBeInTheDocument();
+  });
 });
 
-function renderCard(value: ToolSummary, layout: "grid" | "list" = "grid") {
+function renderCard(
+  value: ToolSummary,
+  layout: "grid" | "list" = "grid",
+  activities: Array<"doctor" | "editing"> = [],
+) {
   return render(
     <MemoryRouter>
       <Routes>
-        <Route path="/" element={<ToolCard tool={value} layout={layout} />} />
+        <Route path="/" element={<ToolCard tool={value} layout={layout} activities={activities} />} />
         <Route path="/tools/:toolId" element={<p>Tool detail route</p>} />
       </Routes>
     </MemoryRouter>,

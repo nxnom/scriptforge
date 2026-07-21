@@ -11,7 +11,7 @@ import {
   type LibraryView,
 } from "../components/LibraryToolbar";
 import { ToolArchiveImport } from "../components/ToolArchiveImport";
-import { ToolCard, type ToolSummary } from "../components/ToolCard";
+import { type ToolActivity, ToolCard, type ToolSummary } from "../components/ToolCard";
 
 export function LibraryPage() {
   const [searchParams] = useSearchParams();
@@ -21,6 +21,8 @@ export function LibraryPage() {
   const [view, setView] = useState<LibraryView>("grid");
   const health = useRead((api) => api("health").GET(), { staleTime: 30_000 });
   const tools = useRead((api) => api("tools").GET(), { staleTime: 30_000 });
+  const activeDoctor = useRead((api) => api("doctor/sessions/active").GET(), { staleTime: 0 });
+  const activeForge = useRead((api) => api("forge/sessions/active").GET(), { staleTime: 0 });
   const allTools = (tools.data?.tools ?? []).filter((tool) => tool.status !== "planned");
   const counts = countTools(allTools);
   const categories = countCategories(allTools);
@@ -77,7 +79,12 @@ export function LibraryPage() {
               aria-label="Tool library"
             >
               {visibleTools.map((tool) => (
-                <ToolCard key={tool.id} tool={tool} layout={view} />
+                <ToolCard
+                  key={tool.id}
+                  tool={tool}
+                  layout={view}
+                  activities={getToolActivities(tool.id, activeDoctor.data?.toolId, activeForge.data?.sessions)}
+                />
               ))}
             </section>
           ) : (
@@ -89,6 +96,19 @@ export function LibraryPage() {
       </div>
     </div>
   );
+}
+
+export function getToolActivities(
+  toolId: string,
+  doctorToolId: string | null | undefined,
+  forgeSessions: Array<{ scope: string; toolId: string | null }> | undefined,
+): ToolActivity[] {
+  const activities: ToolActivity[] = [];
+  if (forgeSessions?.some((session) => session.scope === "update" && session.toolId === toolId)) {
+    activities.push("editing");
+  }
+  if (doctorToolId === toolId) activities.push("doctor");
+  return activities;
 }
 
 export function selectTools(

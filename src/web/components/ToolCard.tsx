@@ -10,8 +10,10 @@ import {
   FileType,
   FolderTree,
   Globe2,
+  HeartPulse,
   Image,
   KeyRound,
+  PencilLine,
   ScanSearch,
   Sparkles,
   Table2,
@@ -52,7 +54,17 @@ export interface ToolSummary {
   createdAt?: number;
 }
 
-export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?: "grid" | "list" }) {
+export type ToolActivity = "doctor" | "editing";
+
+export function ToolCard({
+  tool,
+  layout = "grid",
+  activities = [],
+}: {
+  tool: ToolSummary;
+  layout?: "grid" | "list";
+  activities?: ToolActivity[];
+}) {
   const Icon = icons[tool.icon] ?? Wrench;
   const palette = paletteFor(tool.categories[0] ?? tool.id);
   const available = ["ready", "needs-install", "needs-config"].includes(tool.status);
@@ -75,23 +87,56 @@ export function ToolCard({ tool, layout = "grid" }: { tool: ToolSummary; layout?
           to={`/tools/${tool.id}`}
         />
       )}
-      {layout === "grid" ? <GridCardContent tool={tool} Icon={Icon} /> : <ListCardContent tool={tool} Icon={Icon} />}
+      {layout === "grid" ? (
+        <GridCardContent tool={tool} Icon={Icon} activities={activities} />
+      ) : (
+        <ListCardContent tool={tool} Icon={Icon} />
+      )}
     </article>
   );
 }
 
-function GridCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentType<{ size?: number }> }) {
+function GridCardContent({
+  tool,
+  Icon,
+  activities,
+}: {
+  tool: ToolSummary;
+  Icon: ComponentType<{ size?: number }>;
+  activities: ToolActivity[];
+}) {
   return (
     <div className="pointer-events-none relative flex h-full min-h-44 flex-col gap-3 p-3.5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2">
         <ToolIcon Icon={Icon} />
-        <StatusBadge status={tool.status} />
+        <div className="flex flex-wrap justify-end gap-1">
+          {activities.map((activity) => (
+            <ActivityBadge key={activity} activity={activity} />
+          ))}
+          <StatusBadge status={tool.status} />
+        </div>
       </div>
       <div className="flex flex-1 flex-col gap-1.5">
         <ToolCopy tool={tool} />
       </div>
       <CardFooter tool={tool} />
     </div>
+  );
+}
+
+function ActivityBadge({ activity }: { activity: ToolActivity }) {
+  const doctor = activity === "doctor";
+  const Icon = doctor ? HeartPulse : PencilLine;
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[10px] font-[650] ring-1 ring-inset ${
+        doctor
+          ? "bg-[#3d3021] text-[#efbd70] ring-[#6a4e2b]"
+          : "bg-[#4a2228] text-[#ffabb2] ring-[#873c46] motion-safe:animate-pulse"
+      }`}
+    >
+      <Icon size={10} /> {doctor ? "Doctor running" : "Editing"}
+    </span>
   );
 }
 

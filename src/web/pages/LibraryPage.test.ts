@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ToolSummary } from "../components/ToolCard";
-import { countCategories, selectTools } from "./LibraryPage";
+import { countCategories, getToolActivities, selectTools } from "./LibraryPage";
 
 const tools: ToolSummary[] = [
   {
@@ -35,5 +35,18 @@ describe("library categories", () => {
   it("searches and filters across every category", () => {
     expect(selectTools(tools, "video", "all", null, "name").map((tool) => tool.id)).toEqual(["video-tool"]);
     expect(selectTools(tools, "", "all", "Files", "name").map((tool) => tool.id)).toEqual(["image-tool", "video-tool"]);
+  });
+});
+
+describe("library tool activity", () => {
+  it("maps only matching Doctor and update sessions onto a tool", () => {
+    const sessions = [
+      { scope: "create", toolId: "image-tool" },
+      { scope: "update", toolId: "video-tool" },
+      { scope: "update", toolId: "another-tool" },
+    ];
+
+    expect(getToolActivities("video-tool", "video-tool", sessions)).toEqual(["editing", "doctor"]);
+    expect(getToolActivities("image-tool", "another-tool", sessions)).toEqual([]);
   });
 });
