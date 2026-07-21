@@ -8,7 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Candidate previews in new-tool Forge and installed-tool edit sessions can collapse and restore the terminal, giving the tool interface the full workspace when needed.
+- Tool previews in new-tool Forge and installed-tool edit sessions can collapse and restore the terminal, giving both installed and candidate interfaces the full workspace when needed.
+- Library grid cards now identify tools with an active edit session or Dependency Doctor session.
+
+### Changed
+
+- New-tool Forge sessions now present three selectable visual preview cards before building: ScriptForge's default compact dark style and two alternatives adapted to the tool's purpose. Predefined prompts stay focused on tool behavior because this choice is part of the global authoring flow.
+- Generated-tool guidance now requires wide input and result cards to stretch through the available iframe height while narrow stacked layouts remain content-height.
+- Generated-tool guidance now keeps narrow form controls top-aligned instead of distributing them through large vertical gaps.
+- Active edit-session badges use a distinct red pulse, while Dependency Doctor sessions retain their own amber state.
 
 ### Fixed
 
