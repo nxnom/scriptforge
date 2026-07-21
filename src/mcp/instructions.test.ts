@@ -18,6 +18,9 @@ describe("Forge MCP instructions", () => {
     expect(instructions).toContain('data-scriptforge-value="<matching option value>"');
     expect(instructions).toContain("window.scriptforgeSelect(value)");
     expect(instructions).toContain("ScriptForge does not wrap the choices in host-designed cards or columns");
+    expect(instructions).toContain("using only a clearly different border color");
+    expect(instructions).toContain("do not default every direction to ScriptForge blue");
+    expect(instructions).toContain("Do not add checkmarks, selected badges, labels");
     expect(instructions).toContain("Direction 1 is the recommended default");
     expect(instructions).toContain("#5468ff primary accents");
     expect(instructions).toContain("Tailor Directions 2 and 3 to the tool's purpose");

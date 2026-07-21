@@ -26,6 +26,7 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("three distinct visual UI directions");
     expect(client.getInstructions()).toContain("one body containing the complete HTML, CSS, and JavaScript chooser");
     expect(client.getInstructions()).toContain("window.scriptforgeSelect(value)");
+    expect(client.getInstructions()).toContain("do not default every direction to ScriptForge blue");
     expect(client.getInstructions()).toContain("as if the iframe were 480px wide and again at 1200px");
     expect(client.getInstructions()).toContain("replace that empty drop zone in the same space");
     expect(client.getInstructions()).toContain("#151515 page background");
