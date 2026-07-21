@@ -100,10 +100,12 @@ describe("tool runtime host", () => {
       .png()
       .toBuffer();
     const service = new ToolJobService(jobsRoot, resolve("src/tools/bundled"));
+    const sourceFile = new File([filePart(source)], "source.png", { type: "image/png" });
+    Object.defineProperty(sourceFile, "size", { value: 300 * 1024 * 1024 });
     const { jobId } = await service.start({
       toolId: "image-resizer",
       input: { width: 4, height: 4, fit: "contain", format: "png", quality: 82 },
-      files: [new File([filePart(source)], "source.png", { type: "image/png" })],
+      files: [sourceFile],
     });
     await expect.poll(() => service.getSnapshot(jobId)?.status).toBe("succeeded");
     const result = service.getSnapshot(jobId)?.events.find((event) => event.type === "result");

@@ -29,7 +29,7 @@ try {
   emit({ type: "log", level: "info", message: `Reading ${file.name}` });
   emit({ type: "progress", value: 0.05, label: "Checking source image" });
 
-  const source = sharp(file.path, { failOn: "error", limitInputPixels: 100_000_000 }).rotate();
+  const source = sharp(file.path, { failOn: "error", limitInputPixels: false }).rotate();
   const metadata = await source.metadata();
   if (!metadata.width || !metadata.height) throw new Error("The selected file is not a supported image.");
   if (Math.min(metadata.width, metadata.height) < 512)
@@ -41,7 +41,7 @@ try {
     const key = `${size}:${transparent}:${inset}:${fit}:${background}`;
     if (cache.has(key)) return cache.get(key);
     const dimension = inset ? Math.round(size * inset) : size;
-    let image = sharp(file.path, { failOn: "error", limitInputPixels: 100_000_000 })
+    let image = sharp(file.path, { failOn: "error", limitInputPixels: false })
       .rotate()
       .resize({
         width: dimension,

@@ -35,7 +35,7 @@ try {
   emit({ type: "log", level: "info", message: `Reading ${darkFile ? "light and dark artwork" : lightFile.name}` });
   emit({ type: "progress", value: 0.04, label: "Checking source artwork" });
   for (const [theme, file] of Object.entries(darkFile ? sources : { light: lightFile })) {
-    const metadata = await sharp(file.path, { failOn: "error", limitInputPixels: 100_000_000 }).metadata();
+    const metadata = await sharp(file.path, { failOn: "error", limitInputPixels: false }).metadata();
     if (!metadata.width || !metadata.height) throw new Error(`The ${theme} artwork is not a supported image.`);
     if (Math.min(metadata.width, metadata.height) < 256)
       throw new Error(`Use ${theme} artwork at least 256 × 256 pixels for a useful favicon pack.`);
@@ -49,7 +49,7 @@ try {
     const key = `${theme}:${size}:${transparent}:${inset}:${fit}:${background}`;
     if (cache.has(key)) return cache.get(key);
     const dimension = Math.max(1, Math.round(size * inset));
-    let artwork = sharp(sources[theme].path, { failOn: "error", limitInputPixels: 100_000_000 })
+    let artwork = sharp(sources[theme].path, { failOn: "error", limitInputPixels: false })
       .rotate()
       .resize({
         width: dimension,

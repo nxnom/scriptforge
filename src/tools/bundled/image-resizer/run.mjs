@@ -24,7 +24,7 @@ try {
 
   emit({ type: "log", level: "info", message: `Reading ${file.name}` });
   emit({ type: "progress", value: 0.15, label: "Reading image" });
-  const source = sharp(file.path, { failOn: "error", limitInputPixels: 100_000_000 });
+  const source = sharp(file.path, { failOn: "error", limitInputPixels: false });
   const metadata = await source.metadata();
   if (!metadata.width || !metadata.height || !metadata.format) throw new Error("The file is not a supported image.");
 

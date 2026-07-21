@@ -75,7 +75,7 @@
     <main class="layout">
       <form class="panel controls" id="form">
         <div class="intro"><h1>Image Resizer</h1><p>Resize and convert one image locally.</p></div>
-        <label class="drop" id="drop"><strong>Choose an image</strong><span>Drop a PNG, JPEG, or WebP · up to 20 MB</span><input id="file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+        <label class="drop" id="drop"><strong>Choose an image</strong><span>Drop a PNG, JPEG, or WebP · no ScriptForge size limit</span><input id="file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
         <div class="file-row" id="file-row"><img class="file-thumb" id="thumb" alt="Selected file preview" /><div class="file-copy"><strong id="file-name"></strong><span id="file-size"></span></div><button class="icon-button" id="remove" type="button" aria-label="Remove image">×</button></div>
         <div class="fields">
           <div class="row"><label>Width<input id="width" type="number" min="1" max="8000" value="1200" required /></label><label>Height<input id="height" type="number" min="1" max="8000" value="1200" required /></label></div>
@@ -99,7 +99,6 @@
     <script>
       const $ = (id) => document.getElementById(id);
       const acceptedImageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
-      const maximumImageBytes = 20 * 1024 * 1024;
       let selectedFile;
       let originalUrl;
       const setFile = (file) => {
@@ -119,7 +118,6 @@
         if (!file) return;
         const hasAcceptedType = acceptedImageTypes.has(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name);
         if (!hasAcceptedType) { showError("Choose a PNG, JPEG, or WebP image."); return; }
-        if (file.size > maximumImageBytes) { showError("Choose an image no larger than 20 MB."); return; }
         $("bridge-error").classList.remove("visible");
         setFile(file);
       };

@@ -30,6 +30,8 @@ When a tool operates on existing folders in place, folder selection is part of t
 
 Every visible capability must work as described. In particular, never write “drag and drop,” “drop files,” or equivalent copy unless ui.html implements the complete drag event flow, reads dataTransfer.files, validates the dropped files, and updates the same selection state used by the file input. Styling dragover without accepting the dropped File is not an implementation. Follow and verify the exact drag-and-drop behavior in the host bridge contract below.
 
+ScriptForge is local-first. Do not impose arbitrary per-file, total-upload, page-count, duration, or pixel-count limits on user input. Validate file types and operation-specific values, and surface genuine limits from an underlying executable or file format honestly, but let the user's machine determine practical resource limits.
+
 Use this exact manifest contract; never infer field names or search for another schema:
 ${toolManifestGuide}
 
