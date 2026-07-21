@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ForgePanelDocument } from "../../server/forge/types";
 import { PanelFeedbackForm } from "./PanelFeedbackForm";
@@ -89,13 +89,27 @@ describe("PanelFeedbackForm", () => {
       </PanelFeedbackForm>,
     );
 
-    const defaultDesign = screen.getByRole("radio", { name: /ScriptForge dark/ });
-    const alternateDesign = screen.getByRole("radio", { name: /Warm studio/ });
-    expect(defaultDesign).toBeChecked();
-    expect(defaultDesign).toHaveClass("sr-only");
+    const chooser = screen.getByTitle("Which direction should I build? choices") as HTMLIFrameElement;
+    expect(chooser).toHaveAttribute("sandbox", "allow-scripts");
+    expect(chooser.srcdoc).toContain('data-scriptforge-value="default"');
+    expect(screen.getByText("Selected: ScriptForge dark")).toBeInTheDocument();
 
-    fireEvent.click(alternateDesign);
-    expect(alternateDesign).toBeChecked();
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: chooser.contentWindow,
+          data: { source: "scriptforge-visual-choice", type: "resize", name: "design", height: 112 },
+        }),
+      );
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: chooser.contentWindow,
+          data: { source: "scriptforge-visual-choice", type: "select", name: "design", value: "warm" },
+        }),
+      );
+    });
+    expect(chooser).toHaveStyle({ height: "112px" });
+    expect(screen.getByText("Selected: Warm studio")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Approve, build & check" }));
 
     await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("warm")));
@@ -197,15 +211,24 @@ function designPanel(): ForgePanelDocument {
               value: "default",
               label: "ScriptForge dark",
               description: "Compact and familiar",
-              previewHtml: "<div>Dark dashboard</div>",
             },
             {
               value: "warm",
               label: "Warm studio",
               description: "A warmer workspace",
-              previewHtml: "<div>Warm workspace</div>",
             },
           ],
+          body: `
+            <style>
+              .choices { display: flex; gap: 24px; }
+              [data-scriptforge-selected] { outline: 2px solid #5468ff; }
+            </style>
+            <div class="choices">
+              <button data-scriptforge-value="default">Dark dashboard</button>
+              <button data-scriptforge-value="warm">Warm workspace</button>
+            </div>
+            <script>window.addEventListener("scriptforge:selection", () => {});</script>
+          `,
           defaultValue: "default",
         },
       },

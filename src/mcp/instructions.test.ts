@@ -14,7 +14,10 @@ describe("Forge MCP instructions", () => {
 
     expect(instructions).toContain("always call scriptforge_show_panel with three distinct visual UI directions");
     expect(instructions).toContain("a required visual_choice question");
-    expect(instructions).toContain("preview card itself is selectable");
+    expect(instructions).toContain("one body containing the complete HTML, CSS, and JavaScript chooser");
+    expect(instructions).toContain('data-scriptforge-value="<matching option value>"');
+    expect(instructions).toContain("window.scriptforgeSelect(value)");
+    expect(instructions).toContain("ScriptForge does not wrap the choices in host-designed cards or columns");
     expect(instructions).toContain("Direction 1 is the recommended default");
     expect(instructions).toContain("#5468ff primary accents");
     expect(instructions).toContain("Tailor Directions 2 and 3 to the tool's purpose");

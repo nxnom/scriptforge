@@ -25,9 +25,10 @@ describe("Forge panel question defaults", () => {
             name: "design",
             required: true,
             options: [
-              { value: "default", label: "ScriptForge dark", previewHtml: "<div>Dark dashboard</div>" },
-              { value: "warm", label: "Warm studio", previewHtml: "<div>Warm workspace</div>" },
+              { value: "default", label: "ScriptForge dark" },
+              { value: "warm", label: "Warm studio" },
             ],
+            body: '<button data-scriptforge-value="default">Dark dashboard</button><button data-scriptforge-value="warm">Warm workspace</button>',
             defaultValue: "default",
           },
         },

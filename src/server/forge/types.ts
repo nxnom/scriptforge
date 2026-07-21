@@ -25,10 +25,6 @@ const panelChoiceSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
-const panelVisualChoiceSchema = panelChoiceSchema.extend({
-  previewHtml: z.string().min(1).max(40_000),
-});
-
 const panelQuestionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("single_choice"),
@@ -48,7 +44,8 @@ const panelQuestionSchema = z.discriminatedUnion("kind", [
     kind: z.literal("visual_choice"),
     name: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,79}$/),
     required: z.boolean().optional(),
-    options: z.array(panelVisualChoiceSchema).min(2).max(6),
+    options: z.array(panelChoiceSchema).min(2).max(6),
+    body: z.string().min(1).max(80_000),
     defaultValue: z.string().min(1).max(120).optional(),
   }),
   z.object({

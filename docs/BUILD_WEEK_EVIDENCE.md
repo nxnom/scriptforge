@@ -47,7 +47,7 @@ Codex helped:
 
 ## Verification and Evaluation
 
-The repository is checked with Biome, TypeScript, Vitest, and production builds. The automated suite currently contains 147 tests covering manifest validation, library filtering and live-session states, host/API/MCP boundaries, concurrent and resumable Forge sessions, plan feedback and selectable visual design cards, collapsible installed and candidate workspaces, focused copyable prompt guidance, responsive generated-tool layout requirements, exact candidate selection and saving, Dependency Doctor approvals, trusted iframe behavior, single and multi-file `.forge` imports, encrypted configuration, redaction, card interactions, bundled PDF and media workflows, direct SMTP delivery, and streamed results.
+The repository is checked with Biome, TypeScript, Vitest, and production builds. The automated suite currently contains 147 tests covering manifest validation, library filtering and live-session states, host/API/MCP boundaries, concurrent and resumable Forge sessions, plan feedback and agent-designed interactive visual choosers, collapsible installed and candidate workspaces, focused copyable prompt guidance, responsive generated-tool layout requirements, exact candidate selection and saving, Dependency Doctor approvals, trusted iframe behavior, single and multi-file `.forge` imports, encrypted configuration, redaction, card interactions, bundled PDF and media workflows, direct SMTP delivery, and streamed results.
 
 The clean-package smoke test on July 20, 2026:
 

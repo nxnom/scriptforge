@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- New-tool Forge sessions now present three selectable visual preview cards before building: ScriptForge's default compact dark style and two alternatives adapted to the tool's purpose. Predefined prompts stay focused on tool behavior because this choice is part of the global authoring flow.
+- New-tool Forge sessions now present three selectable visual directions before building: ScriptForge's default compact dark style and two alternatives adapted to the tool's purpose. The agent controls the complete responsive HTML/CSS/JavaScript chooser while ScriptForge injects only its validated selection bridge. Predefined prompts stay focused on tool behavior because this choice is part of the global authoring flow.
 - Generated-tool guidance now requires wide input and result cards to stretch through the available iframe height while narrow stacked layouts remain content-height.
 - Generated-tool guidance now keeps narrow form controls top-aligned instead of distributing them through large vertical gaps.
 - Active edit-session badges use a distinct red pulse, while Dependency Doctor sessions retain their own amber state.

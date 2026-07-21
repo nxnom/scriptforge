@@ -24,7 +24,8 @@ describe("ScriptForge MCP server", () => {
     expect(client.getInstructions()).toContain("balanced side-by-side or dashboard layout");
     expect(client.getInstructions()).toContain("main grid or workspace flex: 1 with align-items: stretch");
     expect(client.getInstructions()).toContain("three distinct visual UI directions");
-    expect(client.getInstructions()).toContain("preview card itself is selectable");
+    expect(client.getInstructions()).toContain("one body containing the complete HTML, CSS, and JavaScript chooser");
+    expect(client.getInstructions()).toContain("window.scriptforgeSelect(value)");
     expect(client.getInstructions()).toContain("as if the iframe were 480px wide and again at 1200px");
     expect(client.getInstructions()).toContain("replace that empty drop zone in the same space");
     expect(client.getInstructions()).toContain("#151515 page background");
