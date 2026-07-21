@@ -94,6 +94,9 @@ describe("PanelFeedbackForm", () => {
     expect(chooser).toHaveAttribute("scrolling", "no");
     expect(chooser.srcdoc).toContain('data-scriptforge-value="default"');
     expect(chooser.srcdoc).toContain("html,body{overflow:hidden!important}");
+    expect(chooser.srcdoc).toContain(
+      "[data-scriptforge-selected]{border-style:solid!important;border-width:4px!important}",
+    );
     expect(screen.getByText("Selected: ScriptForge dark")).toBeInTheDocument();
 
     act(() => {

@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Generated-tool guidance now requires wide input and result cards to stretch through the available iframe height while narrow stacked layouts remain content-height.
 - Generated-tool guidance now keeps narrow form controls top-aligned instead of distributing them through large vertical gaps.
 - Active edit-session badges use a distinct red pulse, while Dependency Doctor sessions retain their own amber state.
-- Visual-direction choosers now use palette-specific, high-contrast selected borders instead of applying the same blue border to every design.
+- Visual-direction choosers now use an enforced 4px selected border with a palette-specific, high-contrast color instead of applying the same thin blue border to every design.
 
 ### Fixed
 
