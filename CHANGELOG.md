@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-07-22
+
+### Added
+
+- Archive Maker expands the validated example collection to four importable `.forge` tools.
+
+### Changed
+
+- The README now tells the personal story behind ScriptForge, emphasizes that anyone can build tools without programming knowledge, and links to the final public demonstration video.
+
 ## [0.1.7] - 2026-07-22
 
 ### Added
@@ -14,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Library grid cards now identify tools with an active edit session or Dependency Doctor session.
 - The connected Forge terminal now offers a compact help menu with complete, copyable example prompts for creating useful local tools and exploring alternate UI layouts and color palettes.
 - Library Import now accepts multiple `.forge` archives from one file-picker selection or drag-and-drop, shows batch progress, continues after individual failures, and reports per-file errors without executing imported code.
-- The repository now includes four validated example `.forge` tools with an import and safety guide.
+- The repository now includes three validated example `.forge` tools with an import and safety guide.
 
 ### Changed
 
@@ -92,7 +102,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/nxnom/scriptforge/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/nxnom/scriptforge/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/nxnom/scriptforge/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/nxnom/scriptforge/compare/v0.1.4...v0.1.5

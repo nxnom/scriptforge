@@ -1,6 +1,6 @@
 # ScriptForge
 
-ScriptForge is a local app store where small utility apps do not exist until you ask Codex to forge them.
+ScriptForge is a local app store where anyone can turn a plain-English request into a useful local tool—no coding required.
 
 [![npm version](https://img.shields.io/npm/v/scriptforge.svg)](https://www.npmjs.com/package/scriptforge)
 
@@ -8,20 +8,28 @@ ScriptForge is a local app store where small utility apps do not exist until you
 
 ## Problem and Solution
 
-Small file tasks often force people to search for a website, upload private files, install a large application, or write a script. ScriptForge keeps those workflows local. It starts as a useful library of focused tools and lets someone describe a missing utility to Codex with GPT-5.6, review the working interface, and save it into their personal library.
+### Why I Built This
 
-The result is one local workspace for everyday image, document, media, and file utilities—without turning every one-off need into a software project.
+I could never remember the tools. Was it `cwebp` or `magick`? What were the FFmpeg flags again? Which converter site had I used before it added a paywall? Every small task became another search for something I had already solved—or another upload to an unfamiliar, ad-filled website just to resize an image.
+
+My non-technical friends had the same problem from the other side. They would ask, “Can you rename all these files?” or “Can you fix this video?” They knew the outcome they wanted, but not which utility, command, or settings would produce it.
+
+### How ScriptForge Solves It
+
+ScriptForge is one local place that either already has the focused tool you need or can create it when you ask. Anyone who can describe the outcome they want can build a tool: explain it in plain English, collaborate with Codex and GPT-5.6 while it builds and tests the utility, review the interface and runner, then save it to your personal library. No programming knowledge is required.
+
+Bundled utilities work without an AI account, files stay on your computer, and created tools remain available for the next time. The goal is simple: no coding, no searching for the same answer again, and no uploading private files to a random converter—just a cup of coffee while Codex does the rest.
 
 ## Demo
 
 https://github.com/user-attachments/assets/8c3468fc-a6f3-4cf6-885d-5d3f938ac1c4
 
-[Watch the public demo on YouTube](https://youtu.be/D193zR5aHMo)
+[Watch the public demo on YouTube](https://youtu.be/nJgYaaTIWBI)
 
 ## Key Features
 
 - Launch eight ready-to-use image, PDF, icon, favicon, code screenshot, media, download, and direct-SMTP email tools with one `npx scriptforge` command.
-- Forge new utilities through a real interactive Codex CLI session powered by GPT-5.6.
+- Let anyone forge a new utility by describing it in plain English through an interactive Codex CLI session powered by GPT-5.6.
 - Review generated interfaces and scripts, save them locally, resume interrupted work, and update installed tools.
 - Run tools with previews, progress, structured logs, cancellation, and optional Dependency Doctor guidance.
 - Keep configuration encrypted and ownership local; import multiple portable, validated `.forge` archives by choosing or dropping them together.
