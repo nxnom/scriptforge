@@ -25,6 +25,27 @@ describe("PanelFeedbackForm", () => {
     );
   });
 
+  it("lets the user request changes from a question-only plan", async () => {
+    const onFeedback = vi.fn(async () => undefined);
+    render(
+      <PanelFeedbackForm panel={requiredPanel()} onFeedback={onFeedback}>
+        <p>Question context</p>
+      </PanelFeedbackForm>,
+    );
+
+    expect(screen.getByRole("button", { name: "Request changes" })).toBeVisible();
+    fireEvent.change(screen.getByPlaceholderText("Add feedback (required when requesting changes)"), {
+      target: { value: "Use the original file names" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Request changes" }));
+
+    await waitFor(() =>
+      expect(onFeedback).toHaveBeenCalledWith(
+        expect.stringContaining("**Not approved. Revise the proposal.**\n\nUse the original file names"),
+      ),
+    );
+  });
+
   it("requires feedback before requesting kickoff changes", async () => {
     const onFeedback = vi.fn(async () => undefined);
     render(

@@ -100,25 +100,17 @@ export function PanelFeedbackForm({
           <RHFTextarea name="note" placeholder="Add feedback (required when requesting changes)" rows={2} />
           <RHFError name="note" />
           <div className="flex justify-end gap-2">
-            {approval ? (
-              <>
-                <Button type="button" size="sm" variant="outlined" onClick={() => decide("rejected")}>
-                  {approval.rejectLabel ?? "Request changes"}
-                </Button>
-                <LoadingButton
-                  type="button"
-                  size="sm"
-                  loading={form.formState.isSubmitting}
-                  onClick={() => decide("approved")}
-                >
-                  {approval.approveLabel ?? "Approve, build & check"}
-                </LoadingButton>
-              </>
-            ) : (
-              <LoadingButton type="submit" size="sm" loading={form.formState.isSubmitting}>
-                Approve, build &amp; check
-              </LoadingButton>
-            )}
+            <Button type="button" size="sm" variant="outlined" onClick={() => decide("rejected")}>
+              {approval?.rejectLabel ?? "Request changes"}
+            </Button>
+            <LoadingButton
+              type="button"
+              size="sm"
+              loading={form.formState.isSubmitting}
+              onClick={() => decide("approved")}
+            >
+              {approval?.approveLabel ?? "Approve, build & check"}
+            </LoadingButton>
           </div>
         </div>
       </form>
