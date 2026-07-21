@@ -1,7 +1,6 @@
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
-import { CandidateReview } from "../forge/CandidateReview";
+import { ForgeSessionWorkspace } from "../forge/ForgeSessionWorkspace";
 import { ForgeSidePanel } from "../forge/ForgeSidePanel";
-import { ForgeTerminal } from "../forge/ForgeTerminal";
 
 export function ToolUpdateWorkspace({
   sessionId,
@@ -32,15 +31,17 @@ export function ToolUpdateWorkspace({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
-      <ForgeTerminal sessionId={sessionId} onSessionEnd={onSessionEnd} onPanel={onPanel} onCandidate={onCandidate} />
-      {candidate ? (
-        <CandidateReview key={candidate.revision} candidate={candidate} sessionId={sessionId} />
-      ) : (
+    <ForgeSessionWorkspace
+      sessionId={sessionId}
+      candidate={candidate}
+      onSessionEnd={onSessionEnd}
+      onPanel={onPanel}
+      onCandidate={onCandidate}
+      fallback={
         <aside className="flex min-h-0 w-[min(48%,620px)] min-w-[420px] shrink-0 overflow-hidden max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0">
           {installedReview}
         </aside>
-      )}
-    </div>
+      }
+    />
   );
 }

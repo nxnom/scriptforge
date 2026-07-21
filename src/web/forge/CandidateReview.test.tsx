@@ -38,6 +38,32 @@ describe("CandidateReview", () => {
 
     expect(screen.getByTitle("Tiny Tool interface preview")).not.toBe(preview);
   });
+
+  it("toggles terminal visibility from the candidate toolbar", () => {
+    const onTerminalCollapsedChange = vi.fn();
+    const view = render(
+      <CandidateReview
+        candidate={candidate()}
+        sessionId="session-1"
+        terminalCollapsed={false}
+        onTerminalCollapsedChange={onTerminalCollapsedChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse terminal" }));
+    expect(onTerminalCollapsedChange).toHaveBeenCalledWith(true);
+
+    view.rerender(
+      <CandidateReview
+        candidate={candidate()}
+        sessionId="session-1"
+        terminalCollapsed
+        onTerminalCollapsedChange={onTerminalCollapsedChange}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Show terminal" })).toBeVisible();
+    expect(screen.getByRole("complementary")).toHaveClass("flex-1", "min-w-0");
+  });
 });
 
 function candidate(): ForgeCandidateDocument {

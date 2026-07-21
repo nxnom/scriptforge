@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Candidate previews in new-tool Forge and installed-tool edit sessions can collapse and restore the terminal, giving the tool interface the full workspace when needed.
+
 ### Fixed
 
 - Installed-tool edit sessions now replace the terminal with blocking question and approval plans, matching the new-tool Forge workspace.

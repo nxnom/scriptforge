@@ -107,7 +107,7 @@ See [Architecture](./docs/ARCHITECTURE.md) for the complete runtime and trust mo
 - **User-facing model role:** GPT-5.6 collaborates with the user, creates and exercises tool candidates, repairs failures, and presents exact revisions for review and saving. It also powers the optional Dependency Doctor diagnosis flow.
 - **Codex acceleration:** Codex helped define the product and trust model, implement the Hono/Spoosh boundary, build the generic runner and Forge terminal, diagnose PTY and iframe integration, create the bundled tools, and write verification tests.
 - **Key decisions:** ScriptForge uses filesystem manifests instead of a database, keeps the server on localhost, preserves explicit Save as the installation boundary, and treats reviewed tools as trusted local code.
-- **Verification:** Biome, TypeScript, 137 automated tests, production builds, isolated npm package installation, HTTP/WebSocket lifecycle checks, a real bundled image-resizer output, and direct SMTP delivery through Mailpit have passed.
+- **Verification:** Biome, TypeScript, 139 automated tests, production builds, isolated npm package installation, HTTP/WebSocket lifecycle checks, a real bundled image-resizer output, and direct SMTP delivery through Mailpit have passed.
 - **Primary Codex Session ID:** `019f7198-5cb2-74b2-96a8-c8909989d1b2`
 
 See [Build Week Evidence](./docs/BUILD_WEEK_EVIDENCE.md) for the detailed implementation decisions and evaluation record.

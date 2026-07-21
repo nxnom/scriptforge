@@ -1,6 +1,6 @@
 import { Button, Tooltip } from "@geckoui/geckoui";
 import { form as spooshForm } from "@spoosh/core";
-import { Code2, Eye, FileJson, RotateCw, Settings2 } from "lucide-react";
+import { Code2, Eye, FileJson, PanelLeftClose, PanelLeftOpen, RotateCw, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ForgeCandidateDocument } from "../../server/forge/types";
 import { toolIframeAllow } from "../../shared/tool-iframe-policy";
@@ -15,10 +15,14 @@ export function CandidateReview({
   candidate,
   sessionId,
   onTestStatusChange,
+  terminalCollapsed = false,
+  onTerminalCollapsedChange,
 }: {
   candidate: ForgeCandidateDocument;
   sessionId: string;
   onTestStatusChange?: (ready: boolean) => void;
+  terminalCollapsed?: boolean;
+  onTerminalCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const [tab, setTab] = useState<CandidateTab>("preview");
   const [previewKey, setPreviewKey] = useState(0);
@@ -67,7 +71,9 @@ export function CandidateReview({
   }, [bridge.jobStatus, candidate.revision, onTestStatusChange, sessionId]);
 
   return (
-    <aside className="flex min-h-0 w-[min(48%,620px)] min-w-[420px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#1d1d1d] max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0">
+    <aside
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#343434] bg-[#1d1d1d] ${terminalCollapsed ? "min-w-0 flex-1" : "w-[min(48%,620px)] min-w-[420px] shrink-0 max-[900px]:h-[48%] max-[900px]:w-full max-[900px]:min-w-0"}`}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <nav className="flex shrink-0 items-center gap-0.5 border-[#333] border-b p-1" aria-label="Candidate files">
           <div className="flex min-w-0 flex-1 gap-0.5">
@@ -81,6 +87,18 @@ export function CandidateReview({
               Details
             </TabButton>
           </div>
+          {onTerminalCollapsedChange && (
+            <Tooltip content={terminalCollapsed ? "Show terminal" : "Collapse terminal"} triggerAsChild>
+              <Button
+                aria-label={terminalCollapsed ? "Show terminal" : "Collapse terminal"}
+                variant="icon"
+                size="xs"
+                onClick={() => onTerminalCollapsedChange(!terminalCollapsed)}
+              >
+                {terminalCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
+              </Button>
+            </Tooltip>
+          )}
           {tab === "preview" && (
             <Tooltip content="Reload preview" triggerAsChild>
               <Button

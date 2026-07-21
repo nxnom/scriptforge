@@ -5,12 +5,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { ForgeCandidateDocument, ForgePanelDocument } from "../../server/forge/types";
 import { invalidate, useRead, useWrite } from "../api";
 import { WorkspaceHeader } from "../components/WorkspaceHeader";
-import { CandidateReview } from "../forge/CandidateReview";
 import type { ForgeDraft } from "../forge/ForgeDraftList";
 import { ForgeIdle } from "../forge/ForgeIdle";
 import { ForgePreflightDialog } from "../forge/ForgePreflightDialog";
+import { ForgeSessionWorkspace } from "../forge/ForgeSessionWorkspace";
 import { ForgeSidePanel } from "../forge/ForgeSidePanel";
-import { ForgeTerminal } from "../forge/ForgeTerminal";
 import { forgeError } from "../forge/forgeError";
 import { type ForgePreferences, loadForgePreferences } from "../forge/preferences";
 
@@ -211,17 +210,13 @@ export function ForgePage() {
                   onSubmissionError={() => setPanel(panel)}
                 />
               ) : (
-                <div className="flex min-h-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
-                  <ForgeTerminal
-                    sessionId={visibleSessionId}
-                    onSessionEnd={endSession}
-                    onPanel={showPanel}
-                    onCandidate={showCandidate}
-                  />
-                  {candidate && (
-                    <CandidateReview key={candidate.revision} candidate={candidate} sessionId={visibleSessionId} />
-                  )}
-                </div>
+                <ForgeSessionWorkspace
+                  sessionId={visibleSessionId}
+                  candidate={candidate}
+                  onSessionEnd={endSession}
+                  onPanel={showPanel}
+                  onCandidate={showCandidate}
+                />
               )}
             </div>
           ) : (
