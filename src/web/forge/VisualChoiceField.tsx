@@ -54,7 +54,7 @@ function VisualChoiceField({
         onChange(event.data.value);
       }
       if (event.data.type === "resize" && Number.isFinite(event.data.height)) {
-        setHeight(Math.max(1, Math.min(900, Math.ceil(event.data.height))));
+        setHeight(Math.max(1, Math.ceil(event.data.height)));
       }
     };
     window.addEventListener("message", receive);
@@ -75,6 +75,7 @@ function VisualChoiceField({
         ref={iframeRef}
         title={`${prompt} choices`}
         sandbox="allow-scripts"
+        scrolling="no"
         className="block w-full border-0 bg-transparent"
         style={{ height }}
         srcDoc={document}
@@ -117,5 +118,5 @@ function visualChoiceDocument(name: string, body: string) {
     reportHeight();
   });
 })();
-</script></head><body>${body}</body></html>`;
+</script></head><body>${body}<style>html,body{overflow:hidden!important}</style></body></html>`;
 }

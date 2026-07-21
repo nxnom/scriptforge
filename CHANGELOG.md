@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Installed-tool edit sessions now replace the terminal with blocking question and approval plans, matching the new-tool Forge workspace.
+- Interactive visual-direction choosers now follow their measured content height without showing a redundant internal scrollbar.
 
 ## [0.1.7] - 2026-07-22
 

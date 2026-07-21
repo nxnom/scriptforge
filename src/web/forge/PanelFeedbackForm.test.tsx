@@ -91,7 +91,9 @@ describe("PanelFeedbackForm", () => {
 
     const chooser = screen.getByTitle("Which direction should I build? choices") as HTMLIFrameElement;
     expect(chooser).toHaveAttribute("sandbox", "allow-scripts");
+    expect(chooser).toHaveAttribute("scrolling", "no");
     expect(chooser.srcdoc).toContain('data-scriptforge-value="default"');
+    expect(chooser.srcdoc).toContain("html,body{overflow:hidden!important}");
     expect(screen.getByText("Selected: ScriptForge dark")).toBeInTheDocument();
 
     act(() => {
