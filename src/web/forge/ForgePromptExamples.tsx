@@ -11,10 +11,10 @@ const promptExamples = [
   },
   {
     title: "Color mixer",
-    description: "Explore three UI and palette directions",
+    description: "Mix colors and check contrast",
     icon: Palette,
     prompt:
-      "Forge a color mixer where I can choose two colors, adjust their mixing ratio, see the result in HEX, RGB, and HSL, generate lighter and darker variations, and check contrast against white and black. Before building it, show me three distinct UI designs with different layouts, visual styles, and color palettes. Include a visual preview of each and let me choose one.",
+      "Forge a color mixer where I can choose two colors, adjust their mixing ratio, see the result in HEX, RGB, and HSL, generate lighter and darker variations, and check contrast against white and black.",
   },
   {
     title: "Date calculator",

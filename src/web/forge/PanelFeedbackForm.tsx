@@ -4,6 +4,7 @@ import { type ReactNode, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ForgePanelDocument } from "../../server/forge/types";
+import { ShadowHtmlBlock } from "./ShadowHtmlBlock";
 
 const baseFeedbackSchema = z.object({
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
@@ -86,6 +87,20 @@ export function PanelFeedbackForm({
                     label={<OptionLabel label={option.label} description={option.description} />}
                   />
                 ))}
+              {question.input.kind === "visual_choice" && (
+                <div className="grid grid-cols-3 gap-3 max-[900px]:grid-cols-1">
+                  {question.input.options.map((option) => (
+                    <RHFRadio
+                      key={option.value}
+                      name={`answers.${question.input.name}`}
+                      value={option.value}
+                      className="peer sr-only"
+                      labelClassName="block min-w-0 overflow-hidden rounded-xl border border-[#3a3a3a] bg-[#202020] p-2 transition-colors peer-checked:border-[#687aff] peer-checked:bg-[#25283a] peer-focus-visible:ring-2 peer-focus-visible:ring-[#8795ff]"
+                      label={<VisualChoiceLabel option={option} />}
+                    />
+                  ))}
+                </div>
+              )}
               <RHFError name={`answers.${question.input.name}`} />
             </fieldset>
           ))}
@@ -115,6 +130,20 @@ export function PanelFeedbackForm({
         </div>
       </form>
     </FormProvider>
+  );
+}
+
+function VisualChoiceLabel({ option }: { option: { label: string; description?: string; previewHtml: string } }) {
+  return (
+    <span className="grid min-w-0 gap-2">
+      <span className="min-h-32 overflow-hidden rounded-lg bg-[#151515]">
+        <ShadowHtmlBlock body={option.previewHtml} />
+      </span>
+      <span className="grid gap-0.5 px-1 pb-1 text-left">
+        <span className="font-medium text-[#dedede] text-xs">{option.label}</span>
+        {option.description && <span className="text-[10px] leading-4 text-[#8f8f8f]">{option.description}</span>}
+      </span>
+    </span>
   );
 }
 

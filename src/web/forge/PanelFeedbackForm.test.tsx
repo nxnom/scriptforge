@@ -81,6 +81,26 @@ describe("PanelFeedbackForm", () => {
     await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("USD, THB")));
   });
 
+  it("makes each visual preview card the design selector", async () => {
+    const onFeedback = vi.fn(async () => undefined);
+    render(
+      <PanelFeedbackForm panel={designPanel()} onFeedback={onFeedback}>
+        <p>Choose a direction</p>
+      </PanelFeedbackForm>,
+    );
+
+    const defaultDesign = screen.getByRole("radio", { name: /ScriptForge dark/ });
+    const alternateDesign = screen.getByRole("radio", { name: /Warm studio/ });
+    expect(defaultDesign).toBeChecked();
+    expect(defaultDesign).toHaveClass("sr-only");
+
+    fireEvent.click(alternateDesign);
+    expect(alternateDesign).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Approve, build & check" }));
+
+    await waitFor(() => expect(onFeedback).toHaveBeenCalledWith(expect.stringContaining("warm")));
+  });
+
   it("submits an approved panel only once when the button is clicked repeatedly", async () => {
     const onFeedback = vi.fn(() => new Promise<void>(() => undefined));
     render(
@@ -152,6 +172,41 @@ function currencyPanel(): ForgePanelDocument {
             { value: "EUR", label: "EUR" },
           ],
           defaultValue: ["USD", "THB"],
+        },
+      },
+    ],
+  };
+}
+
+function designPanel(): ForgePanelDocument {
+  return {
+    title: "Choose a design",
+    version: 1,
+    createdAt: Date.now(),
+    blocks: [
+      {
+        id: "design",
+        type: "question",
+        prompt: "Which direction should I build?",
+        input: {
+          kind: "visual_choice",
+          name: "design",
+          required: true,
+          options: [
+            {
+              value: "default",
+              label: "ScriptForge dark",
+              description: "Compact and familiar",
+              previewHtml: "<div>Dark dashboard</div>",
+            },
+            {
+              value: "warm",
+              label: "Warm studio",
+              description: "A warmer workspace",
+              previewHtml: "<div>Warm workspace</div>",
+            },
+          ],
+          defaultValue: "default",
         },
       },
     ],

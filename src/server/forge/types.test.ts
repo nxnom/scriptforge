@@ -11,6 +11,31 @@ describe("Forge panel question defaults", () => {
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues[0]?.message).toContain("match an option value");
   });
+
+  it("accepts selectable visual choices with an HTML preview per option", () => {
+    const result = forgePanelRequestSchema.safeParse({
+      title: "Choose a design",
+      blocks: [
+        {
+          id: "design",
+          type: "question",
+          prompt: "Which direction should I build?",
+          input: {
+            kind: "visual_choice",
+            name: "design",
+            required: true,
+            options: [
+              { value: "default", label: "ScriptForge dark", previewHtml: "<div>Dark dashboard</div>" },
+              { value: "warm", label: "Warm studio", previewHtml: "<div>Warm workspace</div>" },
+            ],
+            defaultValue: "default",
+          },
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 function currencyPanel(defaultValue: string[]) {

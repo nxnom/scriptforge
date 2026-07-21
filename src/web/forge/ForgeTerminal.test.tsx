@@ -73,7 +73,7 @@ describe("ForgeTerminal", () => {
     expect(latestCandidate).toHaveBeenCalledWith({ revision: "next" });
   });
 
-  it("copies a full example prompt without writing it to the terminal", async () => {
+  it("copies focused example prompts without writing them to the terminal", async () => {
     const props = {
       sessionId: "session-1",
       onSessionEnd: vi.fn(),
@@ -83,14 +83,18 @@ describe("ForgeTerminal", () => {
     render(<ForgeTerminal {...props} />);
 
     act(() => FakeWebSocket.instances[0]?.emit("open"));
-    fireEvent.click(screen.getByRole("button", { name: "Example prompts" }));
-    expect(screen.getByText(/Forge a color mixer where I can choose two colors/)).toBeVisible();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Copy Color mixer prompt" }));
+    for (const title of ["Time-zone planner", "Color mixer", "Date calculator"]) {
+      fireEvent.click(screen.getByRole("button", { name: "Example prompts" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: `Copy ${title} prompt` }));
+    }
 
     const messages = FakeWebSocket.instances[0]?.sent.map((message) => JSON.parse(message));
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining("three distinct UI designs with different layouts, visual styles, and color palettes"),
-    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(3);
+    for (const [prompt] of vi.mocked(navigator.clipboard.writeText).mock.calls) {
+      expect(prompt).toMatch(/^Forge a /);
+      expect(prompt).not.toContain("three distinct UI designs");
+      expect(prompt).not.toContain("#151515");
+    }
     expect(messages?.some((message) => message.type === "input")).toBe(false);
     expect(screen.getByRole("button", { name: "Example prompts" })).toBeVisible();
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
