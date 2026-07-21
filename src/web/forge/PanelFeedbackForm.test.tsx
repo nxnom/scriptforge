@@ -95,7 +95,10 @@ describe("PanelFeedbackForm", () => {
     expect(chooser.srcdoc).toContain('data-scriptforge-value="default"');
     expect(chooser.srcdoc).toContain("html,body{overflow:hidden!important}");
     expect(chooser.srcdoc).toContain(
-      "[data-scriptforge-selected]{border-style:solid!important;border-width:4px!important}",
+      "[data-scriptforge-value]{box-sizing:border-box;border-style:solid!important;border-width:4px!important}",
+    );
+    expect(chooser.srcdoc).toContain(
+      "[data-scriptforge-value]:not([data-scriptforge-selected]){border-color:transparent!important}",
     );
     expect(screen.getByText("Selected: ScriptForge dark")).toBeInTheDocument();
 

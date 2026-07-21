@@ -118,5 +118,5 @@ function visualChoiceDocument(name: string, body: string) {
     reportHeight();
   });
 })();
-</script></head><body>${body}<style>html,body{overflow:hidden!important}[data-scriptforge-value]{box-sizing:border-box}[data-scriptforge-selected]{border-style:solid!important;border-width:4px!important}</style></body></html>`;
+</script></head><body>${body}<style>html,body{overflow:hidden!important}[data-scriptforge-value]{box-sizing:border-box;border-style:solid!important;border-width:4px!important}[data-scriptforge-value]:not([data-scriptforge-selected]){border-color:transparent!important}</style></body></html>`;
 }
