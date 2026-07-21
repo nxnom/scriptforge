@@ -2,6 +2,7 @@
 
 These `.forge` archives are ready-to-import ScriptForge tools:
 
+- `archive-maker.forge` — packs selected files and folders into a ZIP or TAR.GZ archive.
 - `duplicate-file-finder.forge` — finds exact duplicate files and can move selected copies to Trash.
 - `photo-background-studio.forge` — removes photo backgrounds and creates polished variants. It requires the `swift` executable.
 - `swatch-studio-color-mixer.forge` — mixes colors, generates variations, and checks contrast.

@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Library grid cards now identify tools with an active edit session or Dependency Doctor session.
 - The connected Forge terminal now offers a compact help menu with complete, copyable example prompts for creating useful local tools and exploring alternate UI layouts and color palettes.
 - Library Import now accepts multiple `.forge` archives from one file-picker selection or drag-and-drop, shows batch progress, continues after individual failures, and reports per-file errors without executing imported code.
-- The repository now includes three validated example `.forge` tools with an import and safety guide.
+- The repository now includes four validated example `.forge` tools with an import and safety guide.
 
 ### Changed
 
