@@ -33,7 +33,7 @@ describe("ToolUpdateWorkspace", () => {
           ],
         }}
         candidate={null}
-        installedReview={<div>Installed tool</div>}
+        installedReview={() => <div>Installed tool</div>}
         onSessionEnd={vi.fn()}
         onPanel={vi.fn()}
         onCandidate={vi.fn()}

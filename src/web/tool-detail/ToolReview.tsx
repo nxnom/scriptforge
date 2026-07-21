@@ -1,5 +1,5 @@
 import { Button, Spinner, Tooltip } from "@geckoui/geckoui";
-import { Code2, Eye, FileJson, RotateCw } from "lucide-react";
+import { Code2, Eye, FileJson, PanelLeftClose, PanelLeftOpen, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { toolIframeAllow } from "../../shared/tool-iframe-policy";
 import { useRead } from "../api";
@@ -18,6 +18,8 @@ export function ToolReview({
   requirements,
   retryRequirements,
   launchDoctor,
+  terminalCollapsed = false,
+  onTerminalCollapsedChange,
 }: {
   toolId: string;
   toolName: string;
@@ -28,6 +30,8 @@ export function ToolReview({
   requirements: Requirement[];
   retryRequirements: () => unknown;
   launchDoctor: () => void;
+  terminalCollapsed?: boolean;
+  onTerminalCollapsedChange?: (collapsed: boolean) => void;
 }) {
   const [tab, setTab] = useState<ToolTab>("preview");
   const [previewKey, setPreviewKey] = useState(0);
@@ -49,6 +53,18 @@ export function ToolReview({
             Details
           </TabButton>
         </div>
+        {onTerminalCollapsedChange && (
+          <Tooltip content={terminalCollapsed ? "Show terminal" : "Collapse terminal"} triggerAsChild>
+            <Button
+              aria-label={terminalCollapsed ? "Show terminal" : "Collapse terminal"}
+              variant="icon"
+              size="xs"
+              onClick={() => onTerminalCollapsedChange(!terminalCollapsed)}
+            >
+              {terminalCollapsed ? <PanelLeftOpen size={13} /> : <PanelLeftClose size={13} />}
+            </Button>
+          </Tooltip>
+        )}
         {tab === "preview" && toolReady && (
           <Tooltip content="Reload preview" triggerAsChild>
             <Button

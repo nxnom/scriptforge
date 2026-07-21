@@ -13,7 +13,10 @@ export function ForgeSessionWorkspace({
 }: {
   sessionId: string;
   candidate: ForgeCandidateDocument | null;
-  fallback?: React.ReactNode;
+  fallback?: (controls: {
+    terminalCollapsed: boolean;
+    onTerminalCollapsedChange: (collapsed: boolean) => void;
+  }) => React.ReactNode;
   onSessionEnd: (sessionId: string) => void;
   onPanel: (panel: ForgePanelDocument | null) => void;
   onCandidate: (candidate: ForgeCandidateDocument) => void;
@@ -26,7 +29,7 @@ export function ForgeSessionWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 gap-3 overflow-hidden max-[900px]:flex-col">
-      {(!candidate || !terminalCollapsed) && (
+      {(!terminalCollapsed || (!candidate && !fallback)) && (
         <ForgeTerminal
           sessionId={sessionId}
           onSessionEnd={onSessionEnd}
@@ -43,7 +46,7 @@ export function ForgeSessionWorkspace({
           onTerminalCollapsedChange={setTerminalCollapsed}
         />
       ) : (
-        fallback
+        fallback?.({ terminalCollapsed, onTerminalCollapsedChange: setTerminalCollapsed })
       )}
     </div>
   );

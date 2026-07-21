@@ -82,6 +82,7 @@ export function ToolPage() {
     [startJob.trigger, toolId],
   );
   const toolReady = requirements.data?.ok === true && requirements.data.ready;
+  const requirementList = requirements.data?.ok ? requirements.data.requirements : [];
   const { listening, hostError } = useToolHostBridge({ iframeRef, startJob: runTool, enabled: toolReady });
   const doctorVisible = doctorOpen || activeDoctor.data?.toolId === toolId;
   const closeDoctor = useCallback(async () => {
@@ -242,7 +243,7 @@ export function ToolPage() {
                   setCandidate(next);
                   setPanel(null);
                 }}
-                installedReview={
+                installedReview={({ terminalCollapsed, onTerminalCollapsedChange }) => (
                   <ToolReview
                     toolId={toolId}
                     toolName={tool.name}
@@ -250,11 +251,13 @@ export function ToolPage() {
                     listening={listening}
                     configurationLoading={configuration.loading}
                     iframeRef={iframeRef}
-                    requirements={requirements.data.requirements}
+                    requirements={requirementList}
                     retryRequirements={requirements.trigger}
                     launchDoctor={() => setDoctorOpen(true)}
+                    terminalCollapsed={terminalCollapsed}
+                    onTerminalCollapsedChange={onTerminalCollapsedChange}
                   />
-                }
+                )}
               />
             )}
             {!visibleUpdateId && doctorVisible && (

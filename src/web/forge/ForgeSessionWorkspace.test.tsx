@@ -47,6 +47,33 @@ describe("ForgeSessionWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show terminal" }));
     expect(screen.getByText("Codex terminal")).toBeVisible();
   });
+
+  it("allows an installed-tool fallback to collapse the terminal before a candidate exists", () => {
+    render(
+      <ForgeSessionWorkspace
+        sessionId="session-1"
+        candidate={null}
+        fallback={({ terminalCollapsed, onTerminalCollapsedChange }) => (
+          <div>
+            Installed preview
+            <button type="button" onClick={() => onTerminalCollapsedChange(!terminalCollapsed)}>
+              {terminalCollapsed ? "Show terminal" : "Collapse terminal"}
+            </button>
+          </div>
+        )}
+        onSessionEnd={vi.fn()}
+        onPanel={vi.fn()}
+        onCandidate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse terminal" }));
+    expect(screen.queryByText("Codex terminal")).not.toBeInTheDocument();
+    expect(screen.getByText("Installed preview")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show terminal" }));
+    expect(screen.getByText("Codex terminal")).toBeVisible();
+  });
 });
 
 function candidate(): ForgeCandidateDocument {
