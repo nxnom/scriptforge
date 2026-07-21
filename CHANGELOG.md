@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-07-21
+
 ### Changed
 
 - Tool inputs no longer have ScriptForge's generic 25 MB per-file or 250 MB total upload limits.
@@ -66,7 +68,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/nxnom/scriptforge/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/nxnom/scriptforge/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/nxnom/scriptforge/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/nxnom/scriptforge/compare/v0.1.2...v0.1.3
