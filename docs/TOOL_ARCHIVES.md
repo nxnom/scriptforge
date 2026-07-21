@@ -30,6 +30,7 @@ Forge-generated MVP tools are saved as exactly `tool.json`, `run.mjs`, and `ui.h
 - Extraction happens in a temporary sibling directory followed by an atomic rename.
 - Import never evaluates `run.mjs` or loads `ui.html`.
 - Declared executable requirements are checked only after installation. Missing executables produce Needs install and block runs, not import.
+- The Library accepts multiple archives from one picker selection or drop. It validates and imports them sequentially so one invalid archive does not stop the remaining files.
 
 The archive currently provides portability, not authenticity. Signing and provenance metadata remain future work.
 

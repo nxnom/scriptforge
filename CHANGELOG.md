@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-07-22
+
+### Added
+
+- The connected Forge terminal now offers a compact help menu with complete, copyable example prompts for creating useful local tools and exploring alternate UI layouts and color palettes.
+- Library Import now accepts multiple `.forge` archives from one file-picker selection or drag-and-drop, shows batch progress, continues after individual failures, and reports per-file errors without executing imported code.
+
+### Fixed
+
+- Question-only Forge plan panels now include Request changes alongside Approve, with revision feedback returned to the active Codex session.
+
 ## [0.1.6] - 2026-07-21
 
 ### Changed
@@ -68,7 +79,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Filesystem-backed user tools with encrypted configuration, `.forge` import/export, optimistic deletion, and dependency Doctor workflows.
 - Typed Hono and Spoosh APIs plus WebSocket terminal and job lifecycle streams.
 
-[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/nxnom/scriptforge/compare/v0.1.7...HEAD
+[0.1.7]: https://github.com/nxnom/scriptforge/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/nxnom/scriptforge/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/nxnom/scriptforge/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/nxnom/scriptforge/compare/v0.1.3...v0.1.4
