@@ -174,7 +174,8 @@ export class ToolJobService {
     }
     const installed = await findInstalledTool(toolId, this.installedToolsRoot);
     if (installed?.manifest.interface.type !== "html") return;
-    return readFile(join(installed.directory, installed.manifest.interface.entry), "utf8");
+    // Clones of bundled tools keep the same asset placeholders, so hydrate installed interfaces too.
+    return hydrateBundledToolUi(await readFile(join(installed.directory, installed.manifest.interface.entry), "utf8"));
   }
 
   async getToolSource(toolId: string) {

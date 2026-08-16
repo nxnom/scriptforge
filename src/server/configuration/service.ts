@@ -127,6 +127,29 @@ export class ToolConfigurationService {
     await chmod(this.pathFor(toScope), 0o600).catch(() => undefined);
   }
 
+  /**
+   * Clone stored values into a new tool id. Secrets are bound to the tool id through the cipher AAD,
+   * so each one is decrypted and encrypted again under the new id. A secret that cannot be decrypted
+   * is dropped instead of failing the clone; the new tool then reports it as unconfigured.
+   */
+  async cloneValues(fromToolId: string, toToolId: string) {
+    const store = await this.readStore(fromToolId);
+    const entries = Object.entries(store.values);
+    if (entries.length === 0) return;
+
+    const next: StoredConfig = { schemaVersion: 1, values: {} };
+    for (const [key, value] of entries) {
+      const encrypted = encryptedValueSchema.safeParse(value);
+      if (!encrypted.success) {
+        next.values[key] = value;
+        continue;
+      }
+      const plain = await this.decrypt(fromToolId, key, encrypted.data).catch(() => undefined);
+      if (plain !== undefined) next.values[key] = await this.encrypt(toToolId, key, plain);
+    }
+    await this.writeStore(toToolId, next);
+  }
+
   private missingFields(fields: ToolConfigurationField[], store: StoredConfig) {
     return fields
       .filter((field) => field.required && !this.isConfigured(field, store.values[field.key]))

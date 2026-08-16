@@ -1,17 +1,20 @@
-import { ConfirmDialog } from "@geckoui/geckoui";
+import { ConfirmDialog, Dialog } from "@geckoui/geckoui";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToolActions } from "./ToolActions";
 
-const mocks = vi.hoisted(() => ({ trigger: vi.fn() }));
+const mocks = vi.hoisted(() => ({ trigger: vi.fn(), invalidate: vi.fn() }));
 
 vi.mock("../api", () => ({
   useWrite: () => ({ trigger: mocks.trigger }),
+  invalidate: mocks.invalidate,
 }));
 
 beforeEach(() => {
   mocks.trigger.mockReset();
+  mocks.invalidate.mockReset();
 });
 
 afterEach(() => {
@@ -59,4 +62,63 @@ describe("ToolActions", () => {
       tools: [{ id: "keep-this-tool" }],
     });
   });
+
+  it("sends the edited title and refreshes the library", async () => {
+    mocks.trigger.mockResolvedValue({ data: { ok: true, tool: { id: "video-tool", name: "Clip Trimmer" } } });
+    openDialog("Rename tool");
+
+    expect(screen.getByText("Tool title")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Clip Trimmer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save title" }));
+
+    await waitFor(() =>
+      expect(mocks.trigger).toHaveBeenCalledWith({ params: { toolId: "video-tool" }, body: { name: "Clip Trimmer" } }),
+    );
+    expect(mocks.invalidate).toHaveBeenCalledWith("tools");
+  });
+
+  it("clones with a suggested title that the user can change", async () => {
+    mocks.trigger.mockResolvedValue({ data: { ok: true, tool: { id: "video-tool-pro", name: "Video Tool Pro" } } });
+    openDialog("Clone tool");
+
+    expect(screen.getByText("New tool title")).toBeInTheDocument();
+    const input = screen.getByRole("textbox");
+    expect(input).toHaveValue("Video Tool copy");
+    fireEvent.change(input, { target: { value: "Video Tool Pro" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create clone" }));
+
+    await waitFor(() =>
+      expect(mocks.trigger).toHaveBeenCalledWith({
+        params: { toolId: "video-tool" },
+        body: { name: "Video Tool Pro" },
+      }),
+    );
+    expect(mocks.invalidate).toHaveBeenCalledWith("tools");
+  });
+
+  it("keeps the dialog open and shows why the server refused the title", async () => {
+    mocks.trigger.mockResolvedValue({ data: { ok: false }, error: { error: "A tool with that name is installed." } });
+    openDialog("Rename tool");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save title" }));
+
+    expect(await screen.findByText("A tool with that name is installed.")).toBeInTheDocument();
+    expect(mocks.invalidate).not.toHaveBeenCalled();
+  });
 });
+
+function openDialog(action: string) {
+  let content: Parameters<typeof Dialog.show>[0]["content"] | undefined;
+  vi.spyOn(Dialog, "show").mockImplementation((value) => {
+    content = value.content;
+    return "dialog-id";
+  });
+  render(
+    <MemoryRouter>
+      <ToolActions toolId="video-tool" toolName="Video Tool" />
+    </MemoryRouter>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: action }));
+  if (typeof content !== "function") throw new Error(`${action} did not open a dialog.`);
+  render(<MemoryRouter>{content({ dismiss: vi.fn() } as never) as ReactNode}</MemoryRouter>);
+}

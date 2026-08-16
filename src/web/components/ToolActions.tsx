@@ -1,7 +1,8 @@
 import { Button, ConfirmDialog, Menu, MenuItem, MenuTrigger, Tooltip, toast } from "@geckoui/geckoui";
-import { Download, Ellipsis, Settings2, Trash2 } from "lucide-react";
+import { Copy, Download, Ellipsis, PencilLine, Settings2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useWrite } from "../api";
+import { invalidate, useWrite } from "../api";
+import { openToolNameDialog } from "./ToolNameDialog";
 
 export function ToolActions({
   toolId,
@@ -18,6 +19,8 @@ export function ToolActions({
 }) {
   const navigate = useNavigate();
   const deleteTool = useWrite((api) => api("tools/:toolId").DELETE());
+  const renameTool = useWrite((api) => api("tools/:toolId").PATCH());
+  const cloneTool = useWrite((api) => api("tools/:toolId/clone").POST());
   const confirmDelete = () => {
     ConfirmDialog.show({
       title: `Delete ${toolName}?`,
@@ -35,7 +38,7 @@ export function ToolActions({
               tools: current.tools.filter((tool) => tool.id !== toolId),
             })),
         });
-        if (!response.data?.ok) return toast.error(apiError(response.error));
+        if (!response.data?.ok) return toast.error(apiError(response.error, "The tool could not be deleted."));
         dismiss();
         toast.success(`${toolName} deleted.`);
         navigate("/");
@@ -43,6 +46,38 @@ export function ToolActions({
     });
   };
   const exportTool = () => window.location.assign(`/api/tools/${toolId}/export`);
+  const openRename = () =>
+    openToolNameDialog({
+      heading: "Rename tool",
+      description: "The new title shows everywhere in your library. Nothing else about the tool changes.",
+      label: "Tool title",
+      confirmLabel: "Save title",
+      loadingLabel: "Saving…",
+      initialName: toolName,
+      submit: async (name) => {
+        const response = await renameTool.trigger({ params: { toolId }, body: { name } });
+        if (!response.data?.ok) throw new Error(apiError(response.error, "The title could not be saved."));
+        invalidate("tools");
+        toast.success(`Renamed to ${response.data.tool.name}.`);
+      },
+    });
+  const openClone = () =>
+    openToolNameDialog({
+      heading: `Clone ${toolName}`,
+      description:
+        "The clone is a separate tool with its own files and saved configuration. The original stays exactly as it is.",
+      label: "New tool title",
+      confirmLabel: "Create clone",
+      loadingLabel: "Cloning…",
+      initialName: `${toolName} copy`,
+      submit: async (name) => {
+        const response = await cloneTool.trigger({ params: { toolId }, body: { name } });
+        if (!response.data?.ok) throw new Error(apiError(response.error, "The tool could not be cloned."));
+        invalidate("tools");
+        toast.success(`${response.data.tool.name} created.`);
+        navigate(`/tools/${response.data.tool.id}`);
+      },
+    });
 
   const menu = (
     <fieldset aria-label={`${toolName} actions`} className="pointer-events-auto relative z-10 m-0 border-0 p-0">
@@ -63,6 +98,16 @@ export function ToolActions({
             </span>
           </MenuItem>
         )}
+        <MenuItem onClick={openRename}>
+          <span className="flex items-center gap-2">
+            <PencilLine size={13} /> Rename
+          </span>
+        </MenuItem>
+        <MenuItem onClick={openClone}>
+          <span className="flex items-center gap-2">
+            <Copy size={13} /> Clone
+          </span>
+        </MenuItem>
         {manageable && (
           <MenuItem onClick={exportTool}>
             <span className="flex items-center gap-2">
@@ -92,6 +137,16 @@ export function ToolActions({
           </Button>
         </Tooltip>
       )}
+      <Tooltip content="Rename tool" triggerAsChild>
+        <Button aria-label="Rename tool" className="size-9" size="sm" variant="icon" onClick={openRename}>
+          <PencilLine size={15} strokeWidth={1.8} />
+        </Button>
+      </Tooltip>
+      <Tooltip content="Clone tool" triggerAsChild>
+        <Button aria-label="Clone tool" className="size-9" size="sm" variant="icon" onClick={openClone}>
+          <Copy size={15} strokeWidth={1.8} />
+        </Button>
+      </Tooltip>
       {manageable && (
         <Tooltip content="Export tool" triggerAsChild>
           <Button aria-label="Export tool" className="size-9" size="sm" variant="icon" onClick={exportTool}>
@@ -127,8 +182,8 @@ export function ToolActions({
   return icons;
 }
 
-function apiError(error: unknown) {
+function apiError(error: unknown, fallback: string) {
   if (error instanceof Error) return error.message;
   if (error && typeof error === "object" && "error" in error && typeof error.error === "string") return error.error;
-  return "The tool could not be deleted.";
+  return fallback;
 }

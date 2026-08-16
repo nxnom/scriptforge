@@ -4,8 +4,10 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { ToolArchiveService } from "../tools/archive";
 import { listToolCategories } from "../tools/categories";
+import { ToolCloneService } from "../tools/clone";
 import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
 import { listBundledTools } from "../tools/registry";
+import { ToolTitleService } from "../tools/titles";
 import { createToolArchiveRoutes } from "./archive/routes";
 import { type CodexStatusChecker, CodexStatusService } from "./codex/status";
 import { createToolConfigurationRoutes } from "./configuration/routes";
@@ -17,6 +19,7 @@ import { ForgeSessionService } from "./forge/service";
 import { createJobWebSocketRoutes, createToolRuntimeApiRoutes } from "./jobs/routes";
 import { ToolJobService } from "./jobs/service";
 import { RequirementService } from "./requirements/service";
+import { createToolManagementRoutes } from "./tools/routes";
 
 const plannedTools = [
   {
@@ -86,6 +89,8 @@ export function createApiRoutes(
   doctorSessions?: DoctorSessionService,
   archives = new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id))),
   configuration = new ToolConfigurationService(),
+  titles = new ToolTitleService(installedToolsRoot),
+  clones = new ToolCloneService(installedToolsRoot),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -105,7 +110,7 @@ export function createApiRoutes(
             .catch(() => 0),
         })),
       );
-      const bundled = listBundledTools();
+      const bundled = await titles.applyToBundled(listBundledTools());
       const availableIds = new Set([...bundled.map((tool) => tool.id), ...installed.map((tool) => tool.manifest.id)]);
       const readyTools = await Promise.all(
         [
@@ -151,6 +156,7 @@ export function createApiRoutes(
     })
     .get("/codex/status", async (c) => c.json({ ok: true as const, ...(await codexStatus.check()) }))
     .route("/", createToolArchiveRoutes(archives, requirements, configuration))
+    .route("/", createToolManagementRoutes(clones, titles, configuration))
     .route("/", createToolConfigurationRoutes(configuration, installedToolsRoot))
     .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
     .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot, configuration))
@@ -200,6 +206,9 @@ export function createApp(
     configuration?: ToolConfigurationService;
     configRoot?: string;
     encryptionKeyPath?: string;
+    titles?: ToolTitleService;
+    clones?: ToolCloneService;
+    toolTitlesPath?: string;
   } = {},
 ) {
   const installedToolsRoot = options.installedToolsRoot ?? defaultInstalledToolsRoot();
@@ -224,6 +233,8 @@ export function createApp(
     new DoctorSessionService(codexStatus, requirements, installedToolsRoot, options.toolsRoot);
   const archives =
     options.archives ?? new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id)));
+  const titles = options.titles ?? new ToolTitleService(installedToolsRoot, options.toolTitlesPath);
+  const clones = options.clones ?? new ToolCloneService(installedToolsRoot, options.toolsRoot);
   const app = new Hono()
     .route(
       "/api",
@@ -236,6 +247,8 @@ export function createApp(
         doctorSessions,
         archives,
         configuration,
+        titles,
+        clones,
       ),
     )
     .route("/", createJobWebSocketRoutes(jobService))

@@ -31,6 +31,7 @@ https://github.com/user-attachments/assets/8c3468fc-a6f3-4cf6-885d-5d3f938ac1c4
 - Launch eight ready-to-use image, PDF, icon, favicon, code screenshot, media, download, and direct-SMTP email tools with one `npx scriptforge` command.
 - Let anyone forge a new utility by describing it in plain English through an interactive Codex CLI session powered by GPT-5.6.
 - Review generated interfaces and scripts, save them locally, resume interrupted work, and update installed tools.
+- Rename any tool, and clone any tool—bundled ones included—into your own editable copy while the original stays untouched.
 - Run tools with previews, progress, structured logs, cancellation, and optional Dependency Doctor guidance.
 - Keep configuration encrypted and ownership local; import multiple portable, validated `.forge` archives by choosing or dropping them together.
 

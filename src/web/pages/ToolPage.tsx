@@ -210,18 +210,17 @@ export function ToolPage() {
                 stop={confirmStopUpdate}
                 save={saveCandidateUpdate}
               />
-              {!visibleUpdateId &&
-                (installedTool || (configuration.data?.ok && configuration.data.fields.length > 0)) && (
-                  <ToolActions
-                    toolId={toolId}
-                    toolName={tool.name}
-                    mode="responsive"
-                    manageable={installedTool}
-                    onConfigure={
-                      configuration.data?.ok && configuration.data.fields.length > 0 ? configureTool : undefined
-                    }
-                  />
-                )}
+              {!visibleUpdateId && (
+                <ToolActions
+                  toolId={toolId}
+                  toolName={tool.name}
+                  mode="responsive"
+                  manageable={installedTool}
+                  onConfigure={
+                    configuration.data?.ok && configuration.data.fields.length > 0 ? configureTool : undefined
+                  }
+                />
+              )}
             </>
           ) : undefined
         }

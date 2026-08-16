@@ -151,9 +151,9 @@ function ListCardContent({ tool, Icon }: { tool: ToolSummary; Icon: ComponentTyp
         <CategoryBadges categories={tool.categories} />
         {tool.origin === "bundled" && <BuiltinBadge />}
         <StatusBadge status={tool.status} />
-        {tool.origin === "installed" && (
+        {tool.origin && (
           <span className="pointer-events-auto relative z-10">
-            <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} />
+            <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} manageable={tool.origin === "installed"} />
           </span>
         )}
       </div>
@@ -184,7 +184,9 @@ function CardFooter({ tool }: { tool: ToolSummary }) {
       <CategoryBadges categories={tool.categories} />
       <div className="flex items-center gap-2">
         {tool.origin === "bundled" && <BuiltinBadge />}
-        {tool.origin === "installed" && <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} />}
+        {tool.origin && (
+          <ToolActions mode="menu" toolId={tool.id} toolName={tool.name} manageable={tool.origin === "installed"} />
+        )}
       </div>
     </div>
   );

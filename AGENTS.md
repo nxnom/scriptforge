@@ -35,6 +35,8 @@ The selected track and pitch above are settled. Record them in the README once t
 - A successful first Save keeps the owning Forge Codex session alive and changes the action to Update; only the explicit Stop action ends the session. Installed user-tool detail pages can open their own terminal-and-tool update workspace, while bundled tools cannot be updated.
 - Forge sessions are scoped rather than globally exclusive: one new-tool session may run alongside one update session per installed tool. Starting or stopping one scope never replaces or ends the others.
 - User tools saved from Forge or added through Import can be exported as one `.forge` archive or deleted after confirmation. Bundled starter tools cannot be deleted. Import validates and extracts files without executing them; missing executable requirements do not reject the import and block only later runs.
+- Every tool, bundled or installed, can be renamed and cloned. A rename changes only the title: installed tools keep it in their own `tool.json`, and bundled titles live in a `~/.scriptforge/tool-titles.json` override file because bundled manifests ship read-only inside the package.
+- A clone is always a new installed user tool with a fresh identifier derived from its title. It copies the source files byte for byte and copies saved configuration, re-encrypting secrets under the new identifier. The source tool is never changed, so cloning a bundled tool is the way to get an editable, updatable copy of a starter tool.
 
 ## Technical Direction
 
