@@ -132,6 +132,27 @@ describe("local API", () => {
       });
       expect(JSON.stringify(body)).not.toContain("private-token");
       expect(await readFile(join(configRoot, "social-tool.json"), "utf8")).not.toContain("private-token");
+
+      const revealed = await app.request("/api/tools/social-tool/configuration/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "accessToken" }),
+      });
+      expect(revealed.status).toBe(200);
+      expect(revealed.headers.get("cache-control")).toBe("no-store");
+      await expect(revealed.json()).resolves.toEqual({
+        ok: true,
+        key: "accessToken",
+        value: "private-token",
+        configured: true,
+      });
+
+      const publicField = await app.request("/api/tools/social-tool/configuration/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "username" }),
+      });
+      expect(publicField.status).toBe(400);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

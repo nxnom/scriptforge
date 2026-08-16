@@ -37,6 +37,12 @@ export function InstalledConfigurationPanel({
 }) {
   const status = useRead((api) => api("tools/:toolId/configuration").GET({ params: { toolId } }), { staleTime: 0 });
   const update = useWrite((api) => api("tools/:toolId/configuration").PUT());
+  const revealSecret = useWrite((api) => api("tools/:toolId/configuration/reveal").POST());
+  const reveal = async (key: string) => {
+    const response = await revealSecret.trigger({ params: { toolId }, body: { key } });
+    if (!response.data?.ok) throw new Error(errorMessage(response.error));
+    return "value" in response.data ? response.data.value : undefined;
+  };
   const save = async (body: ConfigurationUpdate) => {
     const response = await update.trigger({ params: { toolId }, body });
     if (!response.data?.ok) {
@@ -51,6 +57,7 @@ export function InstalledConfigurationPanel({
       saving={update.loading}
       save={save}
       cancel={onCancel}
+      reveal={reveal}
       showHeading={showHeading}
     />
   );
@@ -92,12 +99,14 @@ function ConfigurationContent({
   saving,
   save,
   cancel,
+  reveal,
   showHeading,
 }: {
   status: { loading: boolean; error?: unknown; data?: { ok: boolean; fields?: unknown } };
   saving: boolean;
   save: (update: ConfigurationUpdate) => Promise<void>;
   cancel: () => void;
+  reveal?: (key: string) => Promise<string | undefined>;
   showHeading?: boolean;
 }) {
   if (status.loading)
@@ -115,6 +124,7 @@ function ConfigurationContent({
       saving={saving}
       onSave={save}
       onCancel={cancel}
+      onReveal={reveal}
       showHeading={showHeading}
     />
   );

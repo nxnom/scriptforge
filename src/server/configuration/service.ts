@@ -97,6 +97,21 @@ export class ToolConfigurationService {
     return { config, secrets };
   }
 
+  /**
+   * Decrypt one saved secret so the user can read back what they stored. Deliberately one field per
+   * call and never part of getStatus, so the ordinary configuration payload stays free of secrets.
+   */
+  async reveal(manifest: ToolManifest, key: string, scope = manifest.id) {
+    const field = manifest.configuration.find((candidate) => candidate.key === key);
+    if (!field) throw new Error(`Unknown configuration field ${key}.`);
+    if (field.type !== "secret") throw new Error(`${field.label} is not a private value.`);
+
+    const stored = (await this.readStore(scope)).values[key];
+    const encrypted = encryptedValueSchema.safeParse(stored);
+    if (!encrypted.success) return { key, value: undefined, configured: false };
+    return { key, value: await this.decrypt(manifest.id, key, encrypted.data), configured: true };
+  }
+
   async delete(scope: string) {
     await rm(this.pathFor(scope), { force: true });
   }

@@ -40,6 +40,30 @@ describe("tool configuration", () => {
     });
   });
 
+  it("reveals one saved secret at a time and never through the ordinary status", async () => {
+    const root = await temporaryRoot();
+    const service = new ToolConfigurationService(join(root, "config"), join(root, "secure", "master.key"));
+    const manifest = configuredManifest();
+    await service.save(manifest, { username: "maya", accessToken: "top-secret-token" });
+
+    await expect(service.reveal(manifest, "accessToken")).resolves.toEqual({
+      key: "accessToken",
+      value: "top-secret-token",
+      configured: true,
+    });
+    expect(JSON.stringify(await service.getStatus(manifest))).not.toContain("top-secret-token");
+
+    await expect(service.reveal(manifest, "username")).rejects.toThrow("not a private value");
+    await expect(service.reveal(manifest, "missingKey")).rejects.toThrow("Unknown configuration field");
+
+    await service.save(manifest, {}, ["accessToken"]);
+    await expect(service.reveal(manifest, "accessToken")).resolves.toEqual({
+      key: "accessToken",
+      value: undefined,
+      configured: false,
+    });
+  });
+
   it("preserves a blank submitted secret, supports replacement, and deletes the vault", async () => {
     const root = await temporaryRoot();
     const configRoot = join(root, "config");

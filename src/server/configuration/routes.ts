@@ -5,6 +5,8 @@ import { findInstalledTool } from "../../tools/installed";
 import { findBundledTool } from "../../tools/registry";
 import type { ToolConfigurationService } from "./service";
 
+const revealRequestSchema = z.object({ key: z.string().regex(/^[a-z][A-Za-z0-9]*$/) });
+
 export const configurationUpdateSchema = z.object({
   values: z.record(z.string(), z.unknown()).default({}),
   clearSecrets: z.array(z.string()).max(24).default([]),
@@ -21,6 +23,24 @@ export function createToolConfigurationRoutes(service: ToolConfigurationService,
         return c.json({ ok: false as const, error: message(error) }, 400);
       }
     })
+    .post(
+      "/tools/:toolId/configuration/reveal",
+      validator("json", (value, c) => {
+        const parsed = revealRequestSchema.safeParse(value);
+        return parsed.success ? parsed.data : c.json({ ok: false as const, error: "Choose a saved value." }, 400);
+      }),
+      async (c) => {
+        try {
+          const manifest = await findManifest(c.req.param("toolId"), installedToolsRoot);
+          if (!manifest) return c.json({ ok: false as const, error: "That tool is not installed." }, 404);
+          const revealed = await service.reveal(manifest, c.req.valid("json").key);
+          c.header("Cache-Control", "no-store");
+          return c.json({ ok: true as const, ...revealed });
+        } catch (error) {
+          return c.json({ ok: false as const, error: message(error) }, 400);
+        }
+      },
+    )
     .put(
       "/tools/:toolId/configuration",
       validator("json", (value, c) => {

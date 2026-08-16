@@ -26,6 +26,65 @@ describe("ToolConfigurationForm", () => {
     );
   });
 
+  it("shows a saved secret on request and hides it again", async () => {
+    const onReveal = vi.fn(async () => "private-token");
+    const configured = fields().map((field) => (field.key === "accessToken" ? { ...field, configured: true } : field));
+    render(
+      <ToolConfigurationForm
+        fields={configured}
+        saving={false}
+        onSave={vi.fn(async () => undefined)}
+        onCancel={vi.fn()}
+        onReveal={onReveal}
+      />,
+    );
+
+    const input = screen.getByLabelText(/Access token/, { selector: "input" });
+    expect(input).toHaveAttribute("type", "password");
+    fireEvent.click(screen.getByRole("button", { name: "Show saved Access token" }));
+
+    await waitFor(() => expect(input).toHaveValue("private-token"));
+    expect(input).toHaveAttribute("type", "text");
+    expect(onReveal).toHaveBeenCalledWith("accessToken");
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide Access token" }));
+    await waitFor(() => expect(input).toHaveValue(""));
+    expect(input).toHaveAttribute("type", "password");
+  });
+
+  it("reports why a saved secret could not be read", async () => {
+    const onReveal = vi.fn(async () => {
+      throw new Error("The ScriptForge encryption key is missing.");
+    });
+    const configured = fields().map((field) => (field.key === "accessToken" ? { ...field, configured: true } : field));
+    render(
+      <ToolConfigurationForm
+        fields={configured}
+        saving={false}
+        onSave={vi.fn(async () => undefined)}
+        onCancel={vi.fn()}
+        onReveal={onReveal}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show saved Access token" }));
+    expect(await screen.findByText("The ScriptForge encryption key is missing.")).toBeVisible();
+    expect(screen.getByLabelText(/Access token/, { selector: "input" })).toHaveAttribute("type", "password");
+  });
+
+  it("offers no reveal action when the caller cannot read secrets back", () => {
+    const configured = fields().map((field) => (field.key === "accessToken" ? { ...field, configured: true } : field));
+    render(
+      <ToolConfigurationForm
+        fields={configured}
+        saving={false}
+        onSave={vi.fn(async () => undefined)}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /Show saved/ })).toBeNull();
+  });
+
   it("does not require re-entering a configured secret and can explicitly remove it", async () => {
     const save = vi.fn(async () => undefined);
     const configured = fields().map((field) => (field.key === "accessToken" ? { ...field, configured: true } : field));

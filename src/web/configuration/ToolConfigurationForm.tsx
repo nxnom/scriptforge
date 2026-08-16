@@ -12,7 +12,9 @@ import {
   SelectOption,
 } from "@geckoui/geckoui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import type { ToolConfigurationField } from "../../tools/manifest";
 
@@ -24,12 +26,14 @@ export function ToolConfigurationForm({
   saving,
   onSave,
   onCancel,
+  onReveal,
   showHeading = true,
 }: {
   fields: ConfigurationFieldStatus[];
   saving: boolean;
   onSave: (update: ConfigurationUpdate) => Promise<void>;
   onCancel: () => void;
+  onReveal?: (key: string) => Promise<string | undefined>;
   showHeading?: boolean;
 }) {
   const form = useForm<Record<string, unknown>>({
@@ -57,7 +61,7 @@ export function ToolConfigurationForm({
         )}
         <div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
           {fields.map((field) => (
-            <ConfigurationField key={field.key} field={field} />
+            <ConfigurationField key={field.key} field={field} onReveal={onReveal} />
           ))}
         </div>
         <div className="flex justify-end gap-2 border-[#333] border-t pt-3">
@@ -73,7 +77,14 @@ export function ToolConfigurationForm({
   );
 }
 
-function ConfigurationField({ field }: { field: ConfigurationFieldStatus }) {
+function ConfigurationField({
+  field,
+  onReveal,
+}: {
+  field: ConfigurationFieldStatus;
+  onReveal?: (key: string) => Promise<string | undefined>;
+}) {
+  const [shown, setShown] = useState(false);
   return (
     <div className="flex flex-col gap-1.5 rounded-xl border border-[#333] bg-[#202020] p-3">
       <Label
@@ -99,11 +110,20 @@ function ConfigurationField({ field }: { field: ConfigurationFieldStatus }) {
         <RHFInput
           name={field.key}
           id={field.key}
-          type={field.type === "secret" ? "password" : "text"}
+          type={field.type === "secret" && !shown ? "password" : "text"}
           autoComplete={field.type === "secret" ? "new-password" : "off"}
           placeholder={
             field.type === "secret" && field.configured ? "Saved — leave blank to keep it" : field.placeholder
           }
+        />
+      )}
+      {field.type === "secret" && field.configured && onReveal && (
+        <RevealSecret
+          fieldKey={field.key}
+          label={field.label}
+          shown={shown}
+          onShownChange={setShown}
+          onReveal={onReveal}
         />
       )}
       {field.type === "secret" && field.configured && (
@@ -117,6 +137,61 @@ function ConfigurationField({ field }: { field: ConfigurationFieldStatus }) {
         />
       )}
       <RHFError name={field.key} />
+    </div>
+  );
+}
+
+function RevealSecret({
+  fieldKey,
+  label,
+  shown,
+  onShownChange,
+  onReveal,
+}: {
+  fieldKey: string;
+  label: string;
+  shown: boolean;
+  onShownChange: (shown: boolean) => void;
+  onReveal: (key: string) => Promise<string | undefined>;
+}) {
+  const form = useFormContext();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>();
+  const toggle = async () => {
+    if (shown) {
+      form.setValue(fieldKey, "");
+      onShownChange(false);
+      return;
+    }
+    setError(undefined);
+    setLoading(true);
+    try {
+      const value = await onReveal(fieldKey);
+      if (value === undefined) throw new Error("That value is no longer saved.");
+      form.setValue(fieldKey, value);
+      onShownChange(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "That value could not be read.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        type="button"
+        size="xs"
+        variant="ghost"
+        disabled={loading}
+        aria-label={shown ? `Hide ${label}` : `Show saved ${label}`}
+        onClick={toggle}
+      >
+        <span className="flex items-center gap-1.5 text-[11px]">
+          {shown ? <EyeOff size={12} /> : <Eye size={12} />}
+          {loading ? "Reading…" : shown ? "Hide saved value" : "Show saved value"}
+        </span>
+      </Button>
+      {error && <span className="text-[11px] text-[#d98279]">{error}</span>}
     </div>
   );
 }
