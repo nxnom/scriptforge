@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { z } from "zod";
 import { findInstalledTool, installTool, updateInstalledTool } from "../../tools/installed";
+import { ToolReferenceService } from "../../tools/reference";
 import { findBundledTool } from "../../tools/registry";
 import { configurationUpdateSchema } from "../configuration/routes";
 import type { ToolConfigurationService } from "../configuration/service";
@@ -46,8 +47,27 @@ export function createForgeApiRoutes(
   jobs: ToolJobService,
   installedToolsRoot?: string,
   configuration?: ToolConfigurationService,
+  reference: ToolReferenceService = new ToolReferenceService(installedToolsRoot),
 ) {
   return new Hono()
+    .get("/sessions/:sessionId/library", async (c) => {
+      try {
+        service.assertMcpToken(c.req.param("sessionId"), bearerToken(c.req.header("authorization")));
+        return c.json({ ok: true as const, tools: await reference.list() });
+      } catch (error) {
+        return c.json({ ok: false as const, error: errorMessage(error, "The library could not be read.") }, 403);
+      }
+    })
+    .get("/sessions/:sessionId/library/:toolId", async (c) => {
+      try {
+        service.assertMcpToken(c.req.param("sessionId"), bearerToken(c.req.header("authorization")));
+        const source = await reference.read(c.req.param("toolId"));
+        if (!source) return c.json({ ok: false as const, error: "That tool is not in the library." }, 404);
+        return c.json({ ok: true as const, ...source });
+      } catch (error) {
+        return c.json({ ok: false as const, error: errorMessage(error, "That tool source could not be read.") }, 403);
+      }
+    })
     .get("/sessions/active", (c) => c.json({ ok: true as const, ...service.getActiveSession() }))
     .get("/sessions", async (c) => c.json({ ok: true as const, sessions: await service.getResumableSessions() }))
     .post(
@@ -224,7 +244,7 @@ export function createForgeApiRoutes(
         try {
           const panel = service.publishPanel(
             c.req.param("sessionId"),
-            c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "",
+            bearerToken(c.req.header("authorization")),
             c.req.valid("json"),
           );
           return c.json({ ok: true as const, panel }, 201);
@@ -243,7 +263,7 @@ export function createForgeApiRoutes(
         try {
           const candidate = await service.publishCandidate(
             c.req.param("sessionId"),
-            c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ?? "",
+            bearerToken(c.req.header("authorization")),
             c.req.valid("json"),
           );
           return c.json({ ok: true as const, candidate }, 201);
@@ -326,6 +346,10 @@ export function createForgeApiRoutes(
           : c.json({ ok: false as const, error: "That Forge terminal is no longer active." }, 404);
       },
     );
+}
+
+function bearerToken(header: string | undefined) {
+  return header?.replace(/^Bearer\s+/i, "") ?? "";
 }
 
 function errorMessage(error: unknown, fallback: string) {

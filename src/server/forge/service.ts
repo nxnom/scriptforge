@@ -233,6 +233,10 @@ export class ForgeSessionService {
     return this.activeSession(sessionId).toolId;
   }
 
+  assertMcpToken(sessionId: string, token: string) {
+    if (token !== this.activeSession(sessionId).mcpToken) throw new Error("Invalid Forge MCP token.");
+  }
+
   markSaved(sessionId: string, toolId: string) {
     const session = this.activeSession(sessionId);
     session.toolId = toolId;
@@ -444,6 +448,6 @@ function codexArgs(
     "-c",
     "mcp_servers.scriptforge.required=true",
     "-c",
-    'mcp_servers.scriptforge.enabled_tools=["scriptforge_show_panel","scriptforge_present_candidate"]',
+    'mcp_servers.scriptforge.enabled_tools=["scriptforge_show_panel","scriptforge_present_candidate","scriptforge_list_tools","scriptforge_read_tool"]',
   ];
 }

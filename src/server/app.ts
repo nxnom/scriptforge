@@ -6,6 +6,7 @@ import { ToolArchiveService } from "../tools/archive";
 import { listToolCategories } from "../tools/categories";
 import { ToolCloneService } from "../tools/clone";
 import { defaultInstalledToolsRoot, listInstalledTools } from "../tools/installed";
+import { ToolReferenceService } from "../tools/reference";
 import { listBundledTools } from "../tools/registry";
 import { ToolTitleService } from "../tools/titles";
 import { createToolArchiveRoutes } from "./archive/routes";
@@ -91,6 +92,7 @@ export function createApiRoutes(
   configuration = new ToolConfigurationService(),
   titles = new ToolTitleService(installedToolsRoot),
   clones = new ToolCloneService(installedToolsRoot),
+  reference = new ToolReferenceService(installedToolsRoot, undefined, titles),
 ) {
   return new Hono()
     .get("/health", (c) =>
@@ -159,7 +161,7 @@ export function createApiRoutes(
     .route("/", createToolManagementRoutes(clones, titles, configuration))
     .route("/", createToolConfigurationRoutes(configuration, installedToolsRoot))
     .route("/doctor", doctorSessions ? createDoctorApiRoutes(doctorSessions) : new Hono())
-    .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot, configuration))
+    .route("/forge", createForgeApiRoutes(forgeSessions, jobService, installedToolsRoot, configuration, reference))
     .route("/", createToolRuntimeApiRoutes(jobService));
 }
 
@@ -208,6 +210,7 @@ export function createApp(
     encryptionKeyPath?: string;
     titles?: ToolTitleService;
     clones?: ToolCloneService;
+    reference?: ToolReferenceService;
     toolTitlesPath?: string;
   } = {},
 ) {
@@ -235,6 +238,7 @@ export function createApp(
     options.archives ?? new ToolArchiveService(installedToolsRoot, new Set(listBundledTools().map((tool) => tool.id)));
   const titles = options.titles ?? new ToolTitleService(installedToolsRoot, options.toolTitlesPath);
   const clones = options.clones ?? new ToolCloneService(installedToolsRoot, options.toolsRoot);
+  const reference = options.reference ?? new ToolReferenceService(installedToolsRoot, options.toolsRoot, titles);
   const app = new Hono()
     .route(
       "/api",
@@ -249,6 +253,7 @@ export function createApp(
         configuration,
         titles,
         clones,
+        reference,
       ),
     )
     .route("/", createJobWebSocketRoutes(jobService))

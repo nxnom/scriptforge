@@ -15,6 +15,11 @@ const server =
         {
           panel: (panel) => publish("panel", panel),
           candidate: (candidate) => publish("candidate", candidate),
+          listLibrary: async () => (await readLibrary("library")).tools,
+          readLibraryTool: async (toolId) => {
+            const source = await readLibrary(`library/${encodeURIComponent(toolId)}`, [404]);
+            return source.ok === false ? undefined : source;
+          },
         },
         { allowDependencyInstalls },
       );
@@ -28,6 +33,16 @@ async function publish(path: "panel" | "candidate", body: unknown) {
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(`ScriptForge rejected ${path}: ${await response.text()}`);
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: the MCP server validates the shape it needs from this JSON.
+async function readLibrary(path: string, allowedFailures: number[] = []): Promise<any> {
+  const response = await fetch(`${serverUrl}/api/forge/sessions/${encodeURIComponent(sessionId)}/${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok && !allowedFailures.includes(response.status))
+    throw new Error(`ScriptForge rejected ${path}: ${await response.text()}`);
+  return response.json();
 }
 
 async function publishDoctor(body: unknown) {
