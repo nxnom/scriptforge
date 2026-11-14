@@ -1,3 +1,17 @@
+> [!WARNING]
+> **ScriptForge is archived and no longer maintained. Please use [maggot](https://github.com/nxnom/maggot) instead.**
+>
+> maggot does the same job in a simpler way. It keeps a shared toolbox of CLI tools and
+> [Agent Skills](https://agentskills.io) that you and your AI coding agents (Claude Code, Codex)
+> can search, run and improve. It is one Go binary, with a local web UI for running tools.
+>
+> - Install: `go install github.com/nxnom/maggot/cmd/maggot@latest`
+> - Start: `maggot toolbox init ~/toolbox`, then `maggot skill install`, then `maggot ui`
+> - Your `.forge` tools do not import directly. Ask your agent to rebuild them as maggot tools
+>   (`maggot guide` has the full authoring guide).
+>
+> See the [maggot README](https://github.com/nxnom/maggot#readme) for details.
+
 # ScriptForge
 
 ScriptForge is a local app store where anyone can turn a plain-English request into a useful local tool—no coding required.
